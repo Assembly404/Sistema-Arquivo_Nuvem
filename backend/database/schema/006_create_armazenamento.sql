@@ -7,7 +7,7 @@ create table if not exists armazenamento(
 
     chave_armazenamento varchar(255) not null,
 
-    dataCriacao timestamp not null,
+    dataCriacao timestamp not null, 
 
     foreign key(id_arquivo) references arquivo(id)
 

@@ -4,7 +4,7 @@ create table if not exists pasta(
     dataCriacao date not null,
     dataCarregamento date,
     dateAcesso date not null,
-    dataCriacao date not null,
+    
     
     id_permissao int not null,
     id_usuario int not null,
