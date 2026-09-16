@@ -1,3 +1,10 @@
+import { Routes, Route } from 'react-router'
+import Home from './pages/Home.jsx'
+import Login from './pages/Login.jsx'
+import Register from './pages/Register.jsx'
+import NotFound from './pages/NotFound.jsx'
+import ForgotPassword from './pages/ForgotPassword.jsx'
+
 
 import './App.css'
 
@@ -6,8 +13,20 @@ function App() {
 
   return (
     <>
-      
+    <Routes>
+      {/*Public routes */}
+      <Route path='/' element={<Home/>}/>
+      <Route path='/login' element={<Login/>} />
+      <Route path='/register' element={<Register />}/>
+      <Route path='/forgotpassword' element={<ForgotPassword />}/>
+
+      <Route path='*' element={<NotFound/>}/>
+    </Routes>
+
+    
+
     </>
+
   )
 }
 
