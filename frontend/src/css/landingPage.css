@@ -6,14 +6,22 @@
 
 
 :root {
-    --primaria: #8b6f47;       /*botões, links ativos */
-    --primaria-hover: #6f5738; /* para hovers */
-    --secundaria: #d4a574;     /* detalhes, ícones, destaques suaves */
-    --escuro: #2b2420;         /* texto principal e títulos*/
-    --maisEscuro: #1a1512;     /* texto de maior contraste */
-    --claro: #faf7f2;          /* fundo de cards */
-    --cinza: #78716c;          /* texto secundário e subtítulos */
-    --vidro: rgba(250, 247, 242, 0.55); /* glass */
+    --primaria: #8b6f47;
+    /*botões, links ativos */
+    --primaria-hover: #6f5738;
+    /* para hovers */
+    --secundaria: #d4a574;
+    /* detalhes, ícones, destaques suaves */
+    --escuro: #2b2420;
+    /* texto principal e títulos*/
+    --maisEscuro: #1a1512;
+    /* texto de maior contraste */
+    --claro: #faf7f2;
+    /* fundo de cards */
+    --cinza: #78716c;
+    /* texto secundário e subtítulos */
+    --vidro: rgba(250, 247, 242, 0.55);
+    /* glass */
 }
 
 
@@ -235,4 +243,53 @@ main {
     color: var(--cinza);
     font-size: 0.95rem;
     line-height: 1.5;
+}
+
+.sobre {
+    max-width: 1100px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.sobre h2 {
+    font-size: 2.2rem;
+    color: var(--maisEscuro);
+    margin-bottom: 0.75rem;
+}
+
+.sobre p{
+    color: var(--cinza);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.sobre-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 60px;
+}
+
+.sobre-img{
+    width: 50%;
+}
+
+.sobre-conteudo{
+    width: 50%;
+    height: 400px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 2rem 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-align: left;
+}
+
+.sobre-conteudo p{
+    margin-top: 2.5rem;
+}
+
+.sobre-conteudo:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 20px var(--escuro);
 }
