@@ -1,5 +1,6 @@
 package com.assemblyproject.cloudsystem.entity;
 
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -13,16 +14,16 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
-@Entity(name = "users")
-@NoArgsConstructor
-@AllArgsConstructor
+@Entity(name = "Users")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class User implements UserDetails {
 
-public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idUser;
+    private Long userID;
 
     @Column(nullable = false, length = 100)
     private String name;
@@ -30,19 +31,24 @@ public class User {
     @Column(nullable = false, length = 100)
     private String surname;
 
-    @Column(nullable = false, length = 100, unique = true)
+    @Column(nullable = false, length = 100)
     private String email;
 
-    @Column(nullable = false, length = 150)
+    @NotNull
     private String password;
 
     @NotNull
-    private LocalDateTime registerDate;
+    private LocalDateTime registrationData;
 
     private LocalDateTime lastAccess;
 
-    @ManyToOne
-    @JoinColumn(name = "id_Role")
-    private Role role;
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
 
+    @Override
+    public String getUsername() {
+        return "";
+    }
 }
