@@ -1,0 +1,32 @@
+.input_container{
+    /* position: relative; */
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.inputField{
+    width: 100%;
+    padding: 10px;
+    border: 1x solid black;
+    border-radius: 10px;
+}
+.inputError{
+    /* border-color: red; */
+}
+.inputIcon{
+    /* position: absolute;
+    top: 50%;
+    left: 10px; */
+    transform: translateY(-50%);
+    pointer-events: none;
+
+}
+.errorText{
+    /* position: absolute;
+    top: 100%;
+    left: 0; */
+    color: red;
+    font-size: 14px;
+    margin-top: 4px;
+    margin-bottom: 10px;
+}

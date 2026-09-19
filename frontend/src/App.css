@@ -1,0 +1,96 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Montserrat", sans-serif;
+}
+
+html{
+  font-size: 90%;
+}
+ol,ul{
+    list-style: none;
+}
+
+
+a{
+    text-decoration: none;
+}
+
+button, input, textarea, select {
+  font: inherit;       
+  color: inherit;      
+  
+         
+}
+
+img,video{
+  height: auto;
+  width: 100%;
+}
+
+.flex{
+  display: flex;
+  align-items: center;
+}
+
+.grid{
+  display: grid;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.icon{
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+.message{
+  display: none;
+}
+
+.showMessage{
+  display: block;
+  color: white;
+  background: rgb(255,0,0);
+  border-radius: 4px;
+  text-align: center; 
+}
+
+@media screen and (max-width: 500px){
+  .heading{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
+@media screen and (max-width: 918px){
+  .heading{
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+  }
+}
+@media screen and (max-width:990px){
+  .heading{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
+
+/* Login and register queries */
+
+@media screen and (max-width:602px){
+  .loginPage, registerPage{
+    .container{
+      height: 100%;
+      width: 100%;
+      flex-direction: column;
+      padding: 1.5rem;
+      
+    }
+  }
+}

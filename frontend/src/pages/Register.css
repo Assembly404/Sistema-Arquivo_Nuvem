@@ -1,0 +1,262 @@
+.input-flex{
+    display: flex;
+    justify-content: center;
+      
+}
+
+.registerPage{
+    min-height: 105vh;
+    width: 100%;
+    margin: auto;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 7px 50px rgb(214,223,213);
+
+    .container{
+        min-height: 95vh;
+        width: 60%;
+        margin: auto;
+        justify-content: space-between;
+        border-radius: 10px;
+        background: hsl(0,0%,91%);
+
+        .videoDiv{
+            position: relative;
+            display: flex;
+            flex: 1;
+            /* flex-basis: 50%; */
+            /* width: 70%; */
+            /* height: 100%; */
+            padding: 0 1.5rem;
+            text-align: center;
+            align-self: stretch;
+            justify-content: center;
+            flex-direction: column;
+            overflow: hidden;
+            /* margin: auto; */
+            border-radius: 10px;
+        }
+        video,.footerDiv{
+            position: absolute;
+        }
+        video{
+            height: 100%;
+            width: 100%;
+            object-fit: cover;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            filter: blur(2px);
+            }
+            .textDiv{
+                position: relative;
+
+                .title{
+                    color: white;
+                    font-size: 35px;
+                    font-weight: 800;
+
+                }
+                p{
+                    color:#e8e8e8;
+                    padding: 1rem;
+                    font-weight: 400;
+                }
+            }
+            .footerDiv{
+                bottom: 10px;
+                padding: 0 1rem;
+                height: 60px;
+                background: rgb(255, 255, 255,0.248);
+                left: 10px;
+                right: 10px;
+                justify-content: space-between;
+                backdrop-filter: blur(1px);
+                border-radius: 10px;
+
+                .text{
+                    color: white;
+                }
+
+                .btn-account{
+                    background: #e8e8e8;
+                    color:  rgb(58, 215, 226);
+                    padding: .8rem 1.5rem;
+                    border-radius: 16px;
+                    font-weight: 400;
+                    transition: .3s ease;
+                    border: none;
+
+                    &:hover{
+                        color: rgb(22, 81, 85);
+                        background: rgb(58, 215, 226);
+                    }
+                }
+
+                 
+            }
+            .formDiv{
+                /* flex-basis: 50%; */
+                /* margin: auto; */
+                flex: 1;
+                flex-direction: column;
+                gap: 1rem;
+                transform: translateY(-1rem);
+
+                .headerDiv{
+                    text-align: center;
+                    padding:1rem 0;
+                    
+                    img{
+                        width: 60px;
+                        padding-bottom: .5rem;
+                    }
+                    h3{
+                        font-size: 25px;
+                        color: black;
+                        font-weight: 600;
+                    }
+                }
+                form{
+                    gap: .8rem;
+
+                    .inputDiv{
+                        input{
+                            outline: none;
+                            border: none;
+                            width: 300px;
+                        }
+
+                        label{
+                            color:black;
+                            font-weight: 400;
+                            font-size: 14px;
+                            padding: .5rem 0;
+                            display: block;
+                        }
+                    }
+                }
+                .forgotPassword{
+                    font-size: 13px;
+                    color: black;
+                    opacity: .7;
+                    text-align: center;
+                    
+                    a{
+                        text-decoration: underline;
+                        cursor: pointer;
+                        opacity: 1;
+                    }
+                }
+            }
+    }
+}
+
+/* register queries */
+
+@media screen and (max-width:602px){
+  .registerPage{
+    .container{
+      height: 100%;
+      width: 100%;
+      flex-direction: column;
+      padding: 1.5rem;
+      
+      .videoDiv{
+        width: 100%;
+
+        .textDiv{
+            .title{
+                font-size: 20px;
+            }
+            p{
+                padding: 1rem;
+            }
+        }
+        .footerDiv{
+            .text{
+                font-size: 12px;
+            }
+            .btn-account{
+                padding: .4rem 1.5rem;
+            }
+        }
+        .formDiv{
+            gap: 1rem;
+            transform: translateY(-.5rem);
+
+            .headerDiv{
+                padding: 1rem 0;
+                
+                img{
+                    width: 40px;
+                }
+                h3{
+                    font-size: 20px;
+                }
+            }
+            .form{
+                gap: .5rem;
+
+                .inputDiv{
+                    input{
+                        width: 100%;
+                    }
+                }
+            }
+
+        }
+      }
+    }
+  }
+}
+@media screen and (max-width:678px){
+  .registerPage{
+    .container{
+      .videoDiv{
+        .textDiv{
+            .title{
+                font-size: 25px;
+            }
+            p{
+                padding: 1rem;
+            }
+        }
+        .footerDiv{
+            .text{
+                font-size: 12px;
+            }
+            .btn-account{
+                padding: .8rem 1.5rem;
+            }
+        }
+        .formDiv{
+            .headerDiv{
+                padding: 1.5rem 0;
+
+                h3{
+                    font-size: 20px;
+                }
+            }
+            .form{
+                .inputDiv{
+                    input{
+                        width: 100%;
+                        max-width: 200px;
+                    }
+                }
+            }
+
+        }
+      }
+    }
+  }
+}
+@media screen and (max-width:927px){
+  .registerPage{
+    .container{
+      width: 85%;
+    }
+  }
+}
