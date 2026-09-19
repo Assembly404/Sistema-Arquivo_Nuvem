@@ -47,6 +47,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @CrossOrigin(origins = "http://")
     public ResponseEntity<RegisterUserResponse> register(@Valid @RequestBody RegisterUserRequest registerRequest) {
         User newUser = new User();
         newUser.setPassword(passwordEncoder.encode(registerRequest.password()));
@@ -58,7 +59,8 @@ public class AuthController {
         newUser.setRegistrationData(dateTime);
 
         repository.save(newUser);
+        String token = tokenConfig.generateToken(newUser);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new RegisterUserResponse(newUser.getName() + " " + newUser.getSurname(), newUser.getEmail()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new RegisterUserResponse(newUser.getName() + " " + newUser.getSurname(), newUser.getEmail(), token));
     }
 }
