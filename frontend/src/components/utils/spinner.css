@@ -4,8 +4,8 @@
   font-size: 28px;
   position: relative;
   display: inline-block;
-  width: 1em;
-  height: 1em;
+  width: .8em;
+  height: .8em;
 }
 
 .spinner.center {

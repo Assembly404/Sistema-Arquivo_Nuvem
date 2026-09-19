@@ -9,7 +9,8 @@ function Button({
     customClass,
     icon,
     loading,
-    type
+    type,
+    disabled
 }){
     return(
         <>
@@ -18,6 +19,7 @@ function Button({
                 style={customStyles}
                 onClick={onClick}
                 type={type}
+                disabled={disabled}
             >
                 {loading ? (
                     <Spinner />

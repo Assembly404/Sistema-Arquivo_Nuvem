@@ -1,21 +1,35 @@
 
-import { useEffect} from "react"
+import { useEffect, useEffectEvent, useRef} from "react"
 import styled from 'styled-components'
 
 
-
+const ICONS = {
+    success: "M8.5 11.5 11 14l4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z",
+    error: "M6 18 17.94 6M18 18 6.06 6",
+};
 function Toast({
     message,
     type,
     onClose,
     duration
 }){
-    useEffect(()=>{
-        const timer = setTimeout(()=>{
-            onClose();
-        },duration || 3000)
-        return ()=> clearTimeout(timer)
-    },[duration, onClose]);
+
+  const onCloseRef = useRef(onClose);
+
+  useEffect(()=>{
+    onCloseRef.current = onClose();
+  },[onClose])
+
+  useEffect(()=>{
+    const timer = setTimeout(()=> onCloseRef.current(), duration)
+    return () => clearTimeout(timer)
+  },[duration])
+    // useEffect(()=>{
+    //     const timer = setTimeout(()=>{
+    //         onClose();
+    //     },duration || 3000)
+    //     return ()=> clearTimeout(timer)
+    // },[duration, onClose]);
 
     return(
         <>
@@ -30,7 +44,7 @@ function Toast({
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
                                     stroke-width="2"
-                                    d="M8.5 11.5 11 14l4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                                    d={ICONS[type] || ICONS.success}
                                     ></path>
                                 </svg>
                             </div>
@@ -42,6 +56,7 @@ function Toast({
                             </svg>
                         </button>
                         <div className="notification-progress-bar" />
+                        style={{ animationDuration: `${duration}ms` }}
                     </div>
                 </div>
             </StyledWrapper>
@@ -369,7 +384,7 @@ const StyledWrapper = styled.div`
 
     /* Remove the infinite property for your website */
 
-    animation: progressBar 5s linear forwards infinite;
+    animation: progressBar 5s linear forwards ;
   }
 
   /* progressBar Animation */

@@ -1,71 +1,103 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import './Register.css'
 import Input from "../components/form/input";
 import Button from "../components/button/button";
-import Toast from "../components/toast/toast";
 import video from "../assets/videoUpload.mp4";
 import image from "../assets/nuvem.png";
-import { Link } from "react-router";
-import {MdOutlineMail} from "react-icons/md";
-import Axios from 'axios';
+import { Link , useNavigate} from "react-router";
+import Toast from "../components/toast/toast";
 
+import { register } from "../api/axios";
 
+// import { faCheck, faTimes, faInfoCircle} from '@fortawesome/react-fontawesome';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faXmark,} from "@fortawesome/free-solid-svg-icons";
+// import { byPrefixAndName } from '@awesome.me/kit-KIT_CODE/icons'
+
+const  USER_REGEX = /^[a-zA-z][a-zA-Z0-9-_]{3,23}$/;
+const PWD_REGEx = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
+const EMAIl_REGEX = /^[a-zA-z0-9._%+-]+@[a-zA-z0-9.-]+\.[a-zA-Z0-9]{2,}$/;
 
 function Register(){
+    const [name, setName] = useState("");
+    const [surname, setSurname] = useState("");
     const [email, setEmail] = useState("");
-    const [senha, setSenha] = useState("");
-    const [nome, setNome] = useState("");
-    const [apelido, setApelido] = useState("");
-    const [emailError, setEmailError] = useState("")
-    const [loading, setLoading] = useState("")
-    const [toast, setToast] = useState(null)
+    const [password, setPwd] = useState("");
+    const [matchPwd, setmatchPwd] = useState("");
+
+    const validName = USER_REGEX.test(name);
+    const validSurname = USER_REGEX.test(surname);
+    const validEmail = EMAIl_REGEX.test(email);
+    const validPwd = PWD_REGEx.test(password);
+    const validmatch = password === matchPwd;
+    // const [errorMessage, setErrorMessage] = useState(false);
+    const [success, setSuccess] = useState(false);
+    const navigate = useNavigate();
+
+    const [loading, setLoading] = useState(false)
+    const userRef = useRef();
+
+    const [toast, setToast] = useState(null);
+    const showToast = (message, type) => setToast({ message, type, id: Date.now() });
+    const closeToast = useCallback(() => setToast(null), []); 
+    // const errRef = useRef();
+
+    const nameError = name && !validName ? "minimo 4 caracteres e deve comecar com uma letra" : "";
+    const apelidoError = surname && !validSurname ? "minimo 4 caracteres e deve comecar com uma letra" : "";
+    const emailError = email && !validEmail ? "email deve conter @dominio.com":"";
+    const pwdError = password && !validPwd
+    ? "8 a 24 caracteres.Deve ter maiúscula, minúscula,\n número e um símbolo (!@#$%)."
+    : "";
+    const matchError = matchPwd && !validmatch ? "As passwords não coincidem." : "";
 
 
-    const showToast = (message, type)=>{
-        setToast({message, type})
-    }
-    const removeToast = () =>{
-        setToast(null);
-    }
-    const http = Axios.create({
-        baseURL:"http://localhost:5000"
-    })
-    async function handleSubmit(){ 
-        setLoading(true);
-            try{
-                const response = await http.post('/api/addNewUser',{
-                    name: nome,
-                    surname: apelido,
-                    email: email,
-                    password: senha,
+    useEffect(()=>{
+        userRef.current.focus();
+    },[]);
 
-                })
-            }catch(error){
-                showToast("Erro ao cadastrar:", error.response?.data || error.message);
-                console.error(error)
-            }finally{
-                setLoading(false)
-                setTimeout(()=>{
-                    showToast("Registro efetuado", "success")
+    const handleSubmit = async function (e) {
+        e.preventDefault();
+        setLoading(true)
 
-                },2000)
-
-            }
-            
         
 
-    }
+        try{
+            const payload = {
+                email: email,
+                name: name,
+                surname: surname,
+                password: password
+            }
+            const response =  register(payload)
+            console.log(response.data)
+            console.log(response.token)
+            console.log(JSON.stringify(response))
+
+            showToast("Conta criada com sucesso!", "success");
+            setTimeout(()=>navigate('/login'),3000)
+        }catch(err){
+            showToast(
+            err.response?.data?.message || "Não foi possível criar a conta. Tente novamente.",
+            "error"
+        );
+            if(!err?.response){
+                console.log('No server Response')
+            }else if(err.response?.status === 401){
+                console.log('')
+            }else{
+                console.log("Registration Failed")
+            }
+        }finally{
+            setLoading(false)
+        }
 
 
-    const handlingEmailChanging = (e)=>{
-        setEmail(e.target.value)
-        setEmailError(validateEmail(e.target.value) ? '': 'Invalid email adress')
-    }
-    const validateEmail =(email)=>{
-        return /\S+@\S+\.\S+/.test(email)
+        
     }
     return(
-        <>  {toast}
+        <>  {toast && (
+                <Toast key={toast.id} message={toast.message} type={toast.type} onClose={closeToast} />
+                )}
             <div className="registerPage flex">
                 <div className="container flex">
                     <div className="videoDiv">
@@ -89,60 +121,127 @@ function Register(){
                             <h3>Crie a sua Conta</h3>
                         </div>
 
-                        <form action="" className="form grid">
+                        <form onSubmit={handleSubmit} className="form grid">
                             <div className="inputDiv">
-                                <label htmlFor="username">Nome</label>
+                                <label htmlFor="name">
+                                    Nome:
+                                    {name && (
+                                        <FontAwesomeIcon 
+                                        icon={validName ? faCheck : faXmark} 
+                                        style={validName ? {color: "rgb(45, 246, 0)"} :{color:"rgb(255,0,24)"}}/>
+                                    )}
+
+                                   
+                                    
+                                </label>
                                 <Input type="text" 
                                 placeholder={"Coloque o seu Nome"}
-                                onChange={(e)=>{
-                                    setNome(e.target.value)
-                                }}
+                                errorMessage={nameError}
+                                id={"name"}
+                                ref={userRef}
+                                value={name}
+                                autoComplete={"off"}
+                                onChange={(e)=>{setName(e.target.value)}}
+                                required={true}
                                 
+                                                             
                                 />
+                            
                             </div>
                             <div className="inputDiv">
-                                <label htmlFor="username">Apelido</label>
-                                <Input type="email" 
+                                <label htmlFor="apelido">
+                                    Apelido: 
+                                    {surname && (
+                                        <FontAwesomeIcon 
+                                        icon={validSurname ? faCheck : faXmark} 
+                                        style={validSurname ? {color: "rgb(45, 246, 0)"} :{color:"rgb(255,0,24)"}}/>
+                                    )}
+                                </label>
+                                <Input type="text" 
                                 placeholder={"Coloque o seu Apelido"}
-                                onChange={(e)=>{
-                                    setApelido(e.target.value)
-                                }}
-                                
+                                id={"apelido"}
+                                // ref={userRef}
+                                value={surname}
+                                autoComplete={"off"}
+                                onChange={(e)=>{setSurname(e.target.value)}}
+                                required={true}
+                                errorMessage={apelidoError}
+                                 
+                                                               
                                 />
+                                
                             </div>
                             <div className="inputDiv">
-                                <label htmlFor="username">Email</label>
+                                <label htmlFor="email">
+                                    Email:
+                                    {email && (
+                                        <FontAwesomeIcon 
+                                        icon={validEmail ? faCheck : faXmark} 
+                                        style={validEmail ? {color: "rgb(45, 246, 0)"} :{color:"rgb(255,0,24)"}}/>
+                                    )}
+
+                                </label>
                                 <Input type="email" 
                                 placeholder={"Coloque o seu Email"}
-                                onChange={(e)=>{
-                                    setEmail(e.target.value)
-                                }}
+                                id={"email"}
+                                value={email}
+                                autoComplete={"off"}
+                                onChange={(e)=>{setEmail(e.target.value)}}
+                                required={true}
+                                errorMessage={emailError}
                                 
+                                                                
                                 />
+                                
                             </div>
                             <div className="inputDiv">
-                                <label htmlFor="username">Password</label>
+                                <label htmlFor="password">
+                                    Password:
+                                    {password && (
+                                        <FontAwesomeIcon 
+                                        icon={validPwd ? faCheck : faXmark} 
+                                        style={validPwd ? {color: "rgb(45, 246, 0)"} :{color:"rgb(255,0,24)"}}/>
+                                    )}
+
+                                </label>
                                 <Input type="password" 
                                 placeholder="Coloque a sua password"
-                                onChange={(e)=>{
-                                    setSenha(e.target.value)
-                                }}
-                                
+                                id={"password"}
+                                value={password}
+                                autoComplete={"off"}
+                                onChange={(e)=>{setPwd(e.target.value)}}
+                                required={true}
+                                errorMessage={pwdError}             
                                 />
                             </div>
                             <div className="inputDiv">
-                                <label htmlFor="username">Confirma Password</label>
+                                <label htmlFor="matchpwd">
+                                    Confirmar Password:
+                                    {matchPwd && (
+                                        <FontAwesomeIcon 
+                                        icon={validmatch ? faCheck : faXmark} 
+                                        style={validmatch ? {color: "rgb(45, 246, 0)"} :{color:"rgb(255,0,24)"}}/>
+                                    )}
+                                </label>
                                 <Input type="password" 
                                 placeholder="Confirma a sua password"
+                                id={'matchpwd'}
+                                value={matchPwd}
+                                onChange={(e)=>{setmatchPwd(e.target.value)}}
+                                required={true}
+                                errorMessage={matchError}
                                 
                                 />
                             </div>
 
                             <Button label={'Registra'}
                             variant={'secundary'} 
-                            type={'submit'}
                             loading={loading}
-                            onClick={handleSubmit}/>
+                            type="submit"
+                            disabled={
+                                !validName || !validSurname || !validEmail || !validPwd || !validmatch ? true : false
+                            }
+                            />
                             
                             
 

@@ -1,8 +1,10 @@
 .input_container{
     /* position: relative; */
     display: flex;
-    align-items: center;
+    /* align-items: center; */
     margin-bottom: 10px;
+    flex-direction: column;
+    text-align: left;
 }
 .inputField{
     width: 100%;
@@ -11,7 +13,7 @@
     border-radius: 10px;
 }
 .inputError{
-    /* border-color: red; */
+    border-color: red;
 }
 .inputIcon{
     /* position: absolute;
@@ -21,12 +23,18 @@
     pointer-events: none;
 
 }
-.errorText{
-    /* position: absolute;
-    top: 100%;
-    left: 0; */
-    color: red;
-    font-size: 14px;
-    margin-top: 4px;
-    margin-bottom: 10px;
+
+.errorText {
+    text-align: left;
+    color: rgb(255, 0, 34);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    .icon-info{
+        font-size: inherit;
+        margin-right: 5px;
+        color: black;
+    }
+    display: block;
+    white-space: pre-line;
+
 }
