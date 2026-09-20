@@ -37,9 +37,9 @@ function Register(){
     const [loading, setLoading] = useState(false)
     const userRef = useRef();
 
-    const [toast, setToast] = useState(null);
-    const showToast = (message, type) => setToast({ message, type, id: Date.now() });
-    const closeToast = useCallback(() => setToast(null), []); 
+    // const [toast, setToast] = useState(null);
+    // const showToast = (message, type) => setToast({ message, type, id: Date.now() });
+    // const closeToast = useCallback(() => setToast(null), []); 
     // const errRef = useRef();
 
     const nameError = name && !validName ? "minimo 4 caracteres e deve comecar com uma letra" : "";
@@ -57,7 +57,6 @@ function Register(){
 
     const handleSubmit = async function (e) {
         e.preventDefault();
-        setLoading(true)
 
         
 
@@ -68,36 +67,31 @@ function Register(){
                 surname: surname,
                 password: password
             }
-            const response =  register(payload)
+            const response =  await register(payload)
             console.log(response.data)
-            console.log(response.token)
+            console.log(response.status)
             console.log(JSON.stringify(response))
+            console.log(response)
 
-            showToast("Conta criada com sucesso!", "success");
-            setTimeout(()=>navigate('/login'),3000)
+            console.log('COnta criada com sucesso')
+            navigate('/login')
+            
         }catch(err){
-            showToast(
-            err.response?.data?.message || "Não foi possível criar a conta. Tente novamente.",
-            "error"
-        );
+            
             if(!err?.response){
                 console.log('No server Response')
-            }else if(err.response?.status === 401){
-                console.log('')
-            }else{
+            }else {
+                console.log(err.response.status)
+                console.log(err.response.data)
                 console.log("Registration Failed")
             }
-        }finally{
-            setLoading(false)
         }
 
 
         
     }
     return(
-        <>  {toast && (
-                <Toast key={toast.id} message={toast.message} type={toast.type} onClose={closeToast} />
-                )}
+        <>  
             <div className="registerPage flex">
                 <div className="container flex">
                     <div className="videoDiv">

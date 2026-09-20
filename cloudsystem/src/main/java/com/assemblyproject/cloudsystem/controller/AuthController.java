@@ -35,7 +35,6 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @CrossOrigin(origins = "http://127.0.0.1:5173")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
         UsernamePasswordAuthenticationToken userAndPass = new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password());
         Authentication authentication = authenticationManager.authenticate(userAndPass);
@@ -47,7 +46,6 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @CrossOrigin(origins = "http://")
     public ResponseEntity<RegisterUserResponse> register(@Valid @RequestBody RegisterUserRequest registerRequest) {
         User newUser = new User();
         newUser.setPassword(passwordEncoder.encode(registerRequest.password()));
