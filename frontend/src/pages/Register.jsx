@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, } from "react";
 import './Register.css'
 import Input from "../components/form/input";
 import Button from "../components/button/button";
 import video from "../assets/videoUpload.mp4";
-import image from "../assets/nuvem.png";
+// import image from "../assets/nuvem.png";
 import { Link , useNavigate} from "react-router";
-import Toast from "../components/toast/toast";
+// import Toast from "../components/toast/toast";
 
 import { register } from "../api/axios";
 
@@ -31,10 +31,10 @@ function Register(){
     const validPwd = PWD_REGEx.test(password);
     const validmatch = password === matchPwd;
     // const [errorMessage, setErrorMessage] = useState(false);
-    const [success, setSuccess] = useState(false);
+    // const [success, setSuccess] = useState(false);
     const navigate = useNavigate();
 
-    const [loading, setLoading] = useState(false)
+    // const [loading, setLoading] = useState(false)
     const userRef = useRef();
 
     // const [toast, setToast] = useState(null);
@@ -73,8 +73,9 @@ function Register(){
             console.log(JSON.stringify(response))
             console.log(response)
 
-            console.log('COnta criada com sucesso')
+            alert('Conta criada com sucesso')
             navigate('/login')
+            
             
         }catch(err){
             
@@ -107,6 +108,7 @@ function Register(){
                             <Link to={'/login'}>
                                 <button className="btn-account">Login</button>
                             </Link>
+                            
                         </div>
                     </div>
                     <div className="formDiv flex">
@@ -230,7 +232,7 @@ function Register(){
 
                             <Button label={'Registra'}
                             variant={'secundary'} 
-                            loading={loading}
+                            
                             type="submit"
                             disabled={
                                 !validName || !validSurname || !validEmail || !validPwd || !validmatch ? true : false

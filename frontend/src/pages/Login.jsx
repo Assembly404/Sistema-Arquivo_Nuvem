@@ -1,49 +1,80 @@
-import { useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import './Login.css'
 import Input from "../components/form/input";
 import Button from "../components/button/button";
-import Toast from "../components/toast/toast";
+// import Toast from "../components/toast/toast";
 import video from "../assets/videoUpload.mp4";
 import image from "../assets/nuvem.png";
-import { Link } from "react-router";
-import {MdOutlineMail} from "react-icons/md"
+import { Link, useNavigate } from "react-router";
+// import {MdOutlineMail} from "react-icons/md"
+import AuthContext from "../context/AuthProvider.jsx";
+import { login } from "../api/axios";
 
+
+const EMAIl_REGEX = /^[a-zA-z0-9._%+-]+@[a-zA-z0-9.-]+\.[a-zA-Z0-9]{2,}$/;
 
 function Login(){
+    const {setAuth} = useContext(AuthContext)
     const [email, setEmail] = useState("")
-    const [senha, setSenha] = useState("");
-    const [emailError, setEmailError] = useState("")
-    const [loading, setLoading] = useState("")
-    const [toast, setToast] = useState(null)
+    const [password, setPassword] = useState("");
+    // const [loading, setLoading] = useState("")
+    // const [toast, setToast] = useState(null)
 
-    const showToast = (message, type)=>{
-        setToast({message, type})
-    }
-    const removeToast = () =>{
-        setToast(null);
-    }
+    const userRef = useRef();
+    const navigate = useNavigate();
 
-    const handleSubmit = () =>{
-        setLoading(true)
-        setTimeout(()=>{
-            setLoading(false)
-            showToast("Muitoas informacoes que vao aparecer no toast notication", "success")
-        },2000)
+    
+    const validEmail = EMAIl_REGEX.test(email);
+
+    const emailError = email && !validEmail ? "email deve conter @dominio.com":"";
+    
+    const handleSubmit = async function (e) {
+        e.preventDefault();
+
+        try{
+            const payload = {
+                email,
+                password
+            }
+            const response = await login(payload);
+            const token = response.data?.token
+
+
+            console.log(response.data);
+            console.log(response.data.token);
+
+            setAuth({email, password, token})
+
+            alert("login efectuado com sucesso")
+
+            navigate("/dashboard")
+
+            
+            
+            
+            console.log(err.response.status)
+            console.log(err.response.data)
+            console.log("Login Failed")
+            
+        }catch(err){
+            if(!err?.response){
+                console.log('No server response')
+            }else if(err.response.status === 403){
+                console.log("User not authotired")
+            }
+        }
+        
         
 
     }
+    useEffect(()=>{
+        userRef.current.focus();
+    },[])
 
-
-    const handlingEmailChanging = (e)=>{
-        setEmail(e.target.value)
-        setEmailError(validateEmail(e.target.value) ? '': 'Invalid email adress')
-    }
-    const validateEmail =(email)=>{
-        return /\S+@\S+\.\S+/.test(email)
-    }
     return(
         <>
-            <div className="loginPage flex">
+            
+            <section className="loginPage flex">
                 <div className="container flex">
                     <div className="videoDiv">
                         <video src={video} autoPlay muted loop></video>
@@ -66,26 +97,39 @@ function Login(){
                             <h3>Bem vindo ao Arquivo Inteligente</h3>
                         </div>
 
-                        <form action="" className="form grid">
+                        <form onSubmit={handleSubmit} className="form grid">
                             <span>Ligue se a sua nuvem</span>
                             <div className="inputDiv">
-                                <label htmlFor="username">Email</label>
+                                <label htmlFor="email">
+                                    Email:
+                                </label>
                                 <Input type="email" 
                                 placeholder={"Coloque o seu Email"}
-                                
-                                />
+                                id={"email"}
+                                value={email}
+                                ref={userRef}
+                                onChange={(e)=>{setEmail(e.target.value)}}
+                                required={true}
+                                errorMessage={emailError} />
                             </div>
                             <div className="inputDiv">
                                 <label htmlFor="username">Password</label>
                                 <Input type="password" 
                                 placeholder="Coloque a sua senha"
+                                onChange={(e)=>{ setPassword(e.target.value)}}
+                                value={password}
+                                required={true}
+
                                 
                                 />
                             </div>
 
                             <Button label={'Login'}
                             variant={'secundary'} 
-                            type={'submit'}/>
+                            type={'submit'}
+                            disabled={!validEmail ? true:false}/>
+
+                            
 
                             <span className="forgotPassword">
                                 Esqueceu a sua password? <a href="/forgotpassword">Clique Aqui</a>
@@ -93,7 +137,7 @@ function Login(){
                         </form>
                     </div>
                 </div>
-            </div>
+            </section>
         </>
     )
 }
