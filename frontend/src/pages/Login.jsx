@@ -48,19 +48,15 @@ function Login(){
             alert("login efectuado com sucesso")
 
             navigate("/dashboard")
-
-            
-            
-            
-            console.log(err.response.status)
-            console.log(err.response.data)
-            console.log("Login Failed")
             
         }catch(err){
             if(!err?.response){
                 console.log('No server response')
             }else if(err.response.status === 403){
                 console.log("User not authotired")
+            }
+            else{
+                console.log('Login Faled')
             }
         }
         
