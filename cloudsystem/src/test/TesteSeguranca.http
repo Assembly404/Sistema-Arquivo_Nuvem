@@ -1,0 +1,8 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=IntelliJ IDEA
+
+###
+
+GET http://localhost:5000/test
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsInN1YiI6ImV2Z3VlbmluZW5hbmVAZ21haS5jb20iLCJleHAiOjE3ODk2NDIxMjEsImlhdCI6MTc4OTU1NTcyMX0.kZUJxxJ0T--8icDPUBFqGaNJgY5CmeP_QdtiRmbnJWw
