@@ -2,7 +2,9 @@
 
 function Dashboard(){
     return(
-        <div>Dashboard</div>
+        <section className="dashboard-page">
+            <h1 className="dashboard-page__title">Início</h1>
+        </section>
     )
 }
 
