@@ -89,6 +89,10 @@
   /* ---- 1.9 Elevação/z-index ---- */
   --z-base: 0; --z-dropdown: 100; --z-sticky: 500;
   --z-navbar: 1000; --z-toast: 1100; --z-modal: 1200;
+  /* Nota (v1.1): --z-dropdown (100) é a camada de um dropdown que vive DENTRO do stacking
+     context do próprio componente. Uma sobreposição portada para fora da árvore (ex.: flyout
+     da sidebar colapsada, em document.body) usa --z-navbar, porque tem de pintar acima de
+     superfícies sticky (--z-sticky: 500). Ver SIDEBAR_ARQUITETURA 6.2 (#12). */
 
   /* ---- 1.10 Movimento (regra 7) ---- */
   --dur-fast: 150ms;   /* hover, foco, toggles pequenos */
@@ -108,6 +112,10 @@
   --fs-xl:      1.5rem;   /* 24px — h3 */
   --fs-2xl:     2rem;     /* 32px — h2 */
   --fs-3xl:     2.5rem;   /* 40px — h1 landing */
+
+  /* ---- 1.12 Layout persistente (off-set de conteúdo) ---- */
+  --sidebar-width: 260px;                                       /* largura expandida (§4.6) */
+  --sidebar-width-collapsed: calc(var(--space-16) + var(--space-2)); /* 72px (D4) */
 }
 
 /* Reset cooperado com os tokens */
@@ -218,6 +226,7 @@ Matriz obrigatória (aplicada na secção 4 a cada componente):
 - Navegação: navbar fixa glass no topo (landing), **sidebar à esquerda** no dashboard autenticado; breadcrumb ou título de página no topo do conteúdo.
 - Foco de teclado sempre visível (não usar `outline: none` sem substituto).
 - Scrollbar do sistema é ocultada (`::-webkit-scrollbar { display: none }`) — manter scroll por gesto/wheel, nunca esconder indicadores de scroll em áreas de lista sem substituto visual.
+- Na sidebar (§4.6) a área de navegação tem scroll próprio com a scrollbar oculta: o **substituto visual do indicador** é o *fade* de `--color-surface` no topo/base da área (`.sidebar-nav-wrap::before/::after`, visível apenas quando existe conteúdo fora da vista). Cabeçalho e rodapé da sidebar **nunca** rolam.
 - Inputs com `label` associada (`htmlFor`), placeholder nunca substitui label.
 - Z-index só via tokens (`--z-*`); proibido valores arbitrários (ex.: `9999`).
 - Responsivo — breakpoints oficiais (consolidados dos existentes): `600px` (mobile), `768px` (tablet), `992px` (desktop), `1200px` (wide). Regras antigas (500/602/678/918/927) devem ser migradas para estes 4 valores.
@@ -431,6 +440,19 @@ Posição fixa `top: 20px; right: 20px; z-index: var(--z-toast)`; duração padr
 .sidebar-item[aria-disabled="true"] { color: var(--color-disabled-ink); cursor: not-allowed; pointer-events: none; }
 ```
 
+**Contrato adicional (adendo v1.1 — scroll, popovers e modo colapsado):**
+
+- **Larguras por token:** a sidebar usa `--sidebar-width` (260px) e `--sidebar-width-collapsed` (72px, §1.12); nenhum ficheiro repete esses literais — `DashboardLayout.css` usa os mesmos tokens no `margin-left` do conteúdo.
+- **Scroll interno:** `.sidebar-header` e `.sidebar-footer` são `flex-shrink: 0`; a navegação vive em `.sidebar-nav-wrap` (`display: flex; flex: 1 1 auto; min-height: 0`) + `.sidebar-nav` (`min-height: 0; overflow-y: auto; overscroll-behavior: contain`, scrollbar oculta). O `padding-left/right: var(--space-1)` com `margin-left/right: calc(var(--space-1) * -1)` mantém a largura dos itens idêntica à do conteúdo e cria gutter para o `outline` de foco (§3.5). O indicador de scroll é o *fade* `.sidebar-nav-wrap[data-scroll-top="true"]::before` / `[data-scroll-bottom="true"]::after` (§3.6).
+- **Popovers do modo colapsado** (flyout do submenu, etiqueta do item, motivo de item desabilitado): renderizados com `createPortal(..., document.body)`, `position: fixed`, `z-index: var(--z-navbar)` e posicionamento por JS a partir de `getBoundingClientRect()` do item — **nunca** `position: absolute` dentro do `<nav>`, onde seriam recortados pelo scroll. O cálculo faz *clamp* vertical (nunca sai da viewport) e aplica `max-height: calc(100vh - (var(--space-4) * 2))` com scroll interno para listas longas. Distância de ancoragem `--space-2`; abertura por `hover`/`focus` e fecho com atraso de 150ms (`--dur-fast`); qualquer scroll ou `Esc` fecha.
+- **Menu de conta (`.sidebar-account__menu`):** largura fixa `calc(var(--sidebar-width) - (var(--space-4) * 2))` = 228px — exatamente a largura interna do modo expandido — **nos dois modos**; no modo colapsado ancora à direita do rail (`left: calc(100% + var(--space-2)); bottom: 0`), para não tapar os ícones. Entrada por `dd-in-up` (painel abre para cima) e itens com `white-space: nowrap`.
+- **Escopo de classes:** o menu de conta usa `.sidebar-menu`/`.sidebar-menu__item` (mesmos valores de 4.7, escopo próprio) em vez de `.dropdown-*`, para não competir com `components/dropdown/dropdown.jsx`.
+- **Item destrutivo:** texto em `--color-danger`, ícone em `--color-danger-action` (uso não-textual, §1.4) e hover `color-mix(in srgb, var(--color-danger-bg) 25%, var(--color-surface))` — mantém AA nos três estados.
+- **Itens desabilitados:** o motivo deixa de usar `title` nativo (o `pointer-events: none` de 4.6 impede o `title` de abrir) e passa a aparecer no popover (variante *reason*) e no `aria-label` como `"<label> — <motivo>"`.
+- **Mobile (< 992px):** a sidebar fechada recebe `inert` (links off-canvas não são tabuláveis) e, com o drawer aberto, o scroll do `body` é bloqueado; o acionador flutuante usa a superfície glass de 4.5.
+- **Rota ativa:** ao mudar de rota, os ancestrais do item ativo voltam a abrir; alternar um agrupador em modo colapsado não altera estado (não há submenu inline nesse modo).
+- Restrição de implementação: `.sidebar` **não** pode receber `overflow: hidden` (recortaria o menu de conta ancorado à direita do rail no modo colapsado).
+
 ### 4.7 Dropdown
 
 ```css
@@ -447,10 +469,16 @@ Posição fixa `top: 20px; right: 20px; z-index: var(--z-toast)`; duração padr
 .dropdown-item:hover { background: var(--color-primary-tint); }
 .dropdown-item:active { background: var(--color-primary-subtle); }
 .dropdown-item[disabled] { color: var(--color-disabled-ink); cursor: not-allowed; }
-.dropdown-item.is-danger { color: var(--color-danger-action); }
-.dropdown-item.is-danger:hover { background: var(--color-danger-bg); }
+.dropdown-item.is-danger { color: var(--color-danger); }             /* AA: 10:1 (adendo v1.1) */
+.dropdown-item.is-danger .dropdown-item__icon { color: var(--color-danger-action); } /* ícone: 4:1 ≥ 3:1 */
+.dropdown-item.is-danger:hover { background: color-mix(in srgb, var(--color-danger-bg) 25%, var(--color-surface)); }
 @keyframes dd-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes dd-in-up { from { opacity: 0; transform: translateY(var(--space-1)); } to { opacity: 1; transform: none; } }
 ```
+
+- `dd-in` é a entrada de painéis que abrem **para baixo**; `dd-in-up` é a variante de painéis que abrem **para cima** (ex.: menu de conta da sidebar, §4.6).
+- **Contraste (correção v1.1):** `--color-danger-action` (`rgb(255,0,34)`) atinge ~4:1 sobre `--color-surface` e ~2.6:1 sobre `--color-danger-bg` — suficiente para **gráficos/ícones** (mínimo 3:1), insuficiente para **texto** (mínimo 4.5:1). Daí texto em `--color-danger` e ícone em `--color-danger-action`.
+- **Consumidores:** a sidebar **não** usa estas classes (usa `.sidebar-menu`/`.sidebar-menu__item` com os mesmos valores, por escopo); `.dropdown-*` fica reservado a dropdowns de conteúdo/formulário, como `components/dropdown/dropdown.jsx`.
 
 ### 4.8 Card
 
@@ -553,10 +581,11 @@ Antes de entregar qualquer componente, confirmar **todos** os itens:
 - [ ] Erros sempre com ícone **e** texto (nunca só cor).
 - [ ] Apenas as 4 durações/2 easings da secção 3.7; `prefers-reduced-motion` respeitado.
 - [ ] Z-index vem dos tokens (`--z-*`).
+- [ ] Áreas com scroll interno têm indicador visível (a scrollbar do sistema é oculta — usar o *fade* normado em 3.6).
 - [ ] Responsivo nos breakpoints 600/768/992/1200px.
 - [ ] Estados por permissão conforme secção 5.1 (nenhum item proibido chega ao DOM).
 - [ ] Feedback de operação via `Toast` (success/error/warning) conforme secção 5.4.
 
 ---
 
-*Documento v1.0 — gerado a partir da consolidação de `App.css`, `index.css`, `navbar.css`, `button.css`, `input.css`, `Login.css`, `spinner.css`, `toast.jsx` e do schema de negócio (`perfil`, `permissao`, `pasta`, `arquivo`, `armazenamento`). Alterações a este documento exigem aprovação do líder técnico.*
+*Documento v1.1 — gerado a partir da consolidação de `App.css`, `index.css`, `navbar.css`, `button.css`, `input.css`, `Login.css`, `spinner.css`, `toast.jsx` e do schema de negócio (`perfil`, `permissao`, `pasta`, `arquivo`, `armazenamento`). O adendo v1.1 (tokens `--sidebar-width*` em §1.12, contrato de scroll/popovers em §4.6, correção de contraste em §4.7, nota de z-index em §1.9 e indicador de scroll em §3.6) resulta da revisão de UI da sidebar aprovada pelo requisitante da tarefa; demais alterações a este documento exigem aprovação do líder técnico.*

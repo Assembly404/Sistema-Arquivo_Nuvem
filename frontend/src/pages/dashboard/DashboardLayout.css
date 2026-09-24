@@ -4,13 +4,13 @@
 }
 
 .dashboard-main {
-    margin-left: 260px;
+    margin-left: var(--sidebar-width);
     padding: var(--space-8);
     transition: margin-left var(--dur-base) var(--ease-out);
 }
 
 .dashboard-layout--collapsed .dashboard-main {
-    margin-left: calc(var(--space-16) + var(--space-2));
+    margin-left: var(--sidebar-width-collapsed);
 }
 
 .dashboard-page {

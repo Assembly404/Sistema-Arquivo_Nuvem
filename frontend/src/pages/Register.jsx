@@ -14,7 +14,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark,} from "@fortawesome/free-solid-svg-icons";
 // import { byPrefixAndName } from '@awesome.me/kit-KIT_CODE/icons'
 
-const  USER_REGEX = /^[a-zA-z][a-zA-Z0-9-_]{3,23}$/;
+const  USER_REGEX = /^[a-zA-z][a-zA-Z0-9-_]{2,23}$/;
 const PWD_REGEx = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
 const EMAIl_REGEX = /^[a-zA-z0-9._%+-]+@[a-zA-z0-9.-]+\.[a-zA-Z0-9]{2,}$/;
 
@@ -42,7 +42,7 @@ function Register(){
     // const closeToast = useCallback(() => setToast(null), []); 
     // const errRef = useRef();
 
-    const nameError = name && !validName ? "minimo 4 caracteres e deve comecar com uma letra" : "";
+    const nameError = name && !validName ? "minimo 3 caracteres e deve comecar com uma letra" : "";
     const apelidoError = surname && !validSurname ? "minimo 4 caracteres e deve comecar com uma letra" : "";
     const emailError = email && !validEmail ? "email deve conter @dominio.com":"";
     const pwdError = password && !validPwd

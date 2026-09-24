@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router";
 import { FiChevronDown, FiMenu, FiX } from "react-icons/fi";
 import logo from "../../assets/logo.png";
@@ -7,6 +8,12 @@ import "./sidebar.css";
 
 const MOBILE_QUERY = "(max-width: 992px)";
 const ROOT_PATH = "/dashboard";
+const POPOVER_GAP = 8;
+const POPOVER_CLOSE_DELAY = 150;
+
+function getPopoverPanelId(id) {
+    return `sidebar-popover-${id}`;
+}
 
 function normalizePath(path) {
     if (!path) return "";
@@ -86,28 +93,40 @@ export function SidebarItem({
     disabled = false,
     disabledReason = "",
     isSubmenuOpen = false,
-    onToggleSubmenu
+    isPopoverOpen = false,
+    onToggleSubmenu,
+    onPopoverOpen,
+    onPopoverClose
 }) {
     const hasChildren = Boolean(item.children && item.children.length > 0);
     const submenuId = `sidebar-submenu-${item.id}`;
+    const popoverPanelId = getPopoverPanelId(item.id);
     const reason = disabled ? disabledReason : "";
+    const accessibleLabel = reason ? `${item.label} — ${reason}` : item.label;
+    const popoverHandlers = onPopoverOpen && (collapsed || disabled)
+        ? {
+            onMouseEnter: (event) => onPopoverOpen({ item, node: event.currentTarget, reason }),
+            onMouseLeave: onPopoverClose,
+            onFocus: (event) => onPopoverOpen({ item, node: event.currentTarget, reason }),
+            onBlur: onPopoverClose
+        }
+        : {};
     const badge = item.badge === null || item.badge === undefined ? null : (
         <span className="sidebar-badge">{item.badge}</span>
     );
 
     if (hasChildren) {
         return (
-            <li className="sidebar-item-group">
+            <li className="sidebar-item-group" {...popoverHandlers}>
                 <button
                     type="button"
                     className={`sidebar-item sidebar-item--parent ${isParentActive ? "sidebar-item--parent-active" : ""}`}
-                    aria-expanded={collapsed ? false : isSubmenuOpen}
-                    aria-controls={submenuId}
+                    aria-expanded={collapsed ? isPopoverOpen : isSubmenuOpen}
+                    aria-controls={collapsed ? (isPopoverOpen ? popoverPanelId : undefined) : submenuId}
+                    aria-haspopup={collapsed ? "true" : undefined}
                     aria-disabled={disabled ? "true" : undefined}
                     disabled={disabled}
-                    aria-label={item.label}
-                    title={reason}
-                    data-label={item.label}
+                    aria-label={accessibleLabel}
                     onClick={() => onToggleSubmenu?.(item.id)}
                 >
                     <NodeIcon name={item.icon} className="icon sidebar-item__icon" />
@@ -127,39 +146,11 @@ export function SidebarItem({
                                 isActive={child.id === activeId}
                                 disabled={Boolean(child.disabled)}
                                 disabledReason={child.disabledReason ?? ""}
+                                onPopoverOpen={onPopoverOpen}
+                                onPopoverClose={onPopoverClose}
                             />
                         ))}
                     </ul>
-                )}
-
-                {collapsed && (
-                    <div className="sidebar-flyout">
-                        <p className="sidebar-flyout__title">{item.label}</p>
-                        <ul className="sidebar-flyout__list">
-                            {item.children.map((child) => (
-                                <li key={child.id}>
-                                    {child.disabled ? (
-                                        <span
-                                            className="sidebar-flyout__item"
-                                            aria-disabled="true"
-                                            title={child.disabledReason ?? ""}
-                                        >
-                                            {child.label}
-                                        </span>
-                                    ) : (
-                                        <Link
-                                            to={child.path}
-                                            className="sidebar-flyout__item"
-                                            aria-current={child.id === activeId ? "page" : undefined}
-                                            title={child.label}
-                                        >
-                                            {child.label}
-                                        </Link>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
                 )}
             </li>
         );
@@ -167,13 +158,11 @@ export function SidebarItem({
 
     if (disabled) {
         return (
-            <li>
+            <li {...popoverHandlers}>
                 <span
                     className="sidebar-item"
                     aria-disabled="true"
-                    aria-label={item.label}
-                    title={reason}
-                    data-label={item.label}
+                    aria-label={accessibleLabel}
                 >
                     <NodeIcon name={item.icon} className="icon sidebar-item__icon" />
                     <span className="sidebar-item__label">{item.label}</span>
@@ -184,13 +173,12 @@ export function SidebarItem({
     }
 
     return (
-        <li>
+        <li {...popoverHandlers}>
             <Link
                 to={item.path}
                 className="sidebar-item"
                 aria-current={isActive ? "page" : undefined}
                 aria-label={item.label}
-                data-label={item.label}
             >
                 <NodeIcon name={item.icon} className="icon sidebar-item__icon" />
                 <span className="sidebar-item__label">{item.label}</span>
@@ -215,13 +203,20 @@ function SideBar({
         return activeNode ? findAncestorIds(menu, activeNode.id) : new Set();
     });
     const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+    const [popover, setPopover] = useState(null);
+    const [navScroll, setNavScroll] = useState({ top: false, bottom: false });
     const accountRef = useRef(null);
+    const popoverRef = useRef(null);
+    const popoverTimer = useRef(null);
+    const navRef = useRef(null);
 
     const isCollapsed = collapsed && !isMobile;
     const path = normalizePath(activePath);
     const activeItem = useMemo(() => findActiveItem(menu, path), [menu, path]);
     const activeId = activeItem ? activeItem.id : "";
     const ancestorIds = useMemo(() => findAncestorIds(menu, activeId), [menu, activeId]);
+    const [renderedNav, setRenderedNav] = useState({ path, isMobile });
+    const [renderedCollapse, setRenderedCollapse] = useState(isCollapsed);
 
     const email = user?.email ?? "";
     const name = user?.name?.trim() || email.split("@")[0] || "Utilizador";
@@ -232,20 +227,105 @@ function SideBar({
         .join("")
         .toUpperCase() || "U";
 
-    const [renderedContext, setRenderedContext] = useState({ path, isMobile });
+    const updateNavScroll = useCallback(() => {
+        const node = navRef.current;
+        if (!node) return;
+        const top = node.scrollTop > 1;
+        const bottom = node.scrollTop + node.clientHeight < node.scrollHeight - 1;
+        setNavScroll((current) => (current.top === top && current.bottom === bottom ? current : { top, bottom }));
+    }, []);
 
-    if (renderedContext.path !== path || renderedContext.isMobile !== isMobile) {
-        setRenderedContext({ path, isMobile });
-        setIsMobileOpen(false);
-        setAccountMenuOpen(false);
-    }
+    const handlePopoverOpen = useCallback(({ item, node, reason = "" }) => {
+        window.clearTimeout(popoverTimer.current);
+        const variant = reason
+            ? "reason"
+            : (item.children && item.children.length > 0 ? "menu" : "label");
+        setPopover({
+            id: item.id,
+            label: item.label,
+            reason,
+            variant,
+            children: item.children ?? [],
+            rect: node.getBoundingClientRect()
+        });
+    }, []);
+
+    const handlePopoverHold = useCallback(() => {
+        window.clearTimeout(popoverTimer.current);
+    }, []);
+
+    const handlePopoverClose = useCallback((event) => {
+        window.clearTimeout(popoverTimer.current);
+        const next = event?.relatedTarget;
+        if (next instanceof Node && popoverRef.current && popoverRef.current.contains(next)) return;
+        popoverTimer.current = window.setTimeout(() => setPopover(null), POPOVER_CLOSE_DELAY);
+    }, []);
+
+    useEffect(() => () => window.clearTimeout(popoverTimer.current), []);
 
     useEffect(() => {
-        if (!accountMenuOpen && !isMobileOpen) return undefined;
+        const node = navRef.current;
+        if (!node) return undefined;
+        const observer = new ResizeObserver(updateNavScroll);
+        observer.observe(node);
+        if (node.firstElementChild) observer.observe(node.firstElementChild);
+        window.addEventListener("resize", updateNavScroll);
+        return () => {
+            observer.disconnect();
+            window.removeEventListener("resize", updateNavScroll);
+        };
+    }, [updateNavScroll]);
+
+    useEffect(() => {
+        if (!isMobile || !isMobileOpen) return undefined;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [isMobile, isMobileOpen]);
+
+    useLayoutEffect(() => {
+        if (!popover) return undefined;
+        const panel = popoverRef.current;
+        if (!panel) return undefined;
+
+        const place = () => {
+            const { rect } = popover;
+            const height = panel.offsetHeight;
+            const width = panel.offsetWidth;
+            const anchorTop = popover.variant === "menu" ? rect.top : rect.top + ((rect.height - height) / 2);
+            const maxTop = Math.max(POPOVER_GAP, window.innerHeight - height - POPOVER_GAP);
+            const top = Math.min(Math.max(anchorTop, POPOVER_GAP), maxTop);
+            const left = Math.min(rect.right + POPOVER_GAP, Math.max(POPOVER_GAP, window.innerWidth - width - POPOVER_GAP));
+            panel.style.top = `${top}px`;
+            panel.style.left = `${left}px`;
+        };
+
+        const dismiss = (event) => {
+            if (popoverRef.current && event.target instanceof Node && popoverRef.current.contains(event.target)) return;
+            setPopover(null);
+        };
+
+        place();
+        window.addEventListener("resize", place);
+        window.addEventListener("scroll", dismiss, true);
+
+        return () => {
+            window.removeEventListener("resize", place);
+            window.removeEventListener("scroll", dismiss, true);
+        };
+    }, [popover]);
+
+    useEffect(() => {
+        if (!accountMenuOpen && !isMobileOpen && !popover) return undefined;
 
         const handlePointerDown = (event) => {
             if (accountRef.current && !accountRef.current.contains(event.target)) {
                 setAccountMenuOpen(false);
+            }
+            if (popoverRef.current && !popoverRef.current.contains(event.target)) {
+                setPopover(null);
             }
         };
 
@@ -253,6 +333,7 @@ function SideBar({
             if (event.key === "Escape") {
                 setAccountMenuOpen(false);
                 setIsMobileOpen(false);
+                setPopover(null);
             }
         };
 
@@ -263,7 +344,7 @@ function SideBar({
             document.removeEventListener("mousedown", handlePointerDown);
             document.removeEventListener("keydown", handleKeyDown);
         };
-    }, [accountMenuOpen, isMobileOpen]);
+    }, [accountMenuOpen, isMobileOpen, popover]);
 
     const handleToggle = () => {
         if (isMobile) {
@@ -274,6 +355,7 @@ function SideBar({
     };
 
     const handleToggleSubmenu = (id) => {
+        if (isCollapsed) return;
         setOpenSubmenus((current) => {
             const next = new Set(current);
             if (next.has(id)) {
@@ -293,6 +375,35 @@ function SideBar({
     const toggleLabel = isMobile
         ? (isMobileOpen ? "Fechar menu" : "Abrir menu")
         : (collapsed ? "Expandir menu" : "Recolher menu");
+
+    if (renderedNav.path !== path || renderedNav.isMobile !== isMobile) {
+        const pathChanged = renderedNav.path !== path;
+        setRenderedNav({ path, isMobile });
+        setIsMobileOpen(false);
+        setAccountMenuOpen(false);
+        setPopover(null);
+
+        if (pathChanged) {
+            const activeNode = findActiveItem(menu, path);
+            const activeAncestors = activeNode ? findAncestorIds(menu, activeNode.id) : new Set();
+            setOpenSubmenus((current) => {
+                let changed = false;
+                const next = new Set(current);
+                activeAncestors.forEach((id) => {
+                    if (!next.has(id)) {
+                        next.add(id);
+                        changed = true;
+                    }
+                });
+                return changed ? next : current;
+            });
+        }
+    }
+
+    if (renderedCollapse !== isCollapsed) {
+        setRenderedCollapse(isCollapsed);
+        setPopover(null);
+    }
 
     return (
         <>
@@ -317,6 +428,7 @@ function SideBar({
                 id="sidebar"
                 className={`sidebar ${isCollapsed ? "sidebar--collapsed" : ""} ${isMobileOpen ? "sidebar--open" : ""}`}
                 aria-label="Navegação principal"
+                inert={isMobile && !isMobileOpen ? true : undefined}
             >
                 <header className="sidebar-header">
                     <Link to={ROOT_PATH} className="sidebar-brand" aria-label="Ir para o início">
@@ -337,24 +449,33 @@ function SideBar({
                     </button>
                 </header>
 
-                <nav className="sidebar-nav">
-                    <ul className="sidebar-nav__list">
-                        {menu.map((item) => (
-                            <SidebarItem
-                                key={item.id}
-                                item={item}
-                                collapsed={isCollapsed}
-                                activeId={activeId}
-                                isActive={item.id === activeId}
-                                isParentActive={ancestorIds.has(item.id)}
-                                disabled={Boolean(item.disabled)}
-                                disabledReason={item.disabledReason ?? ""}
-                                isSubmenuOpen={openSubmenus.has(item.id)}
-                                onToggleSubmenu={handleToggleSubmenu}
-                            />
-                        ))}
-                    </ul>
-                </nav>
+                <div
+                    className="sidebar-nav-wrap"
+                    data-scroll-top={navScroll.top}
+                    data-scroll-bottom={navScroll.bottom}
+                >
+                    <nav className="sidebar-nav" ref={navRef} onScroll={updateNavScroll}>
+                        <ul className="sidebar-nav__list">
+                            {menu.map((item) => (
+                                <SidebarItem
+                                    key={item.id}
+                                    item={item}
+                                    collapsed={isCollapsed}
+                                    activeId={activeId}
+                                    isActive={item.id === activeId}
+                                    isParentActive={ancestorIds.has(item.id)}
+                                    disabled={Boolean(item.disabled)}
+                                    disabledReason={item.disabledReason ?? ""}
+                                    isSubmenuOpen={openSubmenus.has(item.id)}
+                                    isPopoverOpen={popover?.id === item.id}
+                                    onToggleSubmenu={handleToggleSubmenu}
+                                    onPopoverOpen={handlePopoverOpen}
+                                    onPopoverClose={handlePopoverClose}
+                                />
+                            ))}
+                        </ul>
+                    </nav>
+                </div>
 
                 <footer className="sidebar-footer">
                     <div className="sidebar-account" ref={accountRef}>
@@ -371,29 +492,34 @@ function SideBar({
                                 <span className="sidebar-account__name">{name}</span>
                                 <span className="sidebar-account__email">{email}</span>
                             </span>
+                            <FiChevronDown className="icon sidebar-account__chevron" aria-hidden="true" />
                         </button>
 
                         {accountMenuOpen && (
-                            <ul className="dropdown-menu sidebar-account__menu">
+                            <ul className="sidebar-menu sidebar-account__menu">
                                 {SIDEBAR_ACCOUNT_MENU.map((entry) => (
                                     <li key={entry.id}>
                                         {entry.action === "logout" ? (
                                             <button
                                                 type="button"
-                                                className={`dropdown-item ${entry.danger ? "is-danger" : ""}`}
+                                                className={`sidebar-menu__item ${entry.danger ? "is-danger" : ""}`}
                                                 onClick={handleLogout}
                                             >
-                                                <NodeIcon name={entry.icon} />
-                                                {entry.label}
+                                                <span className="sidebar-menu__icon">
+                                                    <NodeIcon name={entry.icon} />
+                                                </span>
+                                                <span className="sidebar-menu__label">{entry.label}</span>
                                             </button>
                                         ) : (
                                             <Link
                                                 to={entry.path}
-                                                className="dropdown-item"
+                                                className="sidebar-menu__item"
                                                 onClick={() => setAccountMenuOpen(false)}
                                             >
-                                                <NodeIcon name={entry.icon} />
-                                                {entry.label}
+                                                <span className="sidebar-menu__icon">
+                                                    <NodeIcon name={entry.icon} />
+                                                </span>
+                                                <span className="sidebar-menu__label">{entry.label}</span>
                                             </Link>
                                         )}
                                     </li>
@@ -403,6 +529,51 @@ function SideBar({
                     </div>
                 </footer>
             </aside>
+
+            {popover && createPortal(
+                <div
+                    id={getPopoverPanelId(popover.id)}
+                    className={popover.variant === "menu" ? "sidebar-flyout" : "sidebar-flyout sidebar-flyout--label"}
+                    role={popover.variant === "menu" ? "group" : "tooltip"}
+                    aria-label={popover.label}
+                    ref={popoverRef}
+                    style={{ top: popover.rect.top, left: popover.rect.right + POPOVER_GAP }}
+                    onMouseEnter={handlePopoverHold}
+                    onMouseLeave={handlePopoverClose}
+                    onBlur={handlePopoverClose}
+                >
+                    {popover.variant === "menu" ? (
+                        <>
+                            <p className="sidebar-flyout__title">{popover.label}</p>
+                            <ul className="sidebar-flyout__list">
+                                {popover.children.map((child) => (
+                                    <li key={child.id}>
+                                        {child.disabled ? (
+                                            <span className="sidebar-flyout__item" aria-disabled="true">
+                                                {child.label}
+                                            </span>
+                                        ) : (
+                                            <Link
+                                                to={child.path}
+                                                className="sidebar-flyout__item"
+                                                aria-current={child.id === activeId ? "page" : undefined}
+                                                onClick={() => setPopover(null)}
+                                            >
+                                                {child.label}
+                                            </Link>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </>
+                    ) : (
+                        <span className="sidebar-flyout__label">
+                            {popover.variant === "reason" ? popover.reason : popover.label}
+                        </span>
+                    )}
+                </div>,
+                document.body
+            )}
         </>
     );
 }
