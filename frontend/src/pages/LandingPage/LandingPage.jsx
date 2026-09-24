@@ -1,5 +1,6 @@
 import "./LandingPage.css"
 import hero from "../../images/hero.jpg"
+import { Link } from "react-router";
 
 const LandingPage = () => {
   return (
@@ -14,13 +15,17 @@ const LandingPage = () => {
           </ul>
 
           <div className="nav-botoes">
-            <a href="#" className="btn-login">
-              Login
-            </a>
+            <Link to={'/login'}>
+              <div href="#" className="btn-login">
+                Login
+              </div>
+            </Link>
 
-            <a href="#" className="btn-cadastro">
-              Cadastrar
-            </a>
+            <Link to={'/register'}>
+              <div href="#" className="btn-cadastro">
+                Cadastrar
+              </div>
+            </Link>
           </div>
         </nav>
       </header>
