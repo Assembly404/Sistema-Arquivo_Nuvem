@@ -11,7 +11,7 @@ import Placeholder from './pages/dashboard/Placeholder.jsx'
 import './App.css';
 
 import LandingPage from './pages/LandingPage/LandingPage.jsx'
-import Dashboard from './pages/dashboard/Dashboard.jsx'
+
 
 
 
