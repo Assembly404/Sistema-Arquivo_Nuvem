@@ -1,31 +1,114 @@
+
+
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
-@import url("https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
 
+:root {
+  /* ---- 1.1 Cores de marca (primárias) ---- */
+  --color-primary:        #8b6f47; /* botões, links ativos, foco da marca */
+  --color-primary-hover:  #6f5738; /* hover */
+  --color-primary-active: #5a462c; /* active/pressed (mais escuro que o hover) */
+  --color-primary-subtle: #e2ba8f; /* secundária: destaques suaves, ícones */
+  --color-primary-tint:   #f5ede2; /* fundo suave de área de marca */
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Montserrat", sans-serif;
+  /* ---- 1.2 Acento de sistema (upload/nuvem/atividade) ---- */
+  --color-accent:         rgb(58, 215, 226);
+  --color-accent-hover:   rgb(40, 180, 190);
+  --color-accent-active:  rgb(30, 150, 160);
+  --color-accent-ink:     rgb(22, 81, 85);   /* texto sobre acento claro */
+
+  /* ---- 1.3 Neutros e superfícies ---- */
+  --color-ink:        #2b2420;  /* texto principal e títulos */
+  --color-ink-strong: #1a1512;  /* texto de maior contraste */
+  --color-ink-muted:  #78716c;  /* texto secundário, subtítulos */
+  --color-bg:         #faf7f2;  /* fundo de app/cards (claro) */
+  --color-surface:    #ffffff;  /* cards, modais, superfícies elevadas */
+  --color-surface-2:  hsl(0, 0%, 91%); /* fundo de painel/área neutra */
+  --color-border:     #e8e8e8;  /* bordas padrão */
+  --color-border-strong: #d6d3d1; /* bordas de input em repouso */
+  --color-glass:      rgba(177, 177, 177, 0.55); /* superfície glass (navbar) */
+  --color-overlay:    rgba(26, 21, 18, 0.55);     /* backdrop de modal */
+
+  /* ---- 1.4 Estado semântico (feedback) — alinhado ao Toast ---- */
+  --color-success:        #047857; --color-success-bg: #7dffbc;
+  --color-info:           #1e3a8a; --color-info-bg:    #7eb8ff;
+  --color-warning:        #78350f; --color-warning-bg: #ffe57e;
+  --color-danger:         #7f1d1d; --color-danger-bg:  #ff7e7e;
+  --color-danger-action:  rgb(255, 0, 34); /* borda/ícone de erro em input */
+  --color-focus-ring:     #8b6f47;         /* anel de foco por teclado */
+
+  /* ---- 1.5 Estados de interação (obliteradores de cor) ---- */
+  --color-disabled-bg:    #e5e5e5;
+  --color-disabled-ink:   #a8a29e;
+  --color-disabled-border:#d6d3d1;
+
+  /* ---- 1.6 Espaçamento (escala 4px — usar SEMPRE destes valores) ---- */
+  --space-1: 4px;  --space-2: 8px;   --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px;  --space-8: 32px; --space-10: 40px;
+  --space-12: 48px; --space-16: 64px;
+
+  /* ---- 1.7 Raios (não inventar outros) ---- */
+  --radius-sm: 6px;   /* toasts, chips, ícones */
+  --radius-md: 10px;  /* cards, inputs, painéis */
+  --radius-lg: 15px;  /* botões */
+  --radius-xl: 20px;  /* botões pill (navbar) */
+  --radius-glass: 30px; /* superfícies glass (navbar) */
+  --radius-full: 999px;
+
+  /* ---- 1.8 Sombras ---- */
+  --shadow-sm: 0 6px 6px rgba(0, 0, 0, 0.18);
+  --shadow-md: 4px 8px 19px -3px rgba(0, 0, 0, 0.27);
+  --shadow-lg: 0 7px 50px rgba(214, 223, 213, 0.9);
+  --shadow-toast: rgba(111, 111, 111, 0.2) 0 8px 24px;
+
+  /* ---- 1.9 Elevação/z-index ---- */
+  --z-base: 0; --z-dropdown: 100; --z-sticky: 500;
+  --z-navbar: 1000; --z-toast: 1100; --z-modal: 1200;
+
+  /* ---- 1.10 Movimento (regra 7) ---- */
+  --dur-fast: 150ms;   /* hover, foco, toggles pequenos */
+  --dur-base: 250ms;   /* transições de componente (padrão) */
+  --dur-slow: 400ms;   /* entrada/saída de painéis, toasts */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: ease-in-out;
+
+  /* ---- 1.11 Tipografia (ver secção 2) ---- */
+  --font-display: "Montserrat", sans-serif; /* títulos, botões, UI */
+  --font-body: "Rubik", sans-serif;         /* corpo de texto */
+  --fs-caption: 0.75rem;  /* 12px */ --lh-caption: 1.4;
+  --fs-small:   0.8125rem;/* 13px */ --lh-small: 1.5;
+  --fs-base:    0.875rem; /* 14px — corpo padrão */
+  --fs-md:      1rem;     /* 16px */
+  --fs-lg:      1.25rem;  /* 20px — h4/títulos de card */
+  --fs-xl:      1.5rem;   /* 24px — h3 */
+  --fs-2xl:     2rem;     /* 32px — h2 */
+  --fs-3xl:     2.5rem;   /* 40px — h1 landing */
+
+  /* ---- 1.12 Layout persistente (off-set de conteúdo) ---- */
+  --sidebar-width: 260px;                                  /* largura expandida (§4.6) */
+  --sidebar-width-collapsed: calc(var(--space-16) + var(--space-2)); /* 72px (D4) */
 }
 
-html{
-  font-size: 90%;
-}
-ol,ul{
-    list-style: none;
+/* Reset cooperado com os tokens */
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--font-display); }
+html { font-size: 90%; } /* 1rem = 14.4px — NÃO alterar */
+body { font-family: var(--font-body); color: var(--color-ink); background: var(--color-bg); }
+ol, ul { list-style: none; }
+a { text-decoration: none; color: var(--color-primary); }
+
+/* Foco visível universal (regra: convenções de plataforma) */
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
-
-a{
-    text-decoration: none;
-}
-
-button, input, textarea, select {
-  font: inherit;       
-  color: inherit;      
-  
-         
+/* Movimento com propósito (regra 7) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 img,video{

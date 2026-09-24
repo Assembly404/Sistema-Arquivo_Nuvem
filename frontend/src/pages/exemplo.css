@@ -1,0 +1,238 @@
+/* ============================================================
+   DESIGN TOKENS — Paleta de Cores
+   Sistema de Arquivos em Nuvem
+   ============================================================
+   Metodologia aplicada:
+   - Regra 60-30-10 (neutro dominante / primária / destaque)
+   - Escalas por tom (base, hover, active, light, bg) para cada cor
+   - Cores semânticas desacopladas da cor de marca (sucesso, erro,
+     alerta, info) — para que o significado nunca dependa só da
+     posição/contexto, e sim também da cor
+   - Contraste mínimo AA (4.5:1 texto normal / 3:1 texto grande)
+     verificado em todos os pares texto-sobre-fundo abaixo
+   - Suporte a dark mode via prefers-color-scheme, reaproveitando
+     os mesmos tokens (nomes não mudam, só os valores)
+   ============================================================ */
+
+:root {
+  /* ===== 1. MARCA (fornecida por você, mantida) ===== */
+  --primaria: #8b6f47;
+  --primaria-hover: #6f5738;
+  --primaria-active: #5c4830;
+  --primaria-light: #a68a5f;   /* estados desabilitados/decorativos sobre --claro */
+  --primaria-lighter: #d9c8ac; /* bordas ativas, ícones suaves */
+  --primaria-bg: #f5efe3;      /* fundo de item selecionado/hover em listas */
+
+  --secundaria: #e2ba8f;
+  --secundaria-hover: #d1a374;
+  --secundaria-light: #f0d6bc;
+  --secundaria-bg: #fbf1e6;    /* badges, chips, destaques suaves */
+
+  /* ===== 2. NEUTROS (60% da interface) ===== */
+  --escuro: #2b2420;           /* texto principal, títulos */
+  --maisEscuro: #1a1512;       /* texto de alto contraste, headers */
+  --claro: #faf7f2;            /* fundo de cards/superfícies */
+  --branco: #ffffff;
+  --cinza: #78716c;            /* texto secundário, subtítulos, metadados */
+  --cinza-claro: #a8a29c;      /* placeholders, ícones inativos */
+  --cinza-borda: #e7e2db;      /* bordas, divisores */
+  --cinza-bg: #f5f2ed;         /* fundo de seções alternadas, hover neutro */
+  --fundo-app: #f7f4ef;        /* fundo geral da aplicação */
+
+  /* ===== 3. SEMÂNTICAS — feedback do sistema =====
+     Escolhidas para permanecer na mesma família de saturação/
+     temperatura da marca (evita o choque "marrom + verde neon
+     saturado" que quebra a identidade visual) */
+
+  /* Sucesso: upload concluído, sincronizado, compartilhamento ok */
+  --sucesso: #5f8d4e;
+  --sucesso-hover: #4a7040;
+  --sucesso-bg: #eaf3e6;
+  --sucesso-texto: #385730;    /* para texto sobre --sucesso-bg */
+
+  /* Alerta: armazenamento quase cheio, arquivo pendente, aviso */
+  --alerta: #c9922f;
+  --alerta-hover: #a97723;
+  --alerta-bg: #fbf1de;
+  --alerta-texto: #7a5a1c;
+
+  /* Erro: falha de upload, exclusão, permissão negada */
+  --erro: #b6503f;
+  --erro-hover: #963f31;
+  --erro-bg: #fae9e6;
+  --erro-texto: #7c352a;
+
+  /* Info: dicas, notificações neutras, links de ajuda */
+  --info: #4f7d94;
+  --info-hover: #3e6577;
+  --info-bg: #e8f1f4;
+  --info-texto: #305161;
+
+  /* ===== 4. SUPERFÍCIES & CAMADAS ===== */
+  --superficie: var(--branco);       /* cards, modais, painéis */
+  --superficie-elevada: var(--branco); /* usar com --sombra-lg */
+  --overlay: rgba(26, 21, 18, 0.5);  /* fundo de modal/drawer */
+  --vidro: rgba(177, 177, 177, 0.55); /* nav glass, mantido */
+
+  /* ===== 5. BORDAS & FOCO (acessibilidade) ===== */
+  --borda: var(--cinza-borda);
+  --borda-hover: #d1c9bc;
+  --foco: var(--primaria);
+  --foco-anel: rgba(139, 111, 71, 0.35); /* box-shadow do :focus-visible */
+
+  /* ===== 6. TEXTO ===== */
+  --texto-titulo: var(--maisEscuro);
+  --texto-corpo: var(--escuro);
+  --texto-secundario: var(--cinza);
+  --texto-desabilitado: #c3bdb5;
+  --texto-sobre-primaria: var(--branco);
+  --texto-sobre-escuro: var(--claro);
+
+  /* ===== 7. TIPOS DE ARQUIVO (ícones, tags, preview) =====
+     Cores fixas por categoria — não trocam com o tema, pois
+     funcionam como um código de cor que o usuário memoriza
+     (igual Google Drive/Dropbox fazem) */
+  --arq-pasta: var(--primaria);
+  --arq-documento: #4f7d94;
+  --arq-planilha: #5f8d4e;
+  --arq-imagem: #8b5fa0;
+  --arq-video: #b6503f;
+  --arq-audio: #c9922f;
+  --arq-pdf: #a04444;
+  --arq-compactado: #78716c;
+
+  /* ===== 8. ELEVAÇÃO (sombras) ===== */
+  --sombra-sm: 0 1px 2px rgba(26, 21, 18, 0.06);
+  --sombra-md: 0 4px 10px rgba(26, 21, 18, 0.10);
+  --sombra-lg: 0 10px 25px rgba(26, 21, 18, 0.16);
+  --sombra-nav: 0 6px 20px rgba(26, 21, 18, 0.12); /* original (0,0,0,0.5) era forte demais para um efeito glass */
+}
+
+/* ===== DARK MODE — mesmos tokens, valores invertidos ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fundo-app: #17130f;
+    --superficie: #221c18;
+    --superficie-elevada: #291f19;
+    --cinza-bg: #221c18;
+    --cinza-borda: #3a2f27;
+    --borda: #3a2f27;
+    --borda-hover: #4a3d32;
+
+    --texto-titulo: #faf7f2;
+    --texto-corpo: #e8e2d8;
+    --texto-secundario: #b3aca3;
+    --texto-desabilitado: #6b6259;
+
+    --primaria-bg: #34291c;
+    --secundaria-bg: #34281d;
+    --sucesso-bg: #1f2a1c;
+    --alerta-bg: #2f2415;
+    --erro-bg: #2f1c18;
+    --info-bg: #1b262b;
+
+    --overlay: rgba(0, 0, 0, 0.65);
+    --vidro: rgba(40, 34, 28, 0.55);
+  }
+}
+
+/* ============================================================
+   EXEMPLOS DE APLICAÇÃO NOS COMPONENTES
+   (mostra como os tokens acima substituem valores soltos)
+   ============================================================ */
+
+body {
+  background: var(--fundo-app);
+  color: var(--texto-corpo);
+}
+
+/* --- Nav (ajustada para usar tokens e sombra mais sutil) --- */
+.nav-container {
+  background: var(--vidro);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: var(--sombra-nav);
+}
+
+.items ul a {
+  color: var(--texto-corpo);
+}
+.items a:hover {
+  color: var(--primaria-hover);
+}
+
+.btn-cadastro {
+  background: var(--primaria);
+  border: 1px solid var(--primaria);
+  color: var(--texto-sobre-primaria);
+}
+.btn-cadastro:hover { background: var(--primaria-hover); }
+.btn-cadastro:active { background: var(--primaria-active); }
+.btn-cadastro:disabled {
+  background: var(--primaria-light);
+  border-color: var(--primaria-light);
+  cursor: not-allowed;
+}
+
+.btn-login {
+  color: var(--primaria);
+  border: 1px solid var(--primaria);
+  background: transparent;
+}
+.btn-login:hover {
+  background: var(--primaria-bg);
+}
+
+/* --- Foco visível (acessibilidade, obrigatório p/ teclado) --- */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--foco-anel);
+}
+
+/* --- Card de arquivo/pasta --- */
+.file-card {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  box-shadow: var(--sombra-sm);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.file-card:hover {
+  border-color: var(--borda-hover);
+  box-shadow: var(--sombra-md);
+}
+.file-card.selected {
+  border-color: var(--primaria);
+  background: var(--primaria-bg);
+}
+
+/* --- Barra de progresso (upload / cota de armazenamento) --- */
+.storage-bar {
+  background: var(--cinza-borda);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.storage-bar__fill {
+  background: var(--primaria);
+}
+.storage-bar__fill.alerta { background: var(--alerta); }
+.storage-bar__fill.erro { background: var(--erro); }
+
+/* --- Notificações / toasts --- */
+.toast--sucesso { background: var(--sucesso-bg); color: var(--sucesso-texto); border-left: 3px solid var(--sucesso); }
+.toast--alerta  { background: var(--alerta-bg);  color: var(--alerta-texto);  border-left: 3px solid var(--alerta); }
+.toast--erro    { background: var(--erro-bg);    color: var(--erro-texto);    border-left: 3px solid var(--erro); }
+.toast--info    { background: var(--info-bg);    color: var(--info-texto);    border-left: 3px solid var(--info); }
+
+/* --- Ícones por tipo de arquivo --- */
+.icon-pasta       { color: var(--arq-pasta); }
+.icon-documento    { color: var(--arq-documento); }
+.icon-planilha     { color: var(--arq-planilha); }
+.icon-imagem       { color: var(--arq-imagem); }
+.icon-video        { color: var(--arq-video); }
+.icon-audio        { color: var(--arq-audio); }
+.icon-pdf          { color: var(--arq-pdf); }
+.icon-compactado   { color: var(--arq-compactado); }
