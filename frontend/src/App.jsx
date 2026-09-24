@@ -6,7 +6,7 @@ import NotFound from './pages/NotFound.jsx'
 import ForgotPassword from './pages/ForgotPassword.jsx'
 import Navbar from './components/header/Navbar';
 import './App.css';
-
+import LandingPage from './pages/LandingPage/LandingPage.jsx'
 import Dashboard from './pages/dashboard/Dashboard.jsx'
 
 
@@ -21,9 +21,9 @@ function App(){
       <Route path='/login' element={<Login/>} />
       <Route path='/register' element={<Register />}/>
       <Route path='/forgotpassword' element={<ForgotPassword />}/>
-
+      <Route path='/LandingPage' element={<LandingPage />} />
       <Route path='/dashboard' element={<Dashboard />}/>
-
+      <Route path='/'></Route>
       <Route path='*' element={<NotFound/>}/>
     </Routes>
 
