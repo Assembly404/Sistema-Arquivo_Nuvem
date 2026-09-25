@@ -17,13 +17,13 @@
 }
 
 
-body {
+/* body {
     font-family: 'Segoe UI', sans-serif;
     background-size: cover;
 
-}
+} */
 
-nav {
+.landing-nav {
     background: var(--vidro);
     backdrop-filter: blur(10px);
     padding: 1rem 2rem;
@@ -49,7 +49,7 @@ nav {
     justify-self: end;
 }
 
-ul {
+.landing-List {
     list-style: none;
     display: flex;
     justify-content: center;
@@ -57,7 +57,7 @@ ul {
     grid-column: 2;
 }
 
-a {
+.section {
     text-decoration: none;
     color: var(--escuro);
     font-weight: 500;
@@ -67,7 +67,7 @@ a {
 
 }
 
-a::after {
+.section::after {
     content: '';
     position: absolute;
     width: 0;
@@ -79,12 +79,12 @@ a::after {
 
 }
 
-a:hover::after {
+.section:hover::after {
     width: 100%;
     left: 0;
 }
 
-a:hover {
+.section:hover {
     color: var(--primaria);
 }
 
@@ -169,7 +169,7 @@ a:hover {
     gap: 1rem;
 }
 
-main {
+.main {
     background: var(--claro);
 }
 

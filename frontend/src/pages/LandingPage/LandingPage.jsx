@@ -6,12 +6,12 @@ const LandingPage = () => {
   return (
     <>
       <header>
-        <nav>
-          <ul>
-            <li><a href="#recursos">Section 1</a></li>
-            <li><a href="#">Section 2</a></li>
-            <li><a href="#">Section 3</a></li>
-            <li><a href="#">Section 4</a></li>
+        <nav className="landing-nav">
+          <ul className="landing-List">
+            <li><a className="section"  href="#recursos">Section 1</a></li>
+            <li><a className="section" href="#">Section 2</a></li>
+            <li><a className="section" href="#">Section 3</a></li>
+            <li><a className="section" href="#">Section 4</a></li>
           </ul>
 
           <div className="nav-botoes">
@@ -56,7 +56,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      <main>
+      <main className="main">
         <section className="recursos" id="recursos">
           <h2>Armazenamento híbrido</h2>
 
