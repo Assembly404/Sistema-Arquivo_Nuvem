@@ -164,19 +164,14 @@ img,video{
   }
 }
 
-/* Login and register queries */
+/* ------------------------------------------------------------------
+   TIPOGRAFIA (§2 da IDENTIDADE_VISUAL.md)
+   O bloco legado `body { font-family: 'Segoe UI', sans-serif; }` foi
+   removido: 'Segoe UI' é PROIBIDO. O body passa a usar --font-body
+   (Rubik) e a UI --font-display (Montserrat), como manda o §2.
 
-@media screen and (max-width:602px){
-  .loginPage, registerPage{
-    .container{
-      height: 100%;
-      width: 100%;
-      flex-direction: column;
-      padding: 1.5rem;
-      
-    }
-  }
-}
-body{
-  font-family: 'Segoe UI', sans-serif;
-}
+   Os estilos de Login/Register vivem em pages/Login.css e
+   pages/Register.css (regras locais, breakpoints oficiais 600/768/992).
+   ------------------------------------------------------------------ */
+
+

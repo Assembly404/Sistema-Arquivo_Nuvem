@@ -1,79 +1,206 @@
- .btn{
+/* ============================================================
+   Botão — §4.1 da Identidade Visual (docs/IDENTIDADE_VISUAL.md)
+   Variantes: primary (marca) · secondary (acento de sistema) ·
+   outline · ghost · danger. Estados: normal, hover, active,
+   disabled (DOM + visual), focus-visible (herdado) e loading.
+   PROIBIDO valores fora dos tokens (--color-*, --radius-*, ...).
+   ============================================================ */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 15px 25px;
     border: none;
-    border-radius: 15px;
-    z-index: 1;
-    position: relative;
-    font-weight: 1000;
-    font-size: 17px;
+    border-radius: var(--radius-lg);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--fs-md);
     width: 100%;
     text-align: center;
+    text-decoration: none;   /* o botão do rodapé é um <a> (Link) */
     cursor: pointer;
-    transition: all 250ms;
+    position: relative;
+    z-index: 1;
     overflow: hidden;
- }
+    transition: all var(--dur-base) var(--ease-out);
+}
 
- .btn-primary{
-    box-shadow: 4px 8px 19px -3px rgba(0,0,0,0.27);
-    background: #e8e8e8; 
-    color: #212121; 
+/* ---- Estados obrigatórios (§3.5) ---- */
+.btn:disabled,
+.btn[aria-disabled="true"] {
+    background: var(--color-disabled-bg) !important;
+    color: var(--color-disabled-ink) !important;
+    box-shadow: none !important;
+    cursor: not-allowed;
+    pointer-events: none;
+}
 
- }
- .btn-primary::before{
+.btn.is-loading {
+    cursor: progress;
+    pointer-events: none;
+}
+
+/* O label fica oculto mas o botão mantém a largura (não pode saltitar) */
+.btn.is-loading .btn-label {
+    visibility: hidden;
+}
+
+.btn .spinner-slot {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    display: none;
+    place-items: center;
+    width: 1.1em;
+    height: 1.1em;
+    color: inherit;
+}
+
+.btn.is-loading .spinner-slot {
+    display: grid;
+}
+
+/* O spinner das blades é maior que o slot — reescala dentro do botão */
+.btn.is-loading .spinner {
+    font-size: 1.25em;
+}
+
+/* ---- Primary (marca, dourado) ----
+   Requisito do owner: no hover as cores INVERTEM (fundo dourado + conteúdo
+   branco → fundo branco + conteúdo dourado) mantendo a MESMA animação de
+   preenchimento (::before 0 → 100%, --dur-base --ease-out).
+   Nota: desvio deliberado ao snippet do §4.1 (que enchia com
+   --color-primary-active e mantinha o conteúdo branco) — a actualizar no
+   documento normativo após aprovação. */
+.btn-primary {
+    background: var(--color-primary);
+    color: var(--color-surface);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary::before {
     content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
+    inset: 0 auto 0 0;
     width: 0;
-    border-radius: 15px;
-    background-color: #212121;
+    background: var(--color-surface);
+    border-radius: inherit;
     z-index: -1;
-    -webkit-box-shadow: 4px 8px 19px -3px rgba(0,0,0,0.27);
-    box-shadow: 4px 8px 19px -3px rgba(0,0,0,0.27);
-    transition: all 250ms
- }
+    transition: width var(--dur-base) var(--ease-out);
+}
 
- .btn-primary:hover{
-     color: #e8e8e8;
-    
- }
- .btn-primary:hover::before{
+.btn-primary:hover {
+    color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover::before {
     width: 100%;
- }
+}
 
- /*Botao secundario*/
+.btn-primary:active {
+    color: var(--color-primary);
+    transform: scale(0.98);
+    transition-duration: var(--dur-fast);
+}
 
- .btn-secundary{
-    /* box-shadow: 4px 8px 19px -3px rgba(0,0,0,0.27); */
-    background: rgb(58, 215, 226); 
-    color: #e8e8e8; 
+/* ---- Secondary (acento de sistema) ----
+   Nota: texto em --color-ink-strong em repouso/hover/active. §3.3 exige
+   contraste ≥ 4.5:1 e o branco sobre --color-accent/accent-active não o atinge —
+   a regra §3 sobrepõe-se ao snippet de cores do §4.1. */
+.btn-secondary {
+    background: var(--color-accent);
+    color: var(--color-ink-strong);
+    box-shadow: var(--shadow-md);
+}
 
- }
-
-.btn-secundary::before{
+.btn-secondary::before {
     content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
+    inset: 0 auto 0 0;
     width: 0;
-    border-radius: 15px;
-    background-color: #e8e8e8;
+    background: var(--color-accent-active);
+    border-radius: inherit;
     z-index: -1;
-    -webkit-box-shadow: 4px 8px 19px -3px rgba(0,0,0,0.27);
-    box-shadow: 4px 8px 19px -3px rgba(0,0,0,0.27);
-    transition: all 250ms
- }
- .btn-secundary:hover{
-   color: rgb(58, 215, 226);
- }
- .btn-secundary:hover::before{
-   width: 100%;
- }
+    transition: width var(--dur-base) var(--ease-out);
+}
 
- .icon{
-    margin-right: 8px;
+.btn-secondary:hover {
+    color: var(--color-ink-strong);
+}
+
+.btn-secondary:hover::before {
+    width: 100%;
+}
+
+.btn-secondary:active {
+    transform: scale(0.98);
+    transition-duration: var(--dur-fast);
+}
+
+/* ---- Outline (secundário de navbar/login) ---- */
+.btn-outline {
+    background: transparent;
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    padding: var(--space-2) var(--space-6);
+    border-radius: var(--radius-xl);
+    font-weight: 600;
+    font-size: var(--fs-small);
+    width: auto;
+}
+
+/* Inversão no hover, com a mesma linguagem do primary (pedido do owner) */
+.btn-outline:hover {
+    background: var(--color-primary);
+    color: var(--color-surface);
+    border-color: var(--color-primary);
+}
+
+.btn-outline:active {
+    background: var(--color-primary);
+    color: var(--color-surface);
+    transform: scale(0.98);
+}
+
+/* ---- Ghost ---- */
+.btn-ghost {
+    background: transparent;
+    color: var(--color-primary);
+    width: auto;
+    padding: var(--space-2) var(--space-3);
+}
+
+.btn-ghost:hover {
+    background: var(--color-primary-tint);
+}
+
+.btn-ghost:active {
+    background: var(--color-primary-subtle);
+}
+
+/* ---- Danger (exclusão — nunca destaque) ----
+   hover/active escurecem a partir do token (color-mix, padrão do §4.7):
+   --color-danger-action é cor de borda/ícone e falha contraste como fundo. */
+.btn-danger {
+    background: var(--color-danger);
+    color: var(--color-surface);
+}
+
+.btn-danger:hover {
+    background: color-mix(in srgb, var(--color-danger) 88%, var(--color-ink-strong));
+}
+
+.btn-danger:active {
+    background: color-mix(in srgb, var(--color-danger) 76%, var(--color-ink-strong));
+    transform: scale(0.98);
+}
+
+/* Foco herdado do reset global (:focus-visible) — NÃO remover */
+
+.icon {
+    margin-right: var(--space-2);
     display: inline-block;
     vertical-align: middle;
- }
+}

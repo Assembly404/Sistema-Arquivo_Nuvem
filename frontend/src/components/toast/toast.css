@@ -1,0 +1,157 @@
+/* ============================================================
+   Toast — §4.3 da Identidade Visual (feedback global)
+   Cores semânticas §1.4 · z-index/raio/sombra/movimento por token.
+   CSS puro (Regra 4 de RegrasDeTecnologias.md).
+   ============================================================ */
+
+.toast-container {
+    position: fixed;
+    top: var(--space-5);
+    right: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    z-index: var(--z-toast);
+}
+
+.toast {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 260px;
+    max-width: 360px;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-toast);
+    /* §3.3: o texto tem de atingir 4.5:1 — os pares de §4.3 sozinhos ficam
+       em 4.07:1 (erro) e 4.41:1 (sucesso), pelo que o texto usa --color-ink
+       e o fundo/ícone mantêm os tokens semânticos. */
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    line-height: var(--lh-small);
+    overflow: hidden;
+    animation: toast-in var(--dur-base) var(--ease-out);
+    transition: transform var(--dur-base) var(--ease-out);
+}
+
+.toast:hover {
+    transform: scale(1.01);
+}
+
+.toast:active {
+    transform: scale(1.05);
+    transition-duration: var(--dur-fast);
+}
+
+.toast__icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.toast__icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.toast__text {
+    flex: 1;
+}
+
+/* Alvo de toque ≥ 44px sem inflacionar a altura do toast (§3.4) */
+.toast__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    margin: calc(var(--space-3) * -1) calc(var(--space-3) * -1) calc(var(--space-3) * -1) 0;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-out);
+}
+
+.toast__close:hover {
+    background: color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.toast__close svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Barra de progresso = tempo restante (§3.7) */
+.toast__progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    transform-origin: left center;
+    background: currentColor;
+    animation-name: toast-progress;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+}
+
+/* ---- Tipos (§1.4 / §4.3) ---- */
+.toast--success {
+    background: var(--color-success-bg);
+}
+
+.toast--success .toast__icon {
+    color: var(--color-success);
+}
+
+.toast--info {
+    background: var(--color-info-bg);
+}
+
+.toast--info .toast__icon {
+    color: var(--color-info);
+}
+
+.toast--warning {
+    background: var(--color-warning-bg);
+}
+
+.toast--warning .toast__icon {
+    color: var(--color-warning);
+}
+
+.toast--error {
+    background: var(--color-danger-bg);
+}
+
+.toast--error .toast__icon {
+    color: var(--color-danger);
+}
+
+@keyframes toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(calc(var(--space-2) * -1));
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes toast-progress {
+    from {
+        transform: scaleX(1);
+    }
+    to {
+        transform: scaleX(0);
+    }
+}

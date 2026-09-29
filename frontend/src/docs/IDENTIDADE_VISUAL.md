@@ -3,6 +3,8 @@
 
 > **Status:** REGRA ESTABLECIDA. Todo componente visual novo ou modificado **deve** seguir este documento. Qualquer PR que viole uma regra aqui escrita será rejeitado na revisão.
 >
+> **Versão:** **v1.2** (2026-09-29). Os snippets §4.1–§4.4 foram sincronizados com o código real; as telas de autenticação (§4.11) e o fluxo de reposição de password (§5.6) passaram a ter especificação própria. Ver histórico no fim do documento.
+>
 > **Como usar:** este ficheiro é auto-suficiente — basta copiar/colar. Não é permitido "pensar no estilo" ao construir: os tokens, estados e specs já estão definidos.
 
 **Índice**
@@ -17,7 +19,7 @@
 
 ## 1. Tokens da entidade visual
 
-**Copie o bloco abaixo e cole no topo do `frontend/src/index.css` (após o reset).** Todos os valores vêm consolidados das paletas existentes (`navbar.css`, `button.css`, `Login.css`, `toast.jsx`): **marrom = identidade da marca**, **ciano = acento de sistema**, cinzas neutros = superfícies.
+**Copie o bloco abaixo para o ficheiro global de estilos.** Localização real (v1.2): `frontend/src/App.css` (importado por `App.jsx`), **não** em `index.css` — o `index.css` só tem o reset mínimo (`* { margin: 0; padding: 0; box-sizing: border-box }`) e é carregado antes dos tokens. Todos os valores vêm consolidados das paletas existentes (`navbar.css`, `button.css`, `Login.css`, `toast.jsx`): **marrom/dourado = identidade da marca**, **ciano = acento de sistema**, cinzas neutros = superfícies.
 
 ```css
 /* ============================================================
@@ -41,6 +43,9 @@
   --color-accent-hover:   rgb(40, 180, 190);
   --color-accent-active:  rgb(30, 150, 160);
   --color-accent-ink:     rgb(22, 81, 85);   /* texto sobre acento claro */
+  /* Nota (v1.2): o acento é EXCLUSIVO de ações de sistema (upload/nuvem/atividade).
+     PROIBIDO usá-lo nas telas de autenticação (Login/Register/Redefinição) — ali
+     manda só a marca (--color-primary*). Ver §4.11 e §5.6. */
 
   /* ---- 1.3 Neutros e superfícies ---- */
   --color-ink:        #2b2420;  /* texto principal e títulos */
@@ -165,7 +170,8 @@ a { text-decoration: none; color: var(--color-primary); }
 | Legenda/erro | `--fs-caption` | 12px | 400 | `.errorText`, dicas |
 | Subtítulo | `--fs-small` | 13px | 400–500 | Texto secundário (`--color-ink-muted`) |
 
-- Peso **1000 não existe em Montserrat** → usar **700** no máximo em botões (o `font-weight: 1000` atual em `.btn` deve ser corrigido para `700`).
+- Peso **1000 não existe em Montserrat** → usar **700** no máximo em botões (já aplicado em `button.css`, v1.2).
+- **Aplicação das fontes (v1.2):** o reset global (`*`) aplica `--font-display`; todo o texto de corpo — parágrafos, `label`, `input`, `.errorText`, `.formHint`, `.toast__text` — **declara** `--font-body` explicitamente. A regra legada `body { font-family: 'Segoe UI', sans-serif; }` foi **removida** de `App.css`; não recriar esta ambiguidade (era o que fazia o sistema inteiro renderizar fora da escala).
 - Line-height: títulos `1.2`, corpo `1.5`, legendas `1.4`.
 - Texto nunca deve ser centralizado em parágrafos > 2 linhas (alinhamento à esquerda, exceto títulos de hero/auth).
 
@@ -182,8 +188,8 @@ a { text-decoration: none; color: var(--color-primary); }
 ### 3.2 Consistência
 - **Proibido** escrever hex/rgb, fontes, `border-radius`, `box-shadow` ou tempos fora dos tokens. Uso obrigatório: `var(--...).
 - Mesma função visual = mesma cor o sistema inteiro:
-  - Marrom (`--color-primary*`) → ações de marca/navegação.
-  - Ciano (`--color-accent*`) → ações de sistema (upload, nuvem, conta).
+  - Marrom/dourado (`--color-primary*`) → ações de marca, navegação **e autenticação** (Login/Register/Redefinição — §4.11, §5.6).
+  - Ciano (`--color-accent*`) → ações de sistema (upload, nuvem, atividade). **Nunca** em telas de autenticação (§1.2).
   - `--color-danger*` → exclusão/erro, **nunca** para destaque.
   - Verde/azul/amarelo/vermelho semânticos → apenas feedback (toast/badges).
 - Raios: botão `--radius-lg`, pill `--radius-xl`, card/input `--radius-md`, chip `--radius-sm`. Não misturar.
@@ -195,7 +201,20 @@ a { text-decoration: none; color: var(--color-primary); }
   - `--color-ink-muted` sobre `--color-surface` ✅ (uso apenas para texto secundário ≥ 13px)
   - `#fff` sobre `--color-primary` ✅ · `#fff` sobre `--color-accent` ⚠️ (usar `--color-accent-ink` ou texto escuro)
   - `--color-danger-action` sobre branco ✅ apenas para `--fs-caption`+ bold nunca; manter texto de erro ≥12px e **não** usar como fundo de texto claro.
-- Texto sobre vídeo/imagem **exige** overlay/scrim ou `backdrop-filter: blur()` (padrão do Login).
+- Texto sobre vídeo/imagem **exige** overlay/scrim ou `backdrop-filter: blur()`. Padrão aprovado (v1.2, §4.11): a superfície de autenticação usa **imagem de nuvens brancas sobre fundo cinzento** (`src/images/hero.jpg`, sRGB ≈ 83%), com título em `--color-ink-strong` e parágrafo em `--color-ink` → ≥ 10:1; a barra de rodapé tem veio branco de 70% (`color-mix(in srgb, var(--color-surface) 70%, transparent)`) + `backdrop-filter: blur(10px)` e texto em `--color-ink`. **Trocar a imagem por uma escura obriga a rever os tokens de texto** — texto claro sobre imagem clara é proibido.
+
+Pares de contraste acrescentados na v1.2 (todos ≥ 4.5:1):
+
+| Texto | Fundo | Rácio |
+|---|---|---|
+| `--color-ink-strong` / `--color-ink` | imagem de nuvens (cinzento claro) | 10–12:1 ✅ |
+| `--color-ink` | barra glass de rodapé (veio branco 70%) | ≥ 8:1 ✅ |
+| `--color-surface` (conteúdo do botão dourado) | `--color-primary` | 4.7:1 ✅ |
+| `--color-primary` (conteúdo no hover) | `--color-surface` (preenchimento do hover) | 4.7:1 ✅ |
+| `--color-ink` (texto do toast) | `--color-*-bg` semânticos | 6.2–12.3:1 ✅ |
+| `--color-ink-strong` | `--color-accent` / `--color-accent-active` (`.btn-secondary`) | 10.3:1 / 5.1:1 ✅ |
+
+> Os pares `cor + bg` do snippet §4.3 davam **4.07:1** (erro) e **4.41:1** (sucesso) — abaixo do mínimo. Por isso o texto do toast é `--color-ink` e só o **fundo e o ícone** ficam semânticos (fundo/ícone = forma, texto = leitura).
 - Nunca `opacity < 0.7` em texto informativo.
 - Máximo **~70 caracteres por linha** em textos corridos.
 
@@ -219,7 +238,8 @@ Matriz obrigatória (aplicada na secção 4 a cada componente):
 | **focus-visible** | `outline: 2px solid var(--color-focus-ring); outline-offset: 2px` (herdado do reset global) |
 | **loading** | desactivar interação (`disabled` + `aria-busy="true"`), mostrar `<Spinner/>` no sítio do ícone/texto, manter a largura do botão (não pode saltitar) |
 
-- Erros de formulário: borda `2px solid var(--color-danger-action)` + mensagem `.errorText` com ícone — **nunca** apenas cor vermelha sem texto.
+- Erros de formulário: borda `var(--color-danger-action)` + mensagem `.errorText` com ícone — **nunca** apenas cor vermelha sem texto. O destaque de 2px faz-se com **anel** (`box-shadow: 0 0 0 1px`), não aumentando a largura da borda (ver §4.2).
+- **Invariante (v1.2) — mudar de estado não altera a geometria:** corrigiu-se o caso em que o `input` crescia ao mostrar erro. Duas regras obrigatórias: (a) a **largura da borda é constante** em todos os estados (1px + anel), porque `border-box` não protege elementos com `height: auto`; (b) a **coluna do formulário tem largura definida**, para a mensagem de erro quebrar linha em vez de alargar o campo. O mesmo vale para `padding`, `margin` e tamanho de fonte entre estados.
 - Sucesso/aviso/erro global → `<Toast type="success|info|warning|error">`.
 
 ### 3.6 Convenções de plataforma
@@ -252,14 +272,16 @@ Matriz obrigatória (aplicada na secção 4 a cada componente):
 
 ```css
 .btn {
+  display: inline-flex; align-items: center; justify-content: center;
   padding: 15px 25px;
   border: none;
   border-radius: var(--radius-lg);
   font-family: var(--font-display);
-  font-weight: 700;              /* corrige font-weight:1000 (inexistente) */
+  font-weight: 700;              /* Montserrat não tem 1000 */
   font-size: var(--fs-md);
   width: 100%;
   text-align: center;
+  text-decoration: none;         /* o botão do rodapé de auth é um <a> (Link) */
   cursor: pointer;
   position: relative;
   z-index: 1;
@@ -278,72 +300,88 @@ Matriz obrigatória (aplicada na secção 4 a cada componente):
 .btn.is-loading .btn-label { visibility: hidden; }
 .btn .spinner-slot {
   position: absolute; inset: 0; margin: auto;
-  display: none; width: 1.1em; height: 1.1em;
+  display: none; place-items: center;
+  width: 1.1em; height: 1.1em; color: inherit;
 }
-.btn.is-loading .spinner-slot { display: block; }
+.btn.is-loading .spinner-slot { display: grid; }
+.btn.is-loading .spinner { font-size: 1.25em; }   /* reescala as blades ao slot */
 
-/* Variante PRIMARY (marca) — normal→hover→active */
-.btn-primary { background: var(--color-primary); color: #fff; box-shadow: var(--shadow-md); }
+/* Variante PRIMARY (marca/dourado) — no hover as cores INVERTEM, mantendo a animação */
+.btn-primary { background: var(--color-primary); color: var(--color-surface); box-shadow: var(--shadow-md); }
 .btn-primary::before {
   content: ""; position: absolute; inset: 0 auto 0 0;
-  width: 0; background: var(--color-primary-active);
-  border-radius: var(--radius-lg); z-index: -1;
+  width: 0; background: var(--color-surface);        /* preenchimento branco */
+  border-radius: inherit; z-index: -1;
   transition: width var(--dur-base) var(--ease-out);
 }
-.btn-primary:hover { color: #fff; box-shadow: var(--shadow-md); }
+.btn-primary:hover { color: var(--color-primary); box-shadow: var(--shadow-md); }
 .btn-primary:hover::before { width: 100%; }
-.btn-primary:active { transform: scale(0.98); transition-duration: var(--dur-fast); }
+.btn-primary:active { color: var(--color-primary); transform: scale(0.98); transition-duration: var(--dur-fast); }
 
-/* Variante SECONDARY (acento de sistema) */
+/* Variante SECONDARY (acento de sistema — PROIBIDA em autenticação, ver §4.11) */
 .btn-secondary { background: var(--color-accent); color: var(--color-ink-strong); box-shadow: var(--shadow-md); }
 .btn-secondary::before {
   content: ""; position: absolute; inset: 0 auto 0 0;
   width: 0; background: var(--color-accent-active);
-  border-radius: var(--radius-lg); z-index: -1;
+  border-radius: inherit; z-index: -1;
   transition: width var(--dur-base) var(--ease-out);
 }
-.btn-secondary:hover { color: #fff; }
+.btn-secondary:hover { color: var(--color-ink-strong); }  /* §3.3: o branco sobre o acento falha 4.5:1 */
 .btn-secondary:hover::before { width: 100%; }
 .btn-secondary:active { transform: scale(0.98); transition-duration: var(--dur-fast); }
 
-/* Variante OUTLINE (secundário de navbar/login) */
+/* Variante OUTLINE (secundário) — o hover inverte para preenchido */
 .btn-outline {
   background: transparent; color: var(--color-primary);
   border: 1px solid var(--color-primary);
-  padding: 0.5rem 1.5rem; border-radius: var(--radius-xl);
-  font-weight: 600; font-size: 0.9rem; width: auto;
+  padding: var(--space-2) var(--space-6); border-radius: var(--radius-xl);
+  font-weight: 600; font-size: var(--fs-small); width: auto;
 }
-.btn-outline:hover { background: var(--color-primary-tint); }
-.btn-outline:active { background: var(--color-primary); color: #fff; transform: scale(0.98); }
+.btn-outline:hover { background: var(--color-primary); color: var(--color-surface); border-color: var(--color-primary); }
+.btn-outline:active { background: var(--color-primary); color: var(--color-surface); transform: scale(0.98); }
 
 /* Variante GHOST */
 .btn-ghost { background: transparent; color: var(--color-primary); width: auto; padding: var(--space-2) var(--space-3); }
 .btn-ghost:hover { background: var(--color-primary-tint); }
 .btn-ghost:active { background: var(--color-primary-subtle); }
 
-/* Variante DANGER (exclusão) */
-.btn-danger { background: var(--color-danger); color: #fff; }
-.btn-danger:hover { background: #991b1b; }
-.btn-danger:active { background: #7f1d1d; transform: scale(0.98); }
+/* Variante DANGER (exclusão) — hover/active escurecem com color-mix (sem cores soltas) */
+.btn-danger { background: var(--color-danger); color: var(--color-surface); }
+.btn-danger:hover { background: color-mix(in srgb, var(--color-danger) 88%, var(--color-ink-strong)); }
+.btn-danger:active { background: color-mix(in srgb, var(--color-danger) 76%, var(--color-ink-strong)); transform: scale(0.98); }
 
 /* Foco herdado do reset global (:focus-visible) — NÃO remover */
 ```
 
-> Nota: `.btn-secundary` (typo atual) deve ser renomeado para `.btn-secondary` e atualizado nos JSX.
+> Notas v1.2:
+> - `.btn-secundary` (typo legado) foi renomeado para `.btn-secondary`; `button.jsx` ainda aceita o alias para não quebrar chamadas antigas.
+> - `#fff` passou a `var(--color-surface)` (mesmo valor `#ffffff`) para cumprir o "só `var(--...)`" do §6.
+> - O `::before` usa `border-radius: inherit`, para acompanhar variantes com raio diferente (ex.: pill de 20px do rodapé de auth).
+> - **Inversão do primary (aprovada pelo requisitante, 2026-09-29):** no hover o preenchimento é branco e o conteúdo passa a dourado — substitui o preenchimento `--color-primary-active` da v1.1. A animação (`::before` 0 → 100%, `--dur-base`, `--ease-out`) mantém-se igual.
+> - `!important` no `:disabled` é o **único** uso legítimo de `!important` em cor: tem de vencer qualquer variante.
+> - Componentes assíncronos passam `loading` ao `Button`: aplica `.is-loading`, `disabled`, `aria-busy="true"` e `aria-label` (porque `.btn-label` fica `visibility: hidden`) — ver §5.3.
+> - **`.btn-secondary` não pode ser usado em telas de autenticação** (§1.2 e §4.11).
 
 ### 4.2 Input (`.inputField`) — estados
 
 ```css
 .input_container { display: flex; flex-direction: column; margin-bottom: var(--space-3); text-align: left; }
 .input_container label {
-  color: var(--color-ink); font-weight: 500;
-  font-size: var(--fs-small); padding: var(--space-1) 0; display: block;
+  color: var(--color-ink); font-family: var(--font-body); font-weight: 500;
+  font-size: var(--fs-small); line-height: var(--lh-small);
+  padding: var(--space-1) 0; display: block;
 }
+/* Ícone de validação no label (Register/Reset) — cor só por classe, nunca inline no JSX */
+.input_container label .fieldIcon { margin-left: var(--space-2); font-size: var(--fs-caption); }
+.fieldIcon--valid { color: var(--color-success); }
+.fieldIcon--invalid { color: var(--color-danger-action); }
 .inputField {
   width: 100%; padding: 10px var(--space-3);
+  min-height: 44px;                                            /* §3.4 + altura estável */
   background: var(--color-surface);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
+  font-family: var(--font-body);
   font-size: var(--fs-base); color: var(--color-ink);
   transition: border-color var(--dur-fast) var(--ease-out),
               box-shadow var(--dur-fast) var(--ease-out);
@@ -351,44 +389,87 @@ Matriz obrigatória (aplicada na secção 4 a cada componente):
 .inputField::placeholder { color: var(--color-ink-muted); opacity: 1; }
 .inputField:hover:not(:disabled) { border-color: var(--color-primary-subtle); }
 .inputField:focus { outline: none; border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(139, 111, 71, 0.25); }           /* focus */
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus-ring) 25%, transparent); }   /* focus */
 .inputField:disabled { background: var(--color-disabled-bg); color: var(--color-disabled-ink); cursor: not-allowed; }
 .inputField:read-only { background: var(--color-surface-2); }
+/* Erro: largura de borda CONSTANTE (1px de borda + 1px de anel = 2px visuais) */
 .inputField.inputError, .inputField[aria-invalid="true"] {
-  border: 2px solid var(--color-danger-action);                 /* erro */
+  border-color: var(--color-danger-action);
+  box-shadow: 0 0 0 1px var(--color-danger-action);
 }
-.inputField.inputError:focus { box-shadow: 0 0 0 3px rgba(255, 0, 34, 0.25); }
+.inputField.inputError:focus, .inputField[aria-invalid="true"]:focus {
+  border-color: var(--color-danger-action);
+  box-shadow: 0 0 0 1px var(--color-danger-action),
+              0 0 0 4px color-mix(in srgb, var(--color-danger-action) 25%, transparent);
+}
 .errorText {
   text-align: left; color: var(--color-danger-action);
   font-size: var(--fs-caption); line-height: var(--lh-caption);
   margin-top: var(--space-1); display: block; white-space: pre-line;
 }
-.errorText .icon-info { font-size: inherit; margin-right: 5px; color: var(--color-ink); }
+.errorText .icon-info { font-size: inherit; margin-right: var(--space-1); color: var(--color-ink); }
+
+/* Formulários de autenticação: largura definida (§4.11) — sem isto a mensagem de
+   erro alarga a coluna e o input "cresce". Em Login.css/Register.css:
+   .loginPage .formDiv .form, .registerPage .formDiv .form { width: 100%; max-width: 320px; } */
 ```
+
+> Notas v1.2 (input): o estado de erro **não** usa `border: 2px` — como o input tem `height: auto`, o `border-box` não evita o salto e o campo **crescia 2px** ao aparecer o erro (ver §3.5); os anéis de foco usam `color-mix` sobre `--color-focus-ring` / `--color-danger-action` em vez de `rgba()` solto (§3.2); `min-height: 44px` fixa a altura em todos os estados e garante o alvo do §3.4; `label` e `input` declaram `--font-body` (§2). O toggle de mostrar/ocultar password (mockups §5.6) é um `<button type="button">` dentro do `.input_container`, com `aria-label`, `aria-pressed` e alvo ≥44px.
 
 ### 4.3 Toast (feedback global) — cores semânticas
 
 ```css
-.notification-item { border-radius: var(--radius-sm); box-shadow: var(--shadow-toast);
-  transition: all var(--dur-base) var(--ease-out); }
-.notification-item:hover   { transform: scale(1.01); }
-.notification-item:active  { transform: scale(1.05); transition-duration: var(--dur-fast); }
-.success { color: #047857; background-color: #7dffbc; }  /* operações concluídas */
-.info    { color: #1e3a8a; background-color: #7eb8ff; }  /* informação de sistema */
-.warning { color: #78350f; background-color: #ffe57e; }  /* quota perto do limite, avisos */
-.error   { color: #7f1d1d; background-color: #ff7e7e; }  /* falhas de operação */
-.notification-progress-bar { animation: progressBar var(--dur-slow) linear forwards; }
+.toast-container { position: fixed; top: var(--space-5); right: var(--space-5);
+  display: flex; flex-direction: column; gap: var(--space-2); z-index: var(--z-toast); }
+.toast {
+  position: relative; display: flex; align-items: center; gap: var(--space-3);
+  min-width: 260px; max-width: 360px; padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow-toast);
+  color: var(--color-ink);                 /* texto — ver pares de contraste em §3.3 */
+  font-family: var(--font-body); font-size: var(--fs-base); line-height: var(--lh-small);
+  overflow: hidden;
+  animation: toast-in var(--dur-base) var(--ease-out);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.toast:hover  { transform: scale(1.01); }
+.toast:active { transform: scale(1.05); transition-duration: var(--dur-fast); }
+.toast__icon { display: inline-flex; flex-shrink: 0; width: 1.25rem; height: 1.25rem; }
+.toast__close {                              /* alvo de 44px sem inflacionar a altura */
+  width: 44px; height: 44px; padding: 0; border: none;
+  margin: calc(var(--space-3) * -1) calc(var(--space-3) * -1) calc(var(--space-3) * -1) 0;
+  border-radius: var(--radius-full); background: transparent; color: inherit; cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.toast__close:hover { background: color-mix(in srgb, currentColor 15%, transparent); }
+.toast__progress { position: absolute; bottom: 0; left: 0; width: 100%; height: 2px;
+  transform-origin: left center; background: currentColor;
+  animation-name: toast-progress; animation-timing-function: linear; animation-fill-mode: forwards; }
+.toast--success { background: var(--color-success-bg); }   /* operações concluídas */
+.toast--info    { background: var(--color-info-bg); }      /* informação de sistema */
+.toast--warning { background: var(--color-warning-bg); }   /* quota perto do limite, avisos */
+.toast--error   { background: var(--color-danger-bg); }    /* falhas de operação */
+.toast--success .toast__icon { color: var(--color-success); }
+.toast--info    .toast__icon { color: var(--color-info); }
+.toast--warning .toast__icon { color: var(--color-warning); }
+.toast--error   .toast__icon { color: var(--color-danger); }
+@keyframes toast-in { from { opacity: 0; transform: translateY(calc(var(--space-2) * -1)); } to { opacity: 1; transform: none; } }
+@keyframes toast-progress { from { transform: scaleX(1); } to { transform: scaleX(0); } }  /* = tempo restante */
 ```
 
-Posição fixa `top: 20px; right: 20px; z-index: var(--z-toast)`; duração padrão 3000–5000ms.
+Posição fixa `top: var(--space-5); right: var(--space-5); z-index: var(--z-toast)`; duração padrão **4500ms** (faixa 3000–5000ms), aplicada inline em `style={{ animationDuration }}` na `.toast__progress`.
+
+> Notas v1.2 (toast): implementado em **CSS puro** (`components/toast/toast.css` + `toast.jsx`) — o `styled-components` foi removido (Regra 4); as classes legadas `.notification-item` e `.success|.info|.warning|.error` passaram a `.toast` e `.toast--*` (não havia outros consumidores); `role="status"` em sucesso/info/aviso e `role="alert"` em erro; botão de fechar com `aria-label="Fechar notificação"`; o temporizador **reinicia** quando muda a `message`; o bug legado que invocava `onClose()` no `mount` foi corrigido. Quem mostra o toast (Login/Register) renderiza-o localmente e limpa o timer de navegação no unmount (§5.3).
 
 ### 4.4 Spinner / Loading
 
 ```css
 .spinner { font-size: 28px; width: .8em; height: .8em; }
-/* blades mantêm #69717d → substituir por var(--color-primary) quando sobre fundo claro */
+/* as blades animam de currentColor → transparent: herdam a cor do contexto (v1.2)
+   — --color-primary sobre fundo claro, cor do texto dentro de .btn-*.
+   #69717d foi REMOVIDO: não há cor fixa no spinner. */
 ```
 - Regra: **um** spinner por região de espera; em botões usar o estado `.is-loading` (secção 4.1), nunca desativar a página inteira sem overlay.
+- **Notas v1.2:** o componente tem `role="status"` + `aria-label="A processar"`; dentro do botão o `.spinner-slot` é `aria-hidden="true"`, porque quem comunica o estado é o `aria-busy` do próprio botão (§4.1).
 
 ### 4.5 Navbar glass
 
@@ -409,13 +490,15 @@ Posição fixa `top: 20px; right: 20px; z-index: var(--z-toast)`; duração padr
 .items ul a:hover { color: var(--color-primary-hover); }
 .items ul a:active { color: var(--color-primary-active); }
 .items ul a[aria-current="page"] { color: var(--color-primary); font-weight: 600; } /* estado ativo */
-.btn-cadastro { background: var(--color-primary); color: #fff; border: 1px solid var(--color-primary); }
+.btn-cadastro { background: var(--color-primary); color: var(--color-surface); border: 1px solid var(--color-primary); }
 .btn-cadastro:hover { background: var(--color-primary-hover); border-color: var(--color-primary-hover); }
 .btn-cadastro:active { background: var(--color-primary-active); transform: scale(0.98); }
 .btn-login { background: transparent; color: var(--color-primary); border: 1px solid var(--color-primary); }
 .btn-login:hover { background: var(--color-primary-tint); }
-.btn-login:active { background: var(--color-primary); color: #fff; }
+.btn-login:active { background: var(--color-primary); color: var(--color-surface); }
 ```
+
+> Nota v1.2: isto é o **alvo** desta secção. Os ficheiros reais (`components/header/navbar.css` e `css/landingPage.css`) ainda usam a paleta legada (`--primaria`, `--vidro`, `rgba(37, 99, 235, …)` no hover do `.btn-login` — **azul fora da identidade**) e estão **pendentes de migração** para estes tokens. Ao tocar no componente: trocar `#fff` por `var(--color-surface)`, remover o azul e passar as queries aos breakpoints oficiais (§3.6).
 
 ### 4.6 Sidebar (dashboard autenticado)
 
@@ -435,7 +518,7 @@ Posição fixa `top: 20px; right: 20px; z-index: var(--z-toast)`; duração padr
 .sidebar-item:hover { background: var(--color-primary-tint); color: var(--color-primary-hover); }
 .sidebar-item:active { background: var(--color-primary-subtle); }
 .sidebar-item[aria-current="page"] {
-  background: var(--color-primary); color: #fff; font-weight: 600;
+  background: var(--color-primary); color: var(--color-surface); font-weight: 600;
 }
 .sidebar-item[aria-disabled="true"] { color: var(--color-disabled-ink); cursor: not-allowed; pointer-events: none; }
 ```
@@ -521,6 +604,73 @@ Posição fixa `top: 20px; right: 20px; z-index: var(--z-toast)`; duração padr
 ```
 - Modal **sempre** fecha com `Esc`, tem botão de fechar com `aria-label` e foco preso dentro dele.
 
+### 4.11 Superfície de autenticação (Login / Register) — v1.2
+
+> Implementação de referência: `pages/Login.{jsx,css}` e `pages/Register.{jsx,css}`. Estas telas **são** a referência visual dos fluxos de auth (não há mockup externo para Login/Register — a Regra 1 fica satisfeita por elas). O fluxo de reposição de password tem mockups próprios (§5.6) e reutiliza o cartão descrito lá.
+>
+> Os seletores abaixo usam os nomes **reais** do código; `videoDiv`/`footerDiv` são nomes legados (eram o painel do vídeo) mantidos para não partir a estrutura existente.
+
+**Estrutura (desktop):** dois painéis num contentor cinzento; no painel esquerdo vive o rodapé glass.
+
+```css
+.loginPage { height: 100vh; }                    /* Login: altura fixa */
+.registerPage { min-height: 100vh; }             /* Register: min-height (tem 5 campos) */
+.loginPage, .registerPage { width: 100%; margin: auto;
+  border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-lg); }
+.loginPage .container, .registerPage .container { width: 60%; margin: auto;
+  justify-content: space-between; border-radius: var(--radius-md);
+  background: var(--color-surface-2); }        /* fundos cinzentos — decisão do owner */
+```
+
+**Painel esquerdo — imagem de nuvens brancas + texto escuro + rodapé glass:**
+
+```css
+.loginPage .videoDiv img { position: absolute; inset: 0; height: 100%; width: 100%;
+  object-fit: cover; object-position: center 25%; }   /* sem blur, sem <video> */
+.loginPage .textDiv .title { color: var(--color-ink-strong); font-family: var(--font-display);
+  font-size: var(--fs-2xl); font-weight: 800; line-height: 1.2; }
+.loginPage .textDiv p { color: var(--color-ink); font-family: var(--font-body);
+  padding: var(--space-4); font-weight: 400; line-height: 1.5; }
+.loginPage .footerDiv { position: absolute; bottom: var(--space-3); left: var(--space-3); right: var(--space-3);
+  height: 60px; padding: 0 var(--space-4); justify-content: space-between;
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  border-radius: var(--radius-md); }
+.loginPage .footerDiv .text { color: var(--color-ink); font-family: var(--font-body);
+  font-size: var(--fs-base); }
+.loginPage .btn-account { width: auto; padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-xl); font-family: var(--font-display);
+  font-size: var(--fs-small); font-weight: 600; }
+```
+
+- **Proibido** vídeo ou qualquer tom azul neste painel: o acento ciano não entra em autenticação (§1.2). A imagem é decorativa (`alt=""`).
+- Texto sobre a imagem **tem** de usar `--color-ink*` (§3.3) — a imagem é clara. O texto branco da v1.0 existia porque havia um vídeo escuro.
+- O botão de troca de ecrã é um `<Link>` com as classes `.btn .btn-primary .btn-account`: o `.btn` tem `display: inline-flex` e `text-decoration: none` precisamente para funcionar em `<a>`.
+
+**Painel direito — ícone dourado, H1 único, formulário de largura fixa:**
+
+```css
+.loginPage .formDiv { flex-basis: 50%; margin: auto; flex-direction: column;
+  gap: var(--space-5); transform: translateY(calc(var(--space-4) * -1)); }
+/* Register difere: .formDiv { flex: 1; gap: var(--space-4); } */
+.loginPage .headerDiv .headIcon { color: var(--color-primary); background: transparent;
+  font-size: calc(var(--fs-3xl) * 1.5); padding-bottom: var(--space-2); }
+.loginPage .headerDiv .authTitle { font-family: var(--font-display); font-size: var(--fs-xl);
+  color: var(--color-ink-strong); font-weight: 600; line-height: 1.2; }   /* H1 único (§3.1) */
+.loginPage .formDiv .form { width: 100%; max-width: 320px; gap: var(--space-4); }  /* §4.2: não cresce */
+.loginPage .formDiv .formHint { color: var(--color-ink-muted); font-family: var(--font-body); text-align: center; }
+.loginPage .forgotPassword { color: var(--color-ink-muted); font-family: var(--font-body); font-size: var(--fs-small); text-align: center; }
+.loginPage .forgotPassword a { color: var(--color-primary); font-weight: 500;
+  transition: color var(--dur-fast) var(--ease-out); }
+.loginPage .forgotPassword a:hover, .loginPage .forgotPassword a:focus-visible {
+  color: var(--color-primary-hover); text-decoration: underline; }
+```
+
+- **Ícone do cabeçalho:** fundo transparente + `--color-primary`, um por página — **Login** `faRightToBracket`, **Register** `faUserPlus` (`aria-hidden="true"`). Proibido raster colorido neste lugar (a legada `nuvem.png`, azul/ciano, foi removida).
+- **Botão de submit:** `.btn-primary` com `loading` (§4.1). Ação de troca de página: `.btn-primary .btn-account` (pill dourado) ou `.btn-outline`; nunca texto cru.
+- **Breakpoints** (ordem descendente, para a regra mais restrita vencer): **992px** contentor 85%; **768px** contentor 100% + títulos menores; **600px** coluna única com `padding: var(--space-5)`.
+- O CSS é **escopado** (`.loginPage`, `.registerPage`) e não interfere com o resto da app; única exceção: `::-webkit-scrollbar { display: none }` (§3.6).
+
 ---
 
 ## 5. Regras de negócio aplicadas à UI
@@ -551,11 +701,24 @@ Estado visual obrigatório por permissão:
 - Upload em progresso: botão `.is-loading` + `Spinner` + barra de progresso; nunca upload silencioso.
 - Falha de upload: `Toast type="error"` e o botão **volta ao estado normal** (não fica preso em loading).
 
-### 5.3 Fluxos de autenticação (Login / Register / ForgotPassword)
+### 5.3 Fluxos de autenticação (Login / Register / Redefinição de password)
 - Erro de credenciais → `Toast type="error"` **ou** `.errorText` no campo (erro de campo) — erro de servidor nunca apaga o que o utilizador digitou.
 - Sucesso → `Toast type="success"` antes de redirecionar.
 - Botão de submit durante requisição: `.is-loading`, `disabled`, largura estável.
 - Links auxiliares ("Esqueceu a senha?", "Criar conta") em `--color-primary` com sublinhado no hover.
+- **Sem acento/azul:** estes fluxos usam apenas a marca (§1.2, §4.11).
+
+**Contrato implementado (v1.2):**
+
+| Regra | Como |
+|---|---|
+| Estado de espera | `loading` em `useState`: `true` antes do pedido, `false` no `finally` — o botão **volta ao normal** quando falha (nunca fica preso em loading) |
+| Sucesso | `Toast type="success"` com `duration` de **1500ms** e só depois `navigate(...)` — o toast tem de ser visível antes do redirecionamento |
+| Erro | `Toast type="error"` com 4500ms; os campos mantêm os valores digitados |
+| Mensagens por causa | sem resposta do servidor · **403** sem autorização · **409** email já registado (Register) · **429** demasiadas tentativas · resto → credenciais incorrectas / dados inválidos |
+| Trilha de erro | `console.error("[login] …", err)` / `console.error("[register] …", err)` **obrigatório** em todos os ramos de erro. **Proibido** registar token ou credenciais (mesmo em caso de sucesso) |
+| Navegação | o timer do `navigate` fica em `useRef` e é limpo no unmount |
+| Foco | ao montar, o foco vai para o primeiro campo (`userRef.current?.focus()`) |
 
 ### 5.4 Operações de ficheiros/pastas (criar, renomear, mover, excluir)
 - Exclusão: modal de confirmação + `btn-danger`; feedback via `Toast`.
@@ -566,13 +729,78 @@ Estado visual obrigatório por permissão:
 - Landing: superfícies glass + `--color-primary` (marca).
 - Dashboard autenticado: fundo `--color-bg`, superfícies `--color-surface`, acento `--color-accent` para ações de nuvem/upload, identidade mantida no item ativo da sidebar.
 
+### 5.6 Redefinição de password ("esqueceu-se da password") — especificado, ainda por implementar
+
+> **Referência visual normativa:** `frontend/src/docs/Modelos_forgotpassword/` (4 telas modelo). Ao contrário do Login/Register, este fluxo é um **cartão centrado de coluna única** com um *badge* de ícone no topo — **não** usa o painel de imagem do §4.11.
+> Estado no código: **por implementar** (o backend também ainda não tem endpoints de reposição).
+
+```css
+.resetPage { min-height: 100vh; display: grid; place-items: center;
+  background: var(--color-bg); padding: var(--space-6); }
+.reset-card {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+  padding: var(--space-8); max-width: 480px; width: 90%; margin: auto; text-align: center;
+}
+.reset-badge {                        /* badge do ícone: dourado + fundo transparente */
+  width: 64px; height: 64px; margin: 0 auto var(--space-4);
+  display: grid; place-items: center;
+  background: transparent; border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-primary); font-size: var(--fs-xl);
+}
+.reset-title { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 600; color: var(--color-ink-strong); }
+.reset-subtitle { font-family: var(--font-body); font-size: var(--fs-base); color: var(--color-ink-muted); }
+.reset-subtitle strong { color: var(--color-ink-strong); }   /* email confirmado, em destaque */
+.reset-back { color: var(--color-primary); font-size: var(--fs-small); }
+.reset-back:hover, .reset-back:focus-visible { color: var(--color-primary-hover); text-decoration: underline; }
+```
+
+> O roxo dos mockups mapeia para `--color-primary`; o cartão e o badge usam os tokens de superfície/borda do sistema.
+
+#### As 4 telas (fidelidade ao mockup)
+
+| # | Título | Badge | Conteúdo | Ação primária | Auxiliares |
+|---|---|---|---|---|---|
+| 1 | *Forgot password?* | chave (`faKey`) | "No worries, we'll send you reset instructions." + campo **Email** (§4.2) | **Reset password** (`.btn-primary`) | "← Back to log in" |
+| 2 | *Check your email* | envelope (`faEnvelope`) | "We sent a password reset link to **{email}**" (email em `--color-ink-strong`) | **Open email app** | "Didn't receive the email? **Click to resend**" (com cooldown de 60s + `[disabled]`) e "← Back to log in" |
+| 3 | *Set new password* | cadeado (`faLock`) | "Your new password must be different to previously used passwords." + **Password** e **Confirm password** (com toggle de visibilidade) + checklist de requisitos | **Reset password** | "← Back to log in" |
+| 4 | *Password reset* | visto (`faCircleCheck`) | "Your password has been successfully reset. Click below to log in magically." | **Continue** → `/login` | "← Back to log in" |
+
+- **Idioma:** os mockups estão em inglês e o resto do sistema em português → decisão pendente do requisitante; até lá mantém-se o texto dos mockups (não misturar idiomas na mesma tela).
+- **Checklist de password:** o mockup mostra 2 itens ("at least 8 characters", "one special character"), mas a regra real é a `PWD_REGEX` do Register (8–24 + maiúscula + minúscula + número + símbolo). Como a identidade **serve** as regras de negócio (§5), a checklist lista os **5 requisitos reais**, cada um com ícone ✓/• **e** texto — `--color-success` quando cumprido, `--color-disabled-ink` quando não.
+- **Toggle de visibilidade:** `<button type="button">` dentro do `.input_container`, `aria-label="Mostrar password"` / `"Ocultar password"`, `aria-pressed`, ícone `--color-ink-muted`, alvo ≥44px.
+- **Feedback:** erros com `Toast type="error"` + `.errorText` (§5.3); sucesso da reposição → `Toast type="success"` **e** a tela 4; submit com `loading` (§4.1); foco movido para o título a cada passo e `aria-live` na região de mensagem.
+
+#### Contrato de API (backend a implementar)
+
+| Tela | Endpoint | Notas |
+|---|---|---|
+| 1 | `POST /auth/password/forgot { email }` | resposta **sempre genérica** — nunca revela se o email existe (anti-enumeração) |
+| 2 | (ecrã de espera) | reenviar = repetir o endpoint 1, com cooldown de 60s no botão |
+| 3–4 | `POST /auth/password/reset { token, password }` | o `token` vem do **link** enviado por email (nos mockups não há código digitado); uso único e curto |
+
+- Requisitos de backend: novas rotas em `AuthController` + `permitAll` no `SecurityConfig`, persistência do token (hash + expiração) e envio de email. A regra do mockup *"must be different to previously used passwords"* tem de ser validada no **servidor**.
+- Rotas de frontend: `/forgotpassword` (telas 1–2 como passos do mesmo ecrã) e `/resetpassword?token=…` (telas 3–4). O token vive em estado/`useRef` e é limpo no unmount — **nunca** em `localStorage`.
+
+#### Checklist específico deste fluxo
+- [ ] Badge de ícone dourado com fundo transparente (`--color-primary`) — sem azul/acento.
+- [ ] Nenhum passo revela se o email existe (mensagem genérica e resposta indistinguível).
+- [ ] Checklist cobre os **5** requisitos reais da `PWD_REGEX`.
+- [ ] Token nunca persistido no cliente; expiração e uso único no servidor.
+- [ ] `aria-live` na região de mensagem e foco movido para o título a cada passo.
+- [ ] Estados completos no submit, no reenviar (cooldown) e no toggle da password.
+
 ---
 
 ## 6. Checklist de revisão obrigatória
 
 Antes de entregar qualquer componente, confirmar **todos** os itens:
 
-- [ ] Usa exclusivamente `var(--...)` para cor, fonte, raio, sombra, espaço e duração.
+- [ ] Usa exclusivamente `var(--...)` para cor, fonte, raio, sombra, espaço e duração (branco = `var(--color-surface)`, **nunca** `#fff`; anéis de foco/erro com `color-mix`, **nunca** `rgba()` solto).
+- [ ] **Mudar de estado não altera a geometria**: largura de borda constante, o erro não «cresce» o campo, coluna de formulário com largura definida (§3.5, §4.2).
+- [ ] Se é tela de autenticação: **sem acento/azuis**, segue o §4.11; se é a reposição de password, segue o §5.6 e os mockups em `docs/Modelos_forgotpassword/`.
+- [ ] Texto sobre imagem/vídeo usa tokens de texto adequados ao fundo (fundo claro → `--color-ink*`), com contraste verificado (§3.3).
 - [ ] Tipografia na escala da secção 2 (Montserrat/Rubik, sem Segoe UI, peso ≤ 700).
 - [ ] Tem **normal, hover, active, disabled, focus-visible** documentados; e **loading** se for assíncrono.
 - [ ] `disabled` existe no DOM (`disabled`/`aria-disabled`), não só visualmente.
@@ -589,3 +817,5 @@ Antes de entregar qualquer componente, confirmar **todos** os itens:
 ---
 
 *Documento v1.1 — gerado a partir da consolidação de `App.css`, `index.css`, `navbar.css`, `button.css`, `input.css`, `Login.css`, `spinner.css`, `toast.jsx` e do schema de negócio (`perfil`, `permissao`, `pasta`, `arquivo`, `armazenamento`). O adendo v1.1 (tokens `--sidebar-width*` em §1.12, contrato de scroll/popovers em §4.6, correção de contraste em §4.7, nota de z-index em §1.9 e indicador de scroll em §3.6) resulta da revisão de UI da sidebar aprovada pelo requisitante da tarefa; demais alterações a este documento exigem aprovação do líder técnico.*
+
+*Documento **v1.2** (2026-09-29) — atualiza a v1.1: **(a)** sincronização dos snippets §4.1–§4.4 com o código em produção (`button.css`/`button.jsx`, `input.css`, `toast.css`/`toast.jsx`, `spinner.css`/`spinner.jsx`), incluindo a **inversão de cores no hover do `.btn-primary`**, o branco por `var(--color-surface)`, o `border-radius: inherit` do `::before`, o favo de erro com **largura de borda constante** (+`min-height: 44px`), os anéis por `color-mix`, o texto do toast em `--color-ink` por contraste e as classes `.toast/.toast--*`; **(b)** nova secção **§4.11 — Superfície de autenticação** (imagem de nuvens brancas sobre fundo cinzento em vez do vídeo, texto `--color-ink*`, rodapé glass, ícone dourado transparente por página, formulário com largura definida, breakpoints 992/768/600, fundos cinzentos mantidos); **(c)** novo **§5.6 — Redefinição de password**, especificado a partir das referências `docs/Modelos_forgotpassword/` (4 telas: chave → envelope → cadeado → visto), com contrato de API, estados e checklist; **(d)** o acento ciano passa a ser explicitamente **proibido em autenticação** (§1.2, §3.2), o local real dos tokens passa a `App.css` (§1) e a tipografia de corpo/Rubik fica sem ambiguidade (§2); **(e)** checklist §6 alargada. Alterações pedidas e aprovadas pelo requisitante da tarefa (2026-09-29); alterações futuras a este documento continuam a exigir aprovação do líder técnico.*

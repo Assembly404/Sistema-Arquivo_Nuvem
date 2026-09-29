@@ -3,19 +3,19 @@ import './spinner.css'
 function Spinner(){
     return(
         <>
-            <div className="spinner">
-                <div class="spinner-blade"></div>
-                <div class="spinner-blade"></div>
-                <div class="spinner-blade"></div>
-                <div class="spinner-blade"></div>
-                <div class="spinner-blade"></div>
-                <div class="spinner-blade"></div>
-                <div class="spinner-blade"></div>
-                <div class="spinner-blade"></div>
-                <div class="spinner-blade"></div>
-                <div class="spinner-blade"></div>
-                <div class="spinner-blade"></div>
-                <div class="spinner-blade"></div>
+            <div className="spinner" role="status" aria-label="A processar">
+                <div className="spinner-blade"></div>
+                <div className="spinner-blade"></div>
+                <div className="spinner-blade"></div>
+                <div className="spinner-blade"></div>
+                <div className="spinner-blade"></div>
+                <div className="spinner-blade"></div>
+                <div className="spinner-blade"></div>
+                <div className="spinner-blade"></div>
+                <div className="spinner-blade"></div>
+                <div className="spinner-blade"></div>
+                <div className="spinner-blade"></div>
+                <div className="spinner-blade"></div>
             </div>
         </>
     )

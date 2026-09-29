@@ -1,40 +1,117 @@
-.input_container{
-    /* position: relative; */
+/* ============================================================
+   Input — §4.2 da Identidade Visual (todos os estados + erro)
+   Corrige o bug legado "border: 1x solid black" (declaração
+   inválida ⇒ o input ficava sem borda nenhuma — §3.4/§4.2).
+   ============================================================ */
+
+.input_container {
     display: flex;
-    /* align-items: center; */
-    margin-bottom: 10px;
     flex-direction: column;
+    margin-bottom: var(--space-3);
     text-align: left;
 }
-.inputField{
+
+.input_container label {
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: var(--fs-small);
+    line-height: var(--lh-small);
+    padding: var(--space-1) 0;
+    display: block;
+}
+
+/* Ícone de validação no label (§3.2: nada de cores no JSX) */
+.input_container label .fieldIcon {
+    margin-left: var(--space-2);
+    font-size: var(--fs-caption);
+}
+
+.fieldIcon--valid {
+    color: var(--color-success);
+}
+
+.fieldIcon--invalid {
+    color: var(--color-danger-action);
+}
+
+.inputField {
     width: 100%;
-    padding: 10px;
-    border: 1x solid black;
-    border-radius: 10px;
-}
-.inputError{
-    border-color: red;
-}
-.inputIcon{
-    /* position: absolute;
-    top: 50%;
-    left: 10px; */
-    transform: translateY(-50%);
-    pointer-events: none;
-
+    /* Altura fixa em todos os estados (o erro não pode fazer o input crescer)
+       e alvo de toque ≥ 44px (§3.4) */
+    min-height: 44px;
+    padding: 10px var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    color: var(--color-ink);
+    transition: border-color var(--dur-fast) var(--ease-out),
+                box-shadow var(--dur-fast) var(--ease-out);
 }
 
+.inputField::placeholder {
+    color: var(--color-ink-muted);
+    opacity: 1;
+}
+
+.inputField:hover:not(:disabled) {
+    border-color: var(--color-primary-subtle);
+}
+
+/* focus: anel da marca — substitui o outline removido (§3.6) */
+.inputField:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focus-ring) 25%, transparent);
+}
+
+.inputField:disabled {
+    background: var(--color-disabled-bg);
+    color: var(--color-disabled-ink);
+    cursor: not-allowed;
+}
+
+.inputField:read-only {
+    background: var(--color-surface-2);
+}
+
+/* Erro: largura de borda CONSTANTE (1px de borda + 1px de anel = 2px visuais).
+   O snippet §4.2 usa `border: 2px`, mas como o input tem height:auto o
+   box-sizing: border-box não evita o salto — o input "crescia" no erro. */
+.inputField.inputError,
+.inputField[aria-invalid="true"] {
+    border-color: var(--color-danger-action);
+    box-shadow: 0 0 0 1px var(--color-danger-action);
+}
+
+.inputField.inputError:focus,
+.inputField[aria-invalid="true"]:focus {
+    border-color: var(--color-danger-action);
+    box-shadow: 0 0 0 1px var(--color-danger-action),
+                0 0 0 4px color-mix(in srgb, var(--color-danger-action) 25%, transparent);
+}
+
+/* Erro sempre com ícone + texto (nunca só cor — §3.5) */
 .errorText {
     text-align: left;
-    color: rgb(255, 0, 34);
-    font-size: 0.75rem;
-    margin-top: 0.25rem;
-    .icon-info{
-        font-size: inherit;
-        margin-right: 5px;
-        color: black;
-    }
+    color: var(--color-danger-action);
+    font-family: var(--font-body);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    margin-top: var(--space-1);
     display: block;
     white-space: pre-line;
+}
 
+.errorText .icon-info {
+    font-size: inherit;
+    margin-right: var(--space-1);
+    color: var(--color-ink);
+}
+
+.inputIcon {
+    transform: translateY(-50%);
+    pointer-events: none;
 }

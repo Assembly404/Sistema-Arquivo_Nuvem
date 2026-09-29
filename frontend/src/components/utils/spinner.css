@@ -129,7 +129,9 @@
 
 @keyframes spinner-fade9234 {
   0% {
-    background-color: #69717d;
+    /* §4.4: sem cor hard-coded — as blades herdam a cor do contexto
+       (--color-primary sobre fundo claro; a cor do texto dentro de .btn-*) */
+    background-color: currentColor;
   }
 
   100% {
