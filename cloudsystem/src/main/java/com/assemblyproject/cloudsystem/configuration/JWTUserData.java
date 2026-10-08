@@ -5,6 +5,7 @@ import lombok.Builder;
 @Builder
 public record JWTUserData(
         Long userID,
-        String email
+        String email,
+        String role
 ) {
 }

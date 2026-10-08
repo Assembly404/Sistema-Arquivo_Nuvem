@@ -1,6 +1,10 @@
 package com.assemblyproject.cloudsystem.dto.response;
 
 public record LoginResponse(
-        String token
+        AuthUserData user,
+        String token,
+        String tokenType,
+        long expiresIn
 ) {
 }
+

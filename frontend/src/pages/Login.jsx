@@ -8,7 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRightToBracket } from "@fortawesome/free-solid-svg-icons";
 import { Link, useNavigate } from "react-router";
 import AuthContext from "../context/AuthProvider.jsx";
-import { login } from "../api/axios";
+import { login, setAuthToken } from "../api/axios";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
@@ -51,8 +51,10 @@ function Login(){
             }
             const response = await login(payload);
             const token = response.data?.token
+            const user = response.data?.user || { email }
 
-            setAuth({email, password, token})
+            setAuthToken(token);
+            setAuth({ user, token })
 
             /* §5.3 — sucesso: Toast antes de redireccionar */
             setToast({ message: "Sessão iniciada com sucesso.", type: "success" });
@@ -65,6 +67,10 @@ function Login(){
             if(!err?.response){
                 console.error("[login] sem resposta do servidor");
                 setToast({ message: "Sem resposta do servidor. Tente novamente.", type: "error" });
+            }else if(err.response.status === 401){
+                console.error("[login] credenciais inválidas", err.response.status);
+                /* erro de servidor nunca apaga o que o utilizador digitou (§5.3) */
+                setToast({ message: "Email ou password incorrectos.", type: "error" });
             }else if(err.response.status === 403){
                 console.error("[login] utilizador sem autorização", err.response.status);
                 setToast({ message: "Não tem autorização para aceder a esta conta.", type: "error" });

@@ -17,6 +17,33 @@ import {
 
 export const SIDEBAR_STORAGE_KEY = "sidebar:collapsed";
 
+const ROLE_PERMISSIONS = {
+    ADMIN: ["ADMIN_ACESSAR", "ADMIN_USUARIOS", "ADMIN_PERMISSOES", "ARQUIVO_VISUALIZAR", "ARQUIVO_EXCLUIR", "ARMAZENAMENTO_VISUALIZAR"],
+    USER: ["ARQUIVO_VISUALIZAR", "ARMAZENAMENTO_VISUALIZAR"]
+};
+
+export const permissionsForRole = (role) => ROLE_PERMISSIONS[role] || [];
+
+export const filterMenuByPermissions = (menu, permissions = []) => {
+    const allowed = new Set(permissions);
+    const isAllowed = (item) => {
+        if (!item.permission) return true;
+        return allowed.has(item.permission);
+    };
+    return menu
+        .map((item) => {
+            const children = (item.children || [])
+                .map((child) => {
+                    if (child.visibility === "secret" && !isAllowed(child)) return null;
+                    return child;
+                })
+                .filter(Boolean);
+            if (item.visibility === "secret" && !isAllowed(item) && children.length === 0) return null;
+            return { ...item, children };
+        })
+        .filter(Boolean);
+};
+
 export const SIDEBAR_ICONS = {
     FiBell,
     FiFile,

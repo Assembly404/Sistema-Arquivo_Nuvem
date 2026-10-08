@@ -13,4 +13,21 @@ function RequireAuth({ children }) {
     return children;
 }
 
+export function RequireRole({ children, role = null, permission = null }) {
+    const { auth, hasRole, hasPermission } = useContext(AuthContext);
+    const location = useLocation();
+
+    if (!auth?.token) {
+        return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    }
+    if (role && !hasRole(role)) {
+        return <Navigate to="/dashboard" replace />;
+    }
+    if (permission && !hasPermission(permission)) {
+        return <Navigate to="/dashboard" replace />;
+    }
+    return children;
+}
+
 export default RequireAuth;
+

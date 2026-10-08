@@ -19,6 +19,7 @@ public class TokenConfig {
         Algorithm algorithm = Algorithm.HMAC256(secret);
         return JWT.create()
                 .withClaim("userID", user.getUserID())
+                .withClaim("role", user.getRole() != null ? user.getRole().name() : "USER")
                 .withSubject(user.getEmail())
                 .withExpiresAt(Instant.now().plusSeconds(86400))
                 .withIssuedAt(Instant.now())
@@ -34,6 +35,7 @@ public class TokenConfig {
             return Optional.of(JWTUserData.builder()
                     .userID(decode.getClaim("userID").asLong())
                     .email(decode.getSubject())
+                    .role(decode.getClaim("role").asString())
                     .build());
 
         } catch (JWTVerificationException e) {

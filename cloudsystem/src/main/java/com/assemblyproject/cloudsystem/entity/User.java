@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
@@ -42,13 +43,18 @@ public class User implements UserDetails {
 
     private LocalDateTime lastAccess;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Role role = Role.USER;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        Role effective = role != null ? role : Role.USER;
+        return List.of(new SimpleGrantedAuthority("ROLE_" + effective.name()));
     }
 
     @Override
     public String getUsername() {
-        return "";
+        return email != null ? email : "";
     }
 }

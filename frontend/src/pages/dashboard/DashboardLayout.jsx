@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import SideBar from "../../components/header/sidebar.jsx";
-import { SIDEBAR_MENU, SIDEBAR_STORAGE_KEY } from "../../components/header/sidebarConfig.js";
+import { SIDEBAR_MENU, SIDEBAR_STORAGE_KEY, filterMenuByPermissions, permissionsForRole } from "../../components/header/sidebarConfig.js";
 import AuthContext from "../../context/AuthProvider.jsx";
 import "./DashboardLayout.css";
 
@@ -22,14 +22,20 @@ function DashboardLayout() {
         navigate("/");
     };
 
+    const permissions = auth?.user?.permissions || permissionsForRole(auth?.user?.role);
+    const visibleMenu = filterMenuByPermissions(SIDEBAR_MENU, permissions);
+    const displayName = auth?.user?.name && auth?.user?.surname
+        ? `${auth.user.name} ${auth.user.surname}`
+        : auth?.user?.name || auth?.user?.email?.split("@")[0] || "";
+
     return (
         <div className={`dashboard-layout ${collapsed ? "dashboard-layout--collapsed" : ""}`}>
             <SideBar
-                menu={SIDEBAR_MENU}
+                menu={visibleMenu}
                 collapsed={collapsed}
                 onToggleCollapse={() => setCollapsed((current) => !current)}
                 activePath={location.pathname}
-                user={{ name: auth?.name, email: auth?.email }}
+                user={{ name: displayName, email: auth?.user?.email }}
                 onLogout={handleLogout}
             />
 
