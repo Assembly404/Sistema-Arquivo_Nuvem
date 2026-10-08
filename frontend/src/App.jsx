@@ -8,6 +8,7 @@ import DashboardLayout from './pages/dashboard/DashboardLayout.jsx'
 import Dashboard from './pages/dashboard/Dashboard.jsx'
 import Profile from './pages/dashboard/Profile.jsx'
 import Placeholder from './pages/dashboard/Placeholder.jsx'
+import AdminUsers from './pages/dashboard/AdminUsers.jsx'
 import './App.css';
 
 import LandingPage from './pages/LandingPage/LandingPage.jsx'
@@ -31,7 +32,7 @@ function App(){
         <Route path='arquivos/compartilhados' element={<Placeholder title="Compartilhados comigo"/>}/>
         <Route path='arquivos/lixeira' element={<Placeholder title="Lixeira"/>}/>
         <Route path='armazenamento' element={<Placeholder title="Armazenamento"/>}/>
-        <Route path='admin/usuarios' element={<RequireRole role="ADMIN"><Placeholder title="Usuários"/></RequireRole>}/>
+        <Route path='admin/usuarios' element={<RequireRole role="ADMIN"><AdminUsers/></RequireRole>}/>
         <Route path='admin/permissoes' element={<RequireRole role="ADMIN"><Placeholder title="Perfis & Permissões"/></RequireRole>}/>
         <Route path='notificacoes' element={<Placeholder title="Notificações"/>}/>
         <Route path='suporte' element={<Placeholder title="Suporte"/>}/>

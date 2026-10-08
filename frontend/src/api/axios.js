@@ -31,6 +31,11 @@ export const patchMe = (data) => http.patch("/users/me", data);
 export const changePassword = (data) => http.post("/users/me/password", data);
 export const deleteMe = () => http.delete("/users/me");
 
+export const listUsers = () => http.get("/admin/users");
+export const createUser = (data) => http.post("/admin/users", data);
+export const changeUserRole = (id, data) => http.patch(`/admin/users/${id}/role`, data);
+export const deleteUser = (id) => http.delete(`/admin/users/${id}`);
+
 export const forgotPassword = (data) => http.post("/auth/password/forgot", data);
 export const verifyOtp = (data) => http.post("/auth/password/verify-otp", data);
 export const resetPassword = (data) => http.post("/auth/password/reset", data);
