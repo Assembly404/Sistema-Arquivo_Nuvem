@@ -7,4 +7,5 @@ import org.springframework.stereotype.Service;
 public interface UserService {
 
     User getCurrentUser();
+    User createAdmin(User user);
 }

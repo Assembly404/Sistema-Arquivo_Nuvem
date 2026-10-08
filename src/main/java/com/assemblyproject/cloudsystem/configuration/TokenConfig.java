@@ -17,9 +17,13 @@ public class TokenConfig {
 
     public String generateToken(User user) {
         Algorithm algorithm = Algorithm.HMAC256(secret);
+        String roleName = user.getRole() != null && user.getRole().getName() != null
+                ? user.getRole().getName().name()
+                : "USER";
         return JWT.create()
                 .withClaim("userID", user.getUserID())
                 .withSubject(user.getEmail())
+                .withClaim("role", roleName)
                 .withExpiresAt(Instant.now().plusSeconds(86400))
                 .withIssuedAt(Instant.now())
                 .sign(algorithm);
@@ -27,15 +31,13 @@ public class TokenConfig {
 
     public Optional<JWTUserData> validateToken(String token) {
         Algorithm algorithm = Algorithm.HMAC256(secret);
-
         try {
             DecodedJWT decode = JWT.require(algorithm).build().verify(token);
-
             return Optional.of(JWTUserData.builder()
                     .userID(decode.getClaim("userID").asLong())
                     .email(decode.getSubject())
+                    .role(decode.getClaim("role").asString())
                     .build());
-
         } catch (JWTVerificationException e) {
             return Optional.empty();
         }

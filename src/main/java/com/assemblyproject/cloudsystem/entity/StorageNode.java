@@ -46,6 +46,10 @@ public class StorageNode {
     private String sessionId;
 
     @Column(nullable = false)
+    @Builder.Default
+    private NodeVisibility visibility = NodeVisibility.PERSONAL;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     public long getFreeSpaceBytes() {

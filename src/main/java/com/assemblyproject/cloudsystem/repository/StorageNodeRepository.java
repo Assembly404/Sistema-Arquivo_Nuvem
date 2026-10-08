@@ -1,6 +1,7 @@
 package com.assemblyproject.cloudsystem.repository;
 
 import com.assemblyproject.cloudsystem.entity.NodeStatus;
+import com.assemblyproject.cloudsystem.entity.NodeVisibility;
 import com.assemblyproject.cloudsystem.entity.StorageNode;
 import com.assemblyproject.cloudsystem.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +16,8 @@ public interface StorageNodeRepository extends JpaRepository<StorageNode, Long> 
 
     List<StorageNode> findAllByOwner(User owner);
 
+    List<StorageNode> findAllByVisibility(NodeVisibility visibility);
+
     Optional<StorageNode> findBySessionId(String sessionId);
 
     List<StorageNode> findAllByStatusAndLastHeartbeatBefore(NodeStatus status, LocalDateTime threshold);
@@ -22,4 +25,6 @@ public interface StorageNodeRepository extends JpaRepository<StorageNode, Long> 
     List<StorageNode> findAllByStatus(NodeStatus status);
 
     List<StorageNode> findAllByStatusOrderByUsedSpaceBytesAsc(NodeStatus status);
+
+    long countByStatus(NodeStatus status);
 }

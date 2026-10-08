@@ -20,7 +20,8 @@ public class Role {
     private Long roleID;
 
     @Column(nullable = false, unique = true)
-    private String name;
+    @Enumerated(EnumType.STRING)
+    private UserRole name;
 
     @OneToMany(mappedBy = "role")
     private List<User> users;

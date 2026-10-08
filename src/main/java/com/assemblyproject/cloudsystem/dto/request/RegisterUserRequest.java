@@ -1,5 +1,6 @@
 package com.assemblyproject.cloudsystem.dto.request;
 
+import com.assemblyproject.cloudsystem.entity.UserRole;
 import jakarta.validation.constraints.NotEmpty;
 
 public record RegisterUserRequest(
@@ -10,6 +11,8 @@ public record RegisterUserRequest(
         @NotEmpty(message = "O email é obrigatório")
         String email,
         @NotEmpty(message = "A password é obrigatória")
-        String password
+        String password,
+        UserRole role
 ) {
+    public UserRole getRole() { return role; }
 }

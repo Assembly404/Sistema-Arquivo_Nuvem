@@ -48,6 +48,8 @@ public class User implements UserDetails {
     @JoinColumn(name = "roleID")
     private Role role;
 
+    private boolean suspended;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (Objects.isNull(role)) {
