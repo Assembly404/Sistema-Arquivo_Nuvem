@@ -42,6 +42,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/password/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
@@ -54,7 +55,10 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(
             "http://localhost:5173",
             "http://127.0.0.1:5173",
-            "http://192.168.10.237:5173"
+            "http://192.168.10.237:5173",
+            "http://192.168.108.*:5173",
+            "http://192.168.108.56:5173",
+            "http://192.168.108.79:5173"
 
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));

@@ -1,0 +1,63 @@
+/* ============================================================
+   Card de feature da landing — §5.5 (superfície + marca).
+   Escopado sob .landing-page para nunca vazar para o dashboard.
+   PROIBIDO valores fora dos tokens (--color-*, --radius-*, ...).
+   ============================================================ */
+
+.landing-page .landing-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-6);
+    text-align: left;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    transition:
+        transform var(--dur-base) var(--ease-out),
+        box-shadow var(--dur-base) var(--ease-out);
+}
+
+.landing-page .landing-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-md);
+}
+
+.landing-page .landing-card__icone {
+    width: var(--space-12);
+    height: var(--space-12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary-tint);
+    color: var(--color-primary);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-xl);
+    margin-bottom: var(--space-2);
+}
+
+.landing-page .landing-card__titulo {
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--color-ink-strong);
+}
+
+.landing-page .landing-card__subtitulo {
+    font-family: var(--font-body);
+    font-size: var(--fs-small);
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--color-primary);
+}
+
+.landing-page .landing-card__texto {
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--color-ink-muted);
+}
+

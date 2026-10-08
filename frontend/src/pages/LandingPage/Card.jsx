@@ -1,18 +1,17 @@
-import "./card.css"
+/* Card de feature da landing page (§5.5 — superfície + marca).
+   Recebe: icone (node), titulo, subtitulo, texto. */
+import "./card.css";
 
-const Card = () => {
-  return (
-    <div className="card">
-      <div className="content">
-        <h1>Card Title</h1>
-        <p>Some quick example text to build on the card title and make up the bulk of the card’s content.</p>
-        <div class="hero-botoes">
-          <a href="#" class="btn-cadastro">button 1</a>
-          <a href="#" class="btn-login">button 2</a>
-        </div>
-      </div>
-    </div>
-  )
-}
+const Card = ({ icone, titulo, subtitulo, texto }) => {
+    return (
+        <article className="landing-card">
+            <div className="landing-card__icone">{icone}</div>
 
-export default Card
+            <h3 className="landing-card__titulo">{titulo}</h3>
+            <p className="landing-card__subtitulo">{subtitulo}</p>
+            <p className="landing-card__texto">{texto}</p>
+        </article>
+    );
+};
+
+export default Card;
