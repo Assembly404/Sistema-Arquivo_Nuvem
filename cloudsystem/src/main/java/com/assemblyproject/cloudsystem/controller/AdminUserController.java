@@ -102,6 +102,34 @@ public class AdminUserController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/users/{id}/suspend")
+    public ResponseEntity<?> suspendUser(@PathVariable Long id, Authentication authentication) {
+        User user = repository.findById(id).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("message", "Utilizador não encontrado."));
+        }
+        if (isSelf(authentication, user)) {
+            return ResponseEntity.status(409).body(Map.of("message", "Não podes suspender a tua própria conta."));
+        }
+        if (user.getRole() == Role.ADMIN && repository.countByRole(Role.ADMIN) <= 1) {
+            return ResponseEntity.status(409).body(Map.of("message", "Tem de existir pelo menos um administrador na plataforma."));
+        }
+        user.setSuspended(true);
+        repository.save(user);
+        return ResponseEntity.ok(toResponse(user));
+    }
+
+    @PostMapping("/users/{id}/unsuspend")
+    public ResponseEntity<?> unsuspendUser(@PathVariable Long id) {
+        User user = repository.findById(id).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("message", "Utilizador não encontrado."));
+        }
+        user.setSuspended(false);
+        repository.save(user);
+        return ResponseEntity.ok(toResponse(user));
+    }
+
     private boolean isSelf(Authentication authentication, User target) {
         if (authentication == null || !(authentication.getPrincipal() instanceof JWTUserData data)) {
             return false;

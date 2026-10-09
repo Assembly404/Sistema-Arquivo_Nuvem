@@ -52,6 +52,9 @@ public class AuthController {
         Authentication authentication = authenticationManager.authenticate(userAndPass);
 
         User user = (User) authentication.getPrincipal();
+        if (user.isSuspended()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         user.setLastAccess(LocalDateTime.now());
         repository.save(user);
         String token = tokenConfig.generateToken(user);

@@ -2,7 +2,6 @@ package com.assemblyproject.cloudsystem.configuration;
 
 import jakarta.servlet.DispatcherType;
 
-import org.apache.tomcat.util.file.ConfigurationSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -18,6 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
@@ -43,6 +43,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/password/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/nodes/jar").permitAll()
+                        .requestMatchers("/dashboard/**").hasRole("ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
@@ -56,6 +58,9 @@ public class SecurityConfig {
             "http://localhost:5173",
             "http://127.0.0.1:5173",
             "http://192.168.10.237:5173",
+            "http://localhost:5500",
+            "http://127.0.0.1:5500",
+            "http://192.168.10.237:5500",
             "http://192.168.108.*:5173",
             "http://192.168.108.56:5173",
             "http://192.168.108.79:5173"
@@ -78,5 +83,10 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 }

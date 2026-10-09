@@ -47,6 +47,8 @@ public class User implements UserDetails {
     @Column(nullable = false, length = 20)
     private Role role = Role.USER;
 
+    private boolean suspended;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Role effective = role != null ? role : Role.USER;
