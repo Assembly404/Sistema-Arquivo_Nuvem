@@ -31,16 +31,26 @@ function AdminUsers() {
     useEffect(() => { titleRef.current?.focus(); }, []);
     useEffect(() => { if (auth?.token) setAuthToken(auth.token); }, [auth?.token]);
 
-    const load = useCallback(() => {
+    const load = useCallback(async () => {
         setLoading(true);
-        listUsers().then((res) => {
+        try {
+            const res = await listUsers();
             setUsers(Array.isArray(res.data) ? res.data : []);
-        }).catch((err) => {
+        } catch (err) {
             console.error("[admin-users] falha ao carregar", err);
             setToast({ message: "Não foi possível carregar os utilizadores.", type: "error" });
-        }).finally(() => setLoading(false));
+        } finally {
+            setLoading(false);
+        }
     }, []);
-    useEffect(() => { if (auth?.token) load(); }, [auth?.token, load]);
+
+     
+    useEffect(() => {
+        if (auth?.token) {
+            void load();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
+    }, [auth?.token]);
 
     const myEmail = auth?.user?.email;
     const roleError = (msg) => setToast({ message: msg, type: "error" });

@@ -44,6 +44,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/password/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/nodes/jar").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/nodes/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/nodes/*/heartbeat").permitAll()
                         .requestMatchers("/dashboard/**").hasRole("ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
@@ -54,17 +56,14 @@ public class SecurityConfig {
     @Bean 
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(
+        config.setAllowedOriginPatterns(List.of(
             "http://localhost:5173",
             "http://127.0.0.1:5173",
             "http://192.168.10.237:5173",
             "http://localhost:5500",
             "http://127.0.0.1:5500",
             "http://192.168.10.237:5500",
-            "http://192.168.108.*:5173",
-            "http://192.168.108.56:5173",
-            "http://192.168.108.79:5173"
-
+            "http://192.168.108.*:5173"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));

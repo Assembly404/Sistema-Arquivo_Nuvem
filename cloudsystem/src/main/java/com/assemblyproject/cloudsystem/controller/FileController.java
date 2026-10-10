@@ -4,8 +4,12 @@ import com.assemblyproject.cloudsystem.dto.response.FileMetadataResponse;
 import com.assemblyproject.cloudsystem.dto.response.UploadResponse;
 import com.assemblyproject.cloudsystem.entity.User;
 import com.assemblyproject.cloudsystem.entity.FileMetadata;
+import com.assemblyproject.cloudsystem.entity.FileReplica;
+import com.assemblyproject.cloudsystem.entity.NodeStatus;
+import com.assemblyproject.cloudsystem.entity.ReplicaStatus;
 import com.assemblyproject.cloudsystem.entity.StorageNode;
 import com.assemblyproject.cloudsystem.repository.FileMetadataRepository;
+import com.assemblyproject.cloudsystem.repository.FileReplicaRepository;
 import com.assemblyproject.cloudsystem.repository.StorageNodeRepository;
 import com.assemblyproject.cloudsystem.repository.UserRepository;
 import com.assemblyproject.cloudsystem.service.ContainerClient;
@@ -32,6 +36,7 @@ public class FileController {
     private final ContainerService containerService;
     private final ContainerClient containerClient;
     private final FileMetadataRepository fileMetadataRepository;
+    private final FileReplicaRepository fileReplicaRepository;
     private final ReplicationService replicationService;
     private final StorageNodeRepository nodeRepository;
     private final UserRepository userRepository;
@@ -39,16 +44,15 @@ public class FileController {
     @PostMapping("/upload")
     public ResponseEntity<UploadResponse> uploadFile(@AuthenticationPrincipal JWTUserData principal,
                                                      @RequestParam("file") MultipartFile file) throws IOException {
-        User user = userRepository.findById(principal.userID()).orElse(null);
+        User user = resolveUser(principal);
         if (user == null) {
             return ResponseEntity.status(401).build();
         }
-        byte[] containerData = containerService.buildContainer(file.getBytes(), file.getOriginalFilename(), file.getContentType(), file.getSize());
-        Long fileID = containerService.uploadFile(user, file);
-        replicationService.replicateFile(fileID, user, containerData);
+        ContainerService.StoredContainer stored = containerService.uploadFile(user, file);
+        replicationService.replicateFile(stored.fileID(), user, stored.containerData());
 
         UploadResponse response = new UploadResponse(
-                fileID,
+                stored.fileID(),
                 file.getOriginalFilename(),
                 file.getContentType(),
                 file.getSize()
@@ -58,7 +62,7 @@ public class FileController {
 
     @GetMapping
     public ResponseEntity<List<FileMetadataResponse>> listUserFiles(@AuthenticationPrincipal JWTUserData principal) {
-        User user = userRepository.findById(principal.userID()).orElse(null);
+        User user = resolveUser(principal);
         if (user == null) {
             return ResponseEntity.status(401).build();
         }
@@ -71,29 +75,27 @@ public class FileController {
     @GetMapping("/{fileId}/download")
     public ResponseEntity<byte[]> downloadFile(@AuthenticationPrincipal JWTUserData principal,
                                                @PathVariable Long fileId) throws IOException {
-        User user = userRepository.findById(principal.userID()).orElse(null);
+        User user = resolveUser(principal);
         if (user == null) {
             return ResponseEntity.status(401).build();
         }
-        FileMetadata metadata = fileMetadataRepository.findById(fileId)
-                .orElseThrow(() -> new RuntimeException("File not found"));
+        FileMetadata metadata = fileMetadataRepository.findById(fileId).orElse(null);
+        if (metadata == null) {
+            return ResponseEntity.status(404).build();
+        }
         if (!metadata.getOwner().getUserID().equals(user.getUserID())) {
             return ResponseEntity.status(403).build();
         }
 
-        List<StorageNode> nodes = nodeRepository.findAllByStatus(com.assemblyproject.cloudsystem.entity.NodeStatus.ONLINE);
-        if (nodes.isEmpty()) {
-            return ResponseEntity.status(503).body(new byte[0]);
+        StorageNode node = pickOnlineNodeWithReplica(metadata);
+        if (node == null) {
+            return ResponseEntity.status(503).build();
         }
 
-        StorageNode node = nodes.get(0);
         byte[] containerData = containerClient.downloadReplica(node, fileId);
-
-        String encryptedKey = metadata.getEncryptedDataKey();
-        byte[] masterKey = java.util.Base64.getDecoder().decode("EvguenyEwenAllenEdmundoMalik".getBytes());
-        byte[] fileKey = containerService.decryptKey(encryptedKey, masterKey);
-
+        byte[] fileKey = containerService.resolveFileKey(metadata);
         byte[] fileData = containerService.downloadFromNode(containerData, fileKey);
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + metadata.getOriginalName() + "\"")
                 .body(fileData);
@@ -102,17 +104,37 @@ public class FileController {
     @DeleteMapping("/{fileId}")
     public ResponseEntity<Map<String, Object>> deleteFile(@AuthenticationPrincipal JWTUserData principal,
                                                           @PathVariable Long fileId) {
-        User user = userRepository.findById(principal.userID()).orElse(null);
+        User user = resolveUser(principal);
         if (user == null) {
             return ResponseEntity.status(401).build();
         }
-        FileMetadata metadata = fileMetadataRepository.findById(fileId)
-                .orElseThrow(() -> new RuntimeException("File not found"));
+        FileMetadata metadata = fileMetadataRepository.findById(fileId).orElse(null);
+        if (metadata == null) {
+            return ResponseEntity.status(404).build();
+        }
         if (!metadata.getOwner().getUserID().equals(user.getUserID())) {
             return ResponseEntity.status(403).build();
         }
         replicationService.deleteReplicas(fileId);
         fileMetadataRepository.delete(metadata);
         return ResponseEntity.ok(Map.of("deleted", true, "fileID", fileId));
+    }
+
+    private StorageNode pickOnlineNodeWithReplica(FileMetadata metadata) {
+        List<FileReplica> replicas = fileReplicaRepository.findAllByFileAndStatus(metadata, ReplicaStatus.SYNCED);
+        for (FileReplica replica : replicas) {
+            StorageNode node = replica.getNode();
+            if (node != null && node.getStatus() == NodeStatus.ONLINE) {
+                return node;
+            }
+        }
+        return null;
+    }
+
+    private User resolveUser(JWTUserData principal) {
+        if (principal == null || principal.userID() == null) {
+            return null;
+        }
+        return userRepository.findById(principal.userID()).orElse(null);
     }
 }

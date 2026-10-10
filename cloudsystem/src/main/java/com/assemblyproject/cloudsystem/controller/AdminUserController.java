@@ -102,7 +102,7 @@ public class AdminUserController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/users/{id}/suspend")
+    @PostMapping("/{id}/suspend")
     public ResponseEntity<?> suspendUser(@PathVariable Long id, Authentication authentication) {
         User user = repository.findById(id).orElse(null);
         if (user == null) {
@@ -119,7 +119,7 @@ public class AdminUserController {
         return ResponseEntity.ok(toResponse(user));
     }
 
-    @PostMapping("/users/{id}/unsuspend")
+    @PostMapping("/{id}/unsuspend")
     public ResponseEntity<?> unsuspendUser(@PathVariable Long id) {
         User user = repository.findById(id).orElse(null);
         if (user == null) {
@@ -154,6 +154,6 @@ public class AdminUserController {
     private AdminUserResponse toResponse(User user) {
         Role role = user.getRole() != null ? user.getRole() : Role.USER;
         return new AdminUserResponse(user.getUserID(), user.getName(), user.getSurname(),
-                user.getEmail(), role.name(), user.getRegistrationData(), user.getLastAccess());
+                user.getEmail(), role.name(), user.getRegistrationData(), user.getLastAccess(), user.isSuspended());
     }
 }

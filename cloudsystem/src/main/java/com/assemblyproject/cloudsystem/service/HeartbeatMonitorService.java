@@ -6,7 +6,6 @@ import com.assemblyproject.cloudsystem.repository.StorageNodeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,9 +18,6 @@ public class HeartbeatMonitorService {
 
     private final StorageNodeRepository nodeRepository;
     private final ContainerClient containerClient;
-
-    @Value("${cloud.node.heartbeat-interval-seconds:30}")
-    private int intervalSeconds;
 
     @Value("${cloud.node.heartbeat-timeout-seconds:90}")
     private int timeoutSeconds;

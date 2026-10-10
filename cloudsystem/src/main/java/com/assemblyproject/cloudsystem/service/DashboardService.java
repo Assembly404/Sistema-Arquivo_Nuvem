@@ -68,12 +68,10 @@ public class DashboardService {
 
     public List<Map<String, Object>> getReplicasByNode() {
         return nodeRepository.findAll().stream().map(node -> {
-            long synced = fileReplicaRepository.findAllByNode(node).stream()
-                    .filter(r -> r.getStatus().name().equals("SYNCED")).count();
-            long pending = fileReplicaRepository.findAllByNode(node).stream()
-                    .filter(r -> r.getStatus().name().equals("PENDING")).count();
-            long failed = fileReplicaRepository.findAllByNode(node).stream()
-                    .filter(r -> r.getStatus().name().equals("FAILED")).count();
+            List<com.assemblyproject.cloudsystem.entity.FileReplica> replicas = fileReplicaRepository.findAllByNode(node);
+            long synced = replicas.stream().filter(r -> r.getStatus() == com.assemblyproject.cloudsystem.entity.ReplicaStatus.SYNCED).count();
+            long pending = replicas.stream().filter(r -> r.getStatus() == com.assemblyproject.cloudsystem.entity.ReplicaStatus.PENDING).count();
+            long failed = replicas.stream().filter(r -> r.getStatus() == com.assemblyproject.cloudsystem.entity.ReplicaStatus.FAILED).count();
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("nodeID", node.getNodeID());
             m.put("name", node.getName());

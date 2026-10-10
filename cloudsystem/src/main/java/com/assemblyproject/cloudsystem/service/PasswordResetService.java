@@ -76,15 +76,26 @@ public class PasswordResetService {
         token.setResetTokenHash(passwordEncoder.encode(resetToken));
         token.setResetTokenExpiresAt(LocalDateTime.now().plusMinutes(RESET_TOKEN_VALIDITY_MINUTES));
         tokenRepository.save(token);
-        return resetToken;
+        return token.getId() + ":" + resetToken;
     }
 
     public void resetPassword(String resetToken, String newPassword, String passwordRegex) {
-        PasswordResetToken token = tokenRepository.findAll().stream()
+        String[] parts = resetToken != null ? resetToken.split(":", 2) : new String[0];
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Token de reposição inválido.");
+        }
+        Long tokenId;
+        try {
+            tokenId = Long.valueOf(parts[0]);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Token de reposição inválido.");
+        }
+        PasswordResetToken token = tokenRepository.findById(tokenId)
                 .filter(t -> t.getResetTokenHash() != null && !t.isUsed())
-                .filter(t -> passwordEncoder.matches(resetToken, t.getResetTokenHash()))
-                .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Token de reposição inválido."));
+        if (!passwordEncoder.matches(parts[1], token.getResetTokenHash())) {
+            throw new IllegalArgumentException("Token de reposição inválido.");
+        }
         if (token.getResetTokenExpiresAt() == null || LocalDateTime.now().isAfter(token.getResetTokenExpiresAt())) {
             throw new IllegalStateException("Token de reposição expirado.");
         }

@@ -1,27 +1,28 @@
 package com.assemblyproject.cloudsystem.service;
 
 import com.assemblyproject.cloudsystem.entity.NodeStatus;
+import com.assemblyproject.cloudsystem.entity.NodeVisibility;
+import com.assemblyproject.cloudsystem.entity.Role;
 import com.assemblyproject.cloudsystem.entity.StorageNode;
+import com.assemblyproject.cloudsystem.entity.User;
 import com.assemblyproject.cloudsystem.repository.StorageNodeRepository;
+import com.assemblyproject.cloudsystem.repository.UserRepository;
 import com.sun.net.httpserver.HttpServer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.boot.json.BasicJsonParser;
 import org.springframework.context.event.EventListener;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 
 @Component
@@ -29,6 +30,7 @@ import java.util.concurrent.Executors;
 public class NodeHttpServer {
 
     private final StorageNodeRepository nodeRepository;
+    private final UserRepository userRepository;
     private final StorageNodeService nodeStorageService;
     private final ContainerService containerService;
     private final NodeCommunicationService communicationService;
@@ -47,6 +49,7 @@ public class NodeHttpServer {
     private String serverUrl;
 
     private HttpServer server;
+    private volatile Long selfNodeId;
 
     @EventListener(ApplicationReadyEvent.class)
     public void start() throws IOException {
@@ -70,28 +73,45 @@ public class NodeHttpServer {
     private void registerWithServer() {
         try {
             String url = serverUrl + "/nodes/register";
+            String advertised = advertisedAddress();
             Map<String, Object> body = Map.of(
                     "name", "Node-" + port,
                     "totalSpaceBytes", 107374182400L,
                     "visibility", "PUBLIC",
-                    "address", InetSocketAddress.createUnresolved(address, port).getHostString() + ":" + port
+                    "address", advertised
             );
-            restTemplate.postForEntity(url, body, Map.class);
-            System.out.println("Node registered with server at " + serverUrl);
+            Map<?, ?> response = restTemplate.postForEntity(url, body, Map.class).getBody();
+            if (response != null && response.get("nodeID") instanceof Number nodeId) {
+                this.selfNodeId = nodeId.longValue();
+            }
+            System.out.println("Node registered with server at " + serverUrl + " as " + advertised);
         } catch (Exception e) {
             System.out.println("Failed to register node: " + e.getMessage());
         }
     }
 
+    private String advertisedAddress() {
+        try {
+            return InetAddress.getLocalHost().getHostAddress() + ":" + port;
+        } catch (Exception e) {
+            return InetSocketAddress.createUnresolved(address, port).getHostString() + ":" + port;
+        }
+    }
+
     private void handleHealth(com.sun.net.httpserver.HttpExchange exch) throws IOException {
-        String resp = "{\"status\":\"OK\"}";
-        sendJson(exch, 200, resp);
+        sendJson(exch, 200, "{\"status\":\"OK\"}");
     }
 
     private void handleReplica(com.sun.net.httpserver.HttpExchange exch) throws IOException {
         String path = exch.getRequestURI().getPath();
         String fileIdStr = path.substring(path.lastIndexOf('/') + 1);
-        Long fileId = Long.parseLong(fileIdStr);
+        Long fileId;
+        try {
+            fileId = Long.parseLong(fileIdStr);
+        } catch (NumberFormatException e) {
+            sendJson(exch, 400, "{\"error\":\"Invalid file id\"}");
+            return;
+        }
 
         if ("GET".equals(exch.getRequestMethod())) {
             serveReplica(exch, fileId);
@@ -103,64 +123,85 @@ public class NodeHttpServer {
     }
 
     private void handleRegister(com.sun.net.httpserver.HttpExchange exch) throws IOException {
-        if ("POST".equals(exch.getRequestMethod())) {
-            byte[] body = exch.getRequestBody().readAllBytes();
-            Map<String, Object> request = parseJson(body);
-            if (request == null) {
-                sendJson(exch, 400, "{\"error\":\"Invalid JSON\"}");
-                return;
-            }
-
-            String name = (String) request.get("name");
-            Long totalSpaceBytes = ((Number) request.get("totalSpaceBytes")).longValue();
-            String visibility = (String) request.get("visibility");
-            String addr = (String) request.get("address");
-
-            StorageNode node = StorageNode.builder()
-                    .name(name)
-                    .totalSpaceBytes(totalSpaceBytes)
-                    .status(NodeStatus.ONLINE)
-                    .visibility(com.assemblyproject.cloudsystem.entity.NodeVisibility.valueOf(visibility))
-                    .lastHeartbeat(LocalDateTime.now())
-                    .createdAt(LocalDateTime.now())
-                    .build();
-            if (addr != null) node.setSessionId(addr);
-            StorageNode saved = nodeRepository.save(node);
-
-            String resp = "{\"nodeID\":" + saved.getNodeID() + "}";
-            sendJson(exch, 200, resp);
-        } else {
+        if (!"POST".equals(exch.getRequestMethod())) {
             exch.sendResponseHeaders(405, -1);
+            return;
         }
+        byte[] body = exch.getRequestBody().readAllBytes();
+        Map<String, Object> request;
+        try {
+            request = new BasicJsonParser().parseMap(new String(body));
+        } catch (Exception e) {
+            sendJson(exch, 400, "{\"error\":\"Invalid JSON\"}");
+            return;
+        }
+        Object nameValue = request.get("name");
+        if (nameValue == null || nameValue.toString().isBlank()) {
+            sendJson(exch, 400, "{\"error\":\"Missing name\"}");
+            return;
+        }
+
+        User owner = userRepository.findFirstByRole(Role.ADMIN)
+                .orElseGet(() -> userRepository.findAll().stream().findFirst().orElse(null));
+        if (owner == null) {
+            sendJson(exch, 409, "{\"error\":\"No owner available\"}");
+            return;
+        }
+
+        NodeVisibility visibility = NodeVisibility.PERSONAL;
+        Object visibilityValue = request.get("visibility");
+        if (visibilityValue != null && !visibilityValue.toString().isBlank()) {
+            try {
+                visibility = NodeVisibility.valueOf(visibilityValue.toString().toUpperCase());
+            } catch (IllegalArgumentException ignored) {
+                visibility = NodeVisibility.PERSONAL;
+            }
+        }
+
+        StorageNode node = StorageNode.builder()
+                .owner(owner)
+                .name(nameValue.toString())
+                .totalSpaceBytes(parseLong(request.get("totalSpaceBytes"), 0L))
+                .status(NodeStatus.ONLINE)
+                .visibility(visibility)
+                .lastHeartbeat(LocalDateTime.now())
+                .createdAt(LocalDateTime.now())
+                .build();
+        Object addressValue = request.get("address");
+        if (addressValue != null) node.setSessionId(addressValue.toString());
+        StorageNode saved = nodeRepository.save(node);
+
+        sendJson(exch, 200, "{\"nodeID\":" + saved.getNodeID() + "}");
     }
 
-    private Map<String, Object> parseJson(byte[] data) {
+    private long parseLong(Object value, long fallback) {
+        if (value == null) {
+            return fallback;
+        }
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
         try {
-            String json = new String(data);
-            // Simple JSON parser for basic objects
-            Map<String, Object> map = new java.util.HashMap<>();
-            json = json.trim().replaceAll("\\{", "").replaceAll("\\}", "");
-            String[] pairs = json.split(",");
-            for (String pair : pairs) {
-                String[] kv = pair.split(":");
-                if (kv.length == 2) {
-                    String key = kv[0].trim().replaceAll("\"", "");
-                    String value = kv[1].trim().replaceAll("\"", "");
-                    map.put(key, value);
-                }
-            }
-            return map;
-        } catch (Exception e) {
-            return null;
+            return Long.parseLong(value.toString().trim());
+        } catch (NumberFormatException e) {
+            return fallback;
         }
     }
 
     private void serveReplica(com.sun.net.httpserver.HttpExchange exch, Long fileId) throws IOException {
-        String nodeAddr = exch.getRemoteAddress().getAddress().getHostAddress() + ":" + exch.getRemoteAddress().getPort();
-        StorageNode node = nodeRepository.findBySessionId(nodeAddr)
-                .orElseThrow(() -> new RuntimeException("Node not registered"));
+        StorageNode node = resolveSelfNode();
+        if (node == null) {
+            sendJson(exch, 404, "{\"error\":\"Node not registered\"}");
+            return;
+        }
 
-        byte[] data = nodeStorageService.readReplica(node, fileId);
+        byte[] data;
+        try {
+            data = nodeStorageService.readReplica(node, fileId);
+        } catch (IOException e) {
+            exch.sendResponseHeaders(404, -1);
+            return;
+        }
         exch.getResponseHeaders().set("Content-Type", "application/octet-stream");
         exch.sendResponseHeaders(200, data.length);
         try (OutputStream os = exch.getResponseBody()) {
@@ -169,15 +210,33 @@ public class NodeHttpServer {
     }
 
     private void uploadReplica(com.sun.net.httpserver.HttpExchange exch, Long fileId) throws IOException {
-        String nodeAddr = exch.getRemoteAddress().getAddress().getHostAddress() + ":" + exch.getRemoteAddress().getPort();
-        StorageNode node = nodeRepository.findBySessionId(nodeAddr)
-                .orElseThrow(() -> new RuntimeException("Node not registered"));
+        StorageNode node = resolveSelfNode();
+        if (node == null) {
+            sendJson(exch, 404, "{\"error\":\"Node not registered\"}");
+            return;
+        }
 
         byte[] data = exch.getRequestBody().readAllBytes();
         nodeStorageService.saveReplica(node, fileId, data);
+        sendJson(exch, 200, "{\"status\":\"OK\"}");
+    }
 
-        String resp = "{\"status\":\"OK\"}";
-        sendJson(exch, 200, resp);
+    /**
+     * Identifica o nó correspondente a este processo: pelo ID obtido no registo
+     * ou, em fallback, pela porta anunciada no sessionId.
+     */
+    private StorageNode resolveSelfNode() {
+        if (selfNodeId != null) {
+            Optional<StorageNode> byId = nodeRepository.findById(selfNodeId);
+            if (byId.isPresent()) {
+                return byId.get();
+            }
+        }
+        String suffix = ":" + port;
+        return nodeRepository.findAll().stream()
+                .filter(n -> n.getSessionId() != null && n.getSessionId().endsWith(suffix))
+                .findFirst()
+                .orElse(null);
     }
 
     private void sendJson(com.sun.net.httpserver.HttpExchange exch, int status, String json) throws IOException {

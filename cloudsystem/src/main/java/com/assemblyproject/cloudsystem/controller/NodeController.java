@@ -2,29 +2,31 @@ package com.assemblyproject.cloudsystem.controller;
 
 import com.assemblyproject.cloudsystem.entity.NodeStatus;
 import com.assemblyproject.cloudsystem.entity.NodeVisibility;
+import com.assemblyproject.cloudsystem.entity.Role;
 import com.assemblyproject.cloudsystem.entity.StorageNode;
 import com.assemblyproject.cloudsystem.entity.User;
+import com.assemblyproject.cloudsystem.dto.request.RegisterNodeRequest;
 import com.assemblyproject.cloudsystem.repository.StorageNodeRepository;
 import com.assemblyproject.cloudsystem.repository.UserRepository;
 import com.assemblyproject.cloudsystem.service.HeartbeatMonitorService;
 import com.assemblyproject.cloudsystem.service.StorageNodeService;
 import com.assemblyproject.cloudsystem.configuration.JWTUserData;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -37,75 +39,88 @@ public class NodeController {
     private final UserRepository userRepository;
 
     @PostMapping("/register")
-    public ResponseEntity<StorageNode> registerNode(@RequestParam("name") String name,
-                                                    @RequestParam(value = "totalSpaceBytes", required = false) Long totalSpaceBytes,
-                                                    @RequestParam(value = "visibility", required = false) NodeVisibility visibility,
-                                                    @RequestParam(value = "address", required = false) String address,
-                                                    @AuthenticationPrincipal User principal) {
-        Optional<StorageNode> existing = nodeRepository.findAllByOwner(principal).stream().findFirst();
-        if (existing.isPresent()) {
-            StorageNode node = existing.get();
-            node.setName(name);
-            node.setTotalSpaceBytes(totalSpaceBytes != null ? totalSpaceBytes : node.getTotalSpaceBytes());
-            node.setVisibility(visibility != null ? visibility : node.getVisibility());
-            if (address != null) node.setSessionId(address);
+    public ResponseEntity<?> registerNode(@Valid @RequestBody RegisterNodeRequest request,
+                                          @AuthenticationPrincipal JWTUserData principal) {
+        User owner = resolveUser(principal);
+        if (owner == null) {
+            owner = userRepository.findFirstByRole(Role.ADMIN).orElse(null);
+        }
+        if (owner == null) {
+            return ResponseEntity.status(409).body(Map.of("message", "Nenhum utilizador disponível para ser dono do nó."));
+        }
+
+        NodeVisibility visibility = parseVisibility(request.visibility());
+
+        StorageNode node = nodeRepository.findAllByOwner(owner).stream().findFirst().orElse(null);
+        if (node != null) {
+            node.setName(request.name());
+            if (request.totalSpaceBytes() != null) node.setTotalSpaceBytes(request.totalSpaceBytes());
+            if (visibility != null) node.setVisibility(visibility);
+            if (request.address() != null) node.setSessionId(request.address());
             node.setStatus(NodeStatus.ONLINE);
             node.setLastHeartbeat(LocalDateTime.now());
             return ResponseEntity.ok(nodeRepository.save(node));
         }
 
-        StorageNode node = StorageNode.builder()
-                .owner(principal)
-                .name(name)
-                .totalSpaceBytes(totalSpaceBytes != null ? totalSpaceBytes : 0L)
+        node = StorageNode.builder()
+                .owner(owner)
+                .name(request.name())
+                .totalSpaceBytes(request.totalSpaceBytes() != null ? request.totalSpaceBytes() : 0L)
                 .status(NodeStatus.ONLINE)
                 .visibility(visibility != null ? visibility : NodeVisibility.PERSONAL)
                 .lastHeartbeat(LocalDateTime.now())
                 .createdAt(LocalDateTime.now())
                 .build();
-        if (address != null) node.setSessionId(address);
+        if (request.address() != null) node.setSessionId(request.address());
         return ResponseEntity.ok(nodeRepository.save(node));
     }
 
     @GetMapping
-    public ResponseEntity<List<StorageNode>> listNodes(@AuthenticationPrincipal User principal) {
-        return ResponseEntity.ok(nodeRepository.findAllByOwner(principal));
+    public ResponseEntity<?> listNodes(@AuthenticationPrincipal JWTUserData principal) {
+        User user = resolveUser(principal);
+        if (user == null) {
+            return ResponseEntity.status(401).body(Map.of("message", "Não autenticado."));
+        }
+        return ResponseEntity.ok(nodeRepository.findAllByOwner(user));
     }
 
     @PostMapping("/{nodeId}/visibility")
-    public ResponseEntity<StorageNode> setVisibility(@PathVariable Long nodeId,
-                                                     @RequestBody Map<String, String> body,
-                                                     @AuthenticationPrincipal User principal) {
-        StorageNode node = nodeRepository.findById(nodeId)
-                .orElseThrow(() -> new RuntimeException("Node not found"));
-        if (!node.getOwner().getUserID().equals(principal.getUserID())) {
-            return ResponseEntity.status(403).build();
+    public ResponseEntity<?> setVisibility(@PathVariable Long nodeId,
+                                           @RequestBody Map<String, String> body,
+                                           @AuthenticationPrincipal JWTUserData principal) {
+        User user = resolveUser(principal);
+        if (user == null) return unauthorized();
+        StorageNode node = nodeRepository.findById(nodeId).orElse(null);
+        if (node == null) return notFound();
+        if (!isOwner(node, user)) return forbidden();
+        NodeVisibility visibility = parseVisibility(body.get("visibility"));
+        if (visibility == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Visibilidade inválida."));
         }
-        node.setVisibility(NodeVisibility.valueOf(body.get("visibility")));
+        node.setVisibility(visibility);
         return ResponseEntity.ok(nodeRepository.save(node));
     }
 
     @PostMapping("/{nodeId}/heartbeat")
     public ResponseEntity<Void> heartbeat(@PathVariable Long nodeId) {
-        Optional<StorageNode> optional = nodeRepository.findById(nodeId);
-        if (optional.isPresent()) {
-            StorageNode node = optional.get();
-            node.setStatus(NodeStatus.ONLINE);
-            node.setLastHeartbeat(LocalDateTime.now());
-            nodeRepository.save(node);
-            return ResponseEntity.ok().build();
+        StorageNode node = nodeRepository.findById(nodeId).orElse(null);
+        if (node == null) {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();
+        node.setStatus(NodeStatus.ONLINE);
+        node.setLastHeartbeat(LocalDateTime.now());
+        nodeRepository.save(node);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{nodeId}/storage-info")
-    public ResponseEntity<Map<String, Object>> storageInfo(@PathVariable Long nodeId,
-                                                           @AuthenticationPrincipal User principal) {
-        StorageNode node = nodeRepository.findById(nodeId)
-                .orElseThrow(() -> new RuntimeException("Node not found"));
-        if (!nodeStorageService.canAccess(node, principal)) {
-            return ResponseEntity.status(403).build();
-        }
+    public ResponseEntity<?> storageInfo(@PathVariable Long nodeId,
+                                         @AuthenticationPrincipal JWTUserData principal) {
+        User user = resolveUser(principal);
+        if (user == null) return unauthorized();
+        StorageNode node = nodeRepository.findById(nodeId).orElse(null);
+        if (node == null) return notFound();
+        if (!nodeStorageService.canAccess(node, user)) return forbidden();
         try {
             long used = nodeStorageService.getStoredBytes(node);
             long free = node.getTotalSpaceBytes() - used;
@@ -116,35 +131,35 @@ public class NodeController {
                     "totalBytes", node.getTotalSpaceBytes()
             ));
         } catch (IOException e) {
-            return ResponseEntity.status(500).build();
+            return ResponseEntity.status(500).body(Map.of("message", "Não foi possível ler o armazenamento do nó."));
         }
     }
 
     @PostMapping("/{nodeId}/quota")
-    public ResponseEntity<StorageNode> setQuota(@PathVariable Long nodeId,
-                                                @RequestBody Map<String, Long> body,
-                                                @AuthenticationPrincipal User principal) {
-        StorageNode node = nodeRepository.findById(nodeId)
-                .orElseThrow(() -> new RuntimeException("Node not found"));
-        if (!node.getOwner().getUserID().equals(principal.getUserID())) {
-            return ResponseEntity.status(403).build();
-        }
+    public ResponseEntity<?> setQuota(@PathVariable Long nodeId,
+                                      @RequestBody Map<String, Long> body,
+                                      @AuthenticationPrincipal JWTUserData principal) {
+        User user = resolveUser(principal);
+        if (user == null) return unauthorized();
+        StorageNode node = nodeRepository.findById(nodeId).orElse(null);
+        if (node == null) return notFound();
+        if (!isOwner(node, user)) return forbidden();
         Long quota = body.get("quotaBytes");
         if (quota != null && quota < node.getUsedSpaceBytes()) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().body(Map.of("message", "A quota não pode ser inferior ao espaço usado."));
         }
-        node.setTotalSpaceBytes(quota != null ? quota : node.getTotalSpaceBytes());
+        if (quota != null) node.setTotalSpaceBytes(quota);
         return ResponseEntity.ok(nodeRepository.save(node));
     }
 
     @GetMapping("/{nodeId}/quota")
-    public ResponseEntity<Map<String, Object>> getQuota(@PathVariable Long nodeId,
-                                                        @AuthenticationPrincipal User principal) {
-        StorageNode node = nodeRepository.findById(nodeId)
-                .orElseThrow(() -> new RuntimeException("Node not found"));
-        if (!nodeStorageService.canAccess(node, principal)) {
-            return ResponseEntity.status(403).build();
-        }
+    public ResponseEntity<?> getQuota(@PathVariable Long nodeId,
+                                      @AuthenticationPrincipal JWTUserData principal) {
+        User user = resolveUser(principal);
+        if (user == null) return unauthorized();
+        StorageNode node = nodeRepository.findById(nodeId).orElse(null);
+        if (node == null) return notFound();
+        if (!nodeStorageService.canAccess(node, user)) return forbidden();
         long used = node.getUsedSpaceBytes();
         long total = node.getTotalSpaceBytes();
         long free = total - used;
@@ -163,42 +178,61 @@ public class NodeController {
     @PostMapping("/{nodeId}/access")
     public ResponseEntity<?> grantAccess(@PathVariable Long nodeId,
                                          @RequestBody Map<String, String> body,
-                                         @AuthenticationPrincipal User principal) {
-        StorageNode node = nodeRepository.findById(nodeId)
-                .orElseThrow(() -> new RuntimeException("Node not found"));
-        if (!node.getOwner().getUserID().equals(principal.getUserID())) {
-            return ResponseEntity.status(403).build();
+                                         @AuthenticationPrincipal JWTUserData principal) {
+        User user = resolveUser(principal);
+        if (user == null) return unauthorized();
+        StorageNode node = nodeRepository.findById(nodeId).orElse(null);
+        if (node == null) return notFound();
+        if (!isOwner(node, user)) return forbidden();
+
+        Long grantedUserId;
+        try {
+            grantedUserId = Long.valueOf(body.get("userID"));
+        } catch (NumberFormatException | NullPointerException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "userID inválido."));
         }
-        Long grantedUserId = Long.valueOf(body.get("userID"));
-        User grantedUser = new User();
-        grantedUser.setUserID(grantedUserId);
+        User grantedUser = userRepository.findById(grantedUserId).orElse(null);
+        if (grantedUser == null) {
+            return ResponseEntity.status(404).body(Map.of("message", "Utilizador não encontrado."));
+        }
         nodeStorageService.grantAccess(node, grantedUser, null);
         return ResponseEntity.ok(Map.of("granted", true));
     }
 
     @DeleteMapping("/{nodeId}/access/{userID}")
     public ResponseEntity<?> revokeAccess(@PathVariable Long nodeId, @PathVariable Long userID,
-                                          @AuthenticationPrincipal User principal) {
-        StorageNode node = nodeRepository.findById(nodeId)
-                .orElseThrow(() -> new RuntimeException("Node not found"));
-        if (!node.getOwner().getUserID().equals(principal.getUserID())) {
-            return ResponseEntity.status(403).build();
+                                          @AuthenticationPrincipal JWTUserData principal) {
+        User user = resolveUser(principal);
+        if (user == null) return unauthorized();
+        StorageNode node = nodeRepository.findById(nodeId).orElse(null);
+        if (node == null) return notFound();
+        if (!isOwner(node, user)) return forbidden();
+        User grantedUser = userRepository.findById(userID).orElse(null);
+        if (grantedUser == null) {
+            return ResponseEntity.status(404).body(Map.of("message", "Utilizador não encontrado."));
         }
-        User grantedUser = new User();
-        grantedUser.setUserID(userID);
         nodeStorageService.revokeAccess(node, grantedUser);
         return ResponseEntity.ok(Map.of("revoked", true));
     }
 
     @GetMapping("/{nodeId}/access")
     public ResponseEntity<?> listAccess(@PathVariable Long nodeId,
-                                        @AuthenticationPrincipal User principal) {
-        StorageNode node = nodeRepository.findById(nodeId)
-                .orElseThrow(() -> new RuntimeException("Node not found"));
-        if (!node.getOwner().getUserID().equals(principal.getUserID())) {
-            return ResponseEntity.status(403).build();
-        }
-        return ResponseEntity.ok(nodeStorageService.getGrantedUsers(node));
+                                        @AuthenticationPrincipal JWTUserData principal) {
+        User user = resolveUser(principal);
+        if (user == null) return unauthorized();
+        StorageNode node = nodeRepository.findById(nodeId).orElse(null);
+        if (node == null) return notFound();
+        if (!isOwner(node, user)) return forbidden();
+
+        List<Map<String, Object>> granted = new ArrayList<>();
+        nodeStorageService.getGrantedUsers(node).forEach(access -> granted.add(Map.of(
+                "userID", access.getGrantedUser().getUserID(),
+                "name", access.getGrantedUser().getName(),
+                "email", access.getGrantedUser().getEmail(),
+                "grantedAt", access.getGrantedAt() != null ? access.getGrantedAt().toString() : "",
+                "expiresAt", access.getExpiresAt() != null ? access.getExpiresAt().toString() : ""
+        )));
+        return ResponseEntity.ok(granted);
     }
 
     @GetMapping("/jar")
@@ -231,19 +265,46 @@ public class NodeController {
     }
 
     @GetMapping("/offline")
-    public ResponseEntity<List<com.assemblyproject.cloudsystem.entity.StorageNode>> listOffline() {
+    public ResponseEntity<List<StorageNode>> listOffline() {
         return ResponseEntity.ok(heartbeatMonitorService.getOfflineNodes());
     }
 
     @GetMapping("/degraded")
-    public ResponseEntity<List<com.assemblyproject.cloudsystem.entity.StorageNode>> listDegraded() {
+    public ResponseEntity<List<StorageNode>> listDegraded() {
         return ResponseEntity.ok(heartbeatMonitorService.getDegradedNodes());
+    }
+
+    private boolean isOwner(StorageNode node, User user) {
+        return node.getOwner() != null && node.getOwner().getUserID().equals(user.getUserID());
+    }
+
+    private ResponseEntity<Map<String, String>> unauthorized() {
+        return ResponseEntity.status(401).body(Map.of("message", "Não autenticado."));
+    }
+
+    private ResponseEntity<Map<String, String>> forbidden() {
+        return ResponseEntity.status(403).body(Map.of("message", "Sem permissão."));
+    }
+
+    private ResponseEntity<Map<String, String>> notFound() {
+        return ResponseEntity.status(404).body(Map.of("message", "Nó não encontrado."));
+    }
+
+    private NodeVisibility parseVisibility(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return NodeVisibility.valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     /**
      * Resolve o utilizador autenticado (principal JWT) a partir do banco de dados.
      */
-    private User currentUser(@AuthenticationPrincipal JWTUserData principal) {
+    private User resolveUser(JWTUserData principal) {
         if (principal == null || principal.userID() == null) {
             return null;
         }

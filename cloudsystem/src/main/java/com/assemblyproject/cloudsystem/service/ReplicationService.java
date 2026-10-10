@@ -10,6 +10,8 @@ import com.assemblyproject.cloudsystem.repository.FileMetadataRepository;
 import com.assemblyproject.cloudsystem.repository.FileReplicaRepository;
 import com.assemblyproject.cloudsystem.repository.StorageNodeRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,13 +25,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ReplicationService {
 
+    private static final Logger log = LoggerFactory.getLogger(ReplicationService.class);
+    private static final int REPLICATION_FACTOR = 3;
+
     private final FileMetadataRepository fileMetadataRepository;
     private final FileReplicaRepository fileReplicaRepository;
     private final StorageNodeRepository nodeRepository;
     private final ContainerClient containerClient;
-    private final ContainerService containerService;
     private final StorageNodeService nodeStorageService;
-    private final int REPLICATION_FACTOR = 3;
 
     @Async
     @Transactional
@@ -40,17 +43,17 @@ public class ReplicationService {
         List<StorageNode> candidates = nodeRepository.findAllByStatus(NodeStatus.ONLINE);
         List<StorageNode> accessible = candidates.stream()
                 .filter(n -> n.getVisibility() == NodeVisibility.PUBLIC
-                        || n.getOwner().getUserID().equals(owner.getUserID()))
+                        || (n.getOwner() != null && n.getOwner().getUserID().equals(owner.getUserID())))
                 .collect(Collectors.toList());
-        List<StorageNode> selected = selectNodesWithSpace(accessible, REPLICATION_FACTOR);
+        List<StorageNode> selected = selectNodesWithSpace(accessible, REPLICATION_FACTOR, containerData.length);
 
         if (selected.isEmpty()) {
-            System.out.println("⚠️ No accessible nodes for replication");
+            log.warn("Nenhum nó acessível com espaço para replicar o ficheiro {}", fileID);
             return;
         }
 
         for (StorageNode node : selected) {
-            com.assemblyproject.cloudsystem.entity.FileReplica replica = com.assemblyproject.cloudsystem.entity.FileReplica.builder()
+            FileReplica replica = FileReplica.builder()
                     .file(metadata)
                     .node(node)
                     .status(ReplicaStatus.PENDING)
@@ -62,35 +65,41 @@ public class ReplicationService {
                 containerClient.uploadReplica(node, metadata.getFileID(), containerData);
                 replica.setStatus(ReplicaStatus.SYNCED);
                 fileReplicaRepository.save(replica);
-                System.out.println("✅ Replica uploaded to node " + node.getNodeID());
+                log.info("Réplica enviada para o nó {}", node.getNodeID());
             } catch (IOException e) {
                 replica.setStatus(ReplicaStatus.FAILED);
                 fileReplicaRepository.save(replica);
-                System.out.println("⚠️ Replica failed for node " + node.getNodeID() + ": " + e.getMessage());
+                log.warn("Falha ao replicar para o nó {}: {}", node.getNodeID(), e.getMessage());
             }
         }
     }
 
-    @Async
     @Transactional
     public void deleteReplicas(Long fileID) {
-        List<com.assemblyproject.cloudsystem.entity.FileReplica> replicas = fileReplicaRepository.findAllByFile(
-                fileMetadataRepository.findById(fileID)
-                        .orElseThrow(() -> new IllegalArgumentException("File not found")));
-        for (com.assemblyproject.cloudsystem.entity.FileReplica replica : replicas) {
+        FileMetadata metadata = fileMetadataRepository.findById(fileID).orElse(null);
+        if (metadata == null) {
+            return;
+        }
+        List<FileReplica> replicas = fileReplicaRepository.findAllByFile(metadata);
+        for (FileReplica replica : replicas) {
+            StorageNode node = replica.getNode();
             try {
-                StorageNode node = replica.getNode();
-                nodeStorageService.deleteReplica(node, fileID);
-                fileReplicaRepository.delete(replica);
-                System.out.println("✅ Replica deleted on node " + node.getNodeID());
+                if (node != null) {
+                    nodeStorageService.deleteReplica(node, fileID);
+                }
             } catch (IOException e) {
-                System.out.println("⚠️ Failed to delete replica on node " + replica.getNode().getNodeID());
+                log.warn("Falha ao apagar réplica do ficheiro {} no nó {}", fileID,
+                        node != null ? node.getNodeID() : null);
+            } finally {
+                fileReplicaRepository.delete(replica);
             }
         }
     }
 
-    private List<StorageNode> selectNodesWithSpace(List<StorageNode> candidates, int factor) {
+    private List<StorageNode> selectNodesWithSpace(List<StorageNode> candidates, int factor, int requiredBytes) {
         return candidates.stream()
+                .filter(n -> n.getTotalSpaceBytes() == null
+                        || n.getFreeSpaceBytes() >= requiredBytes)
                 .sorted((a, b) -> Long.compare(b.getFreeSpaceBytes(), a.getFreeSpaceBytes()))
                 .limit(factor)
                 .collect(Collectors.toList());
@@ -102,9 +111,7 @@ public class ReplicationService {
                     replica.setStatus(status);
                     replica.setUpdatedAt(LocalDateTime.now());
                     fileReplicaRepository.save(replica);
-                    System.out.println("✅ Replica " + status + " confirmed for file " + fileID + " on node " + nodeID);
-                }, () -> {
-                    System.out.println("⚠️ Replica not found for file " + fileID + " and node " + nodeID);
-                });
+                    log.info("Réplica {} confirmada para o ficheiro {} no nó {}", status, fileID, nodeID);
+                }, () -> log.warn("Réplica não encontrada para o ficheiro {} e nó {}", fileID, nodeID));
     }
 }
