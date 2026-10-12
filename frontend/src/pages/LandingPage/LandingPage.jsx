@@ -121,19 +121,14 @@ const LandingPage = () => {
     const fecharMenu = () => setMenuAberto(false);
     const heroRef = useRef(null);
 
-    // Efeito parallax no hero
+    // Efeito parallax: aplica-se apenas à imagem de fundo do hero,
+    // para nunca deslocar a secção inteira por cima do conteúdo seguinte.
     useEffect(() => {
         const handleScroll = () => {
             if (!heroRef.current) return;
-            const scrollY = window.scrollY;
             const heroRect = heroRef.current.getBoundingClientRect();
-            // Parallax speed: 0.3x (hero moves slower than scroll)
-            const speed = 0.3;
-            const offset = scrollY * speed;
-            // Only apply if hero is in viewport
             if (heroRect.bottom >= 0 && heroRect.top <= window.innerHeight) {
-                heroRef.current.style.transform = `translateY(${offset}px)`;
-                // Set CSS variable for image parallax
+                const offset = window.scrollY * 0.3;
                 heroRef.current.style.setProperty('--parallax-offset', `${offset}px`);
             }
         };

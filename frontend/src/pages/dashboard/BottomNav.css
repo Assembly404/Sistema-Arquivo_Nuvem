@@ -40,19 +40,16 @@
 
 .bottom-nav__item {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 2px;
-    padding: var(--space-2) var(--space-2);
+    justify-content: center;
+    padding: var(--space-2);
     border: none;
     background: transparent;
     color: var(--color-ink-muted);
-    font-size: var(--fs-caption);
-    font-weight: 600;
     cursor: pointer;
     border-radius: var(--radius-lg);
     transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
-    min-width: 72px;
+    min-width: 64px;
     position: relative;
 }
 
@@ -88,12 +85,6 @@
     height: 26px;
     stroke-width: 2.2;
     transition: color var(--dur-fast) var(--ease-out);
-}
-
-.bottom-nav__label {
-    white-space: nowrap;
-    line-height: 1;
-    font-size: var(--fs-caption);
 }
 
 .bottom-nav__badge {
@@ -238,17 +229,12 @@
 @media (max-width: 480px) {
     .bottom-nav {
         padding: var(--space-2) var(--space-1) calc(var(--space-2) + env(safe-area-inset-bottom));
-        gap: 0;
+        gap: var(--space-1);
     }
     
     .bottom-nav__item {
-        padding: var(--space-2) var(--space-1);
-        min-width: 0;
-        width: 20vw;
-    }
-    
-    .bottom-nav__label {
-        font-size: var(--fs-caption);
+        padding: var(--space-2);
+        min-width: 56px;
     }
     
     .bottom-nav__icon {

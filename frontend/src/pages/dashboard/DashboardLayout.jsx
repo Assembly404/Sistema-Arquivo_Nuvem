@@ -117,6 +117,7 @@ function DashboardLayout() {
                 isOpen={bottomNavOpen}
                 onClose={() => setBottomNavOpen(false)}
                 unreadCount={unread}
+                role={auth?.user?.role}
             />
         </div>
     );

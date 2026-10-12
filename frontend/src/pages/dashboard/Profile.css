@@ -122,7 +122,8 @@
     .profile-header__top { justify-content: center; }
     .profile-header__actions { margin-left: 0; width: 100%; }
     .profile-stats { justify-content: center; gap: var(--space-5); }
-    .profile-email, .profile-meta { justify-content: center; }
+    .profile-email { justify-content: center; overflow-wrap: anywhere; }
+    .profile-meta { justify-content: center; }
     .profile-tab span { display: none; } /* só ícones, como o IG em ecrã estreito */
     .profile-tab { padding: var(--space-3) var(--space-2); }
     .profile-grid { grid-template-columns: 1fr; }
@@ -130,6 +131,9 @@
 @media (max-width: 600px) {
     .profile-page .card { padding: var(--space-4); }
     .profile-page .btn { width: 100%; }
-    .profile-header__actions .btn { width: auto; flex: 1; }
+    .profile-header__actions { flex-direction: column; }
+    .profile-header__actions .btn { width: 100%; flex: none; }
+    .profile-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .profile-tab { flex: 1 0 44px; min-width: 44px; }
     .modal__actions { flex-direction: column; }
 }

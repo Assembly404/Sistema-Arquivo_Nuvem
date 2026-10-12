@@ -622,6 +622,12 @@
         --sidebar-inline-padding: var(--space-4);
         width: var(--sidebar-width);
     }
+
+    /* O botão flutuante fica sobreposto pelo header sticky e pela bottom nav,
+       que já cobrem toda a navegação — escondido no mobile. */
+    .sidebar-trigger {
+        display: none;
+    }
 }
 
 @media (max-width: 600px) {

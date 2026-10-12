@@ -12,7 +12,7 @@ function Support() {
                     <h2 className="card__title"><FiHelpCircle aria-hidden="true" /> Central de ajuda</h2>
                     <p className="dashboard-page__text">
                         Consulta o guia de início rápido e as perguntas frequentes sobre a plataforma
-                        na página <a href="/dashboard/arquivos">Arquivos</a> ou nos documento de requisitos.
+                        na página <a href="/dashboard/arquivos">Arquivos</a>.
                     </p>
                 </div>
 

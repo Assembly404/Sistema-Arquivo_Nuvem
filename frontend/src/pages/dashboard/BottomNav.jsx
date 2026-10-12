@@ -12,6 +12,8 @@ import {
     FiUser,
     FiLogOut,
     FiShield,
+    FiShare2,
+    FiTrash2,
 } from "react-icons/fi";
 import "./BottomNav.css";
 
@@ -24,6 +26,8 @@ const NAV_ITEMS = [
 
 const MORE_MENU_ITEMS = [
     { id: "perfil", label: "Perfil", icon: FiUser, path: "/dashboard/perfil" },
+    { id: "compartilhados", label: "Compartilhados", icon: FiShare2, path: "/dashboard/arquivos/compartilhados" },
+    { id: "lixeira", label: "Lixeira", icon: FiTrash2, path: "/dashboard/arquivos/lixeira" },
     { id: "configuracoes", label: "Configurações", icon: FiSettings, path: "/dashboard/configuracoes" },
     { id: "suporte", label: "Suporte", icon: FiHelpCircle, path: "/dashboard/suporte" },
     { id: "admin", label: "Administração", icon: FiShield, path: "/dashboard/admin/usuarios", adminOnly: true },
@@ -31,11 +35,16 @@ const MORE_MENU_ITEMS = [
     { id: "logout", label: "Terminar sessão", icon: FiLogOut, action: "logout", danger: true },
 ];
 
-function BottomNav({ activePath, onAction, unreadCount = 0 }) {
+function BottomNav({ activePath, onAction, unreadCount = 0, role = null }) {
     const [moreOpen, setMoreOpen] = useState(false);
     const moreRef = useRef(null);
     const location = useLocation();
     const navigate = useNavigate();
+
+    const moreItems = useMemo(
+        () => MORE_MENU_ITEMS.filter((item) => !item.adminOnly || role === "ADMIN"),
+        [role]
+    );
 
     // Close more menu on route change
     /* eslint-disable react-hooks/set-state-in-effect */
@@ -97,7 +106,6 @@ function BottomNav({ activePath, onAction, unreadCount = 0 }) {
                         <span className="bottom-nav__icon" aria-hidden="true">
                             <item.icon className={`icon ${isActive ? "icon--active" : ""}`} />
                         </span>
-                        <span className="bottom-nav__label">{item.label}</span>
                         {badge && (
                             <span className="bottom-nav__badge" aria-label={`${unreadCount} notificações não lidas`}>
                                 {badge}
@@ -119,12 +127,11 @@ function BottomNav({ activePath, onAction, unreadCount = 0 }) {
                     <span className="bottom-nav__icon" aria-hidden="true">
                         <FiMoreHorizontal className="icon" />
                     </span>
-                    <span className="bottom-nav__label">Mais</span>
                 </button>
 
                 {moreOpen && (
                     <div className="bottom-nav__dropdown" role="menu" aria-label="Mais opções">
-                        {MORE_MENU_ITEMS.map((item, index) => {
+                        {moreItems.map((item, index) => {
                             if (item.divider) {
                                 return <hr key={`divider-${index}`} className="bottom-nav__divider" />;
                             }

@@ -794,19 +794,18 @@ function MyFiles() {
                 {searching && <span className="files-breadcrumb__item">Resultados da pesquisa</span>}
             </nav>
 
-            <div className="drive-filters" role="group" aria-label="Filtros">
-                <span className="drive-filters__label">Tipo</span>
-                {FILE_FILTERS.map((key) => (
-                    <button
-                        key={key}
-                        type="button"
-                        className={`drive-chip ${filter === key ? "on" : ""}`}
-                        aria-pressed={filter === key}
-                        onClick={() => setFilter(key === "todos" ? "todos" : (filter === key ? "todos" : key))}
-                    >
-                        {FILTER_LABELS[key]}
-                    </button>
-                ))}
+            <div className="drive-filters">
+                <label className="drive-filters__label" htmlFor="drive-type-filter">Tipo</label>
+                <select
+                    id="drive-type-filter"
+                    className="admin-users__role drive-filters__select"
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                >
+                    {FILE_FILTERS.map((key) => (
+                        <option key={key} value={key}>{FILTER_LABELS[key]}</option>
+                    ))}
+                </select>
             </div>
 
             <div
@@ -882,6 +881,7 @@ function MyFiles() {
                 ) : (
                     <>
                         {(folders.length > 0 || visibleFiles.length > 0) && (
+                            <div className="drive-table-wrap">
                             <table className="drive-table">
                                 <thead>
                                     <tr>
@@ -931,6 +931,7 @@ function MyFiles() {
                                     ))}
                                 </tbody>
                             </table>
+                            </div>
                         )}
                     </>
                 )}
@@ -1134,7 +1135,7 @@ function MyFiles() {
                     <div className="modal" role="dialog" aria-modal="true" aria-label={`Mover ou copiar ${spaceFile.originalName}`} onClick={(e) => e.stopPropagation()}>
                         <h2 className="card__title">Espaços · {spaceFile.originalName}</h2>
                         <p className="dashboard-page__text">
-                            Espaço atual: {spaceFile.space === "DEVICE" ? "dispositivo pessoal" : spaceFile.space === "SYSTEM" ? "nuvem do sistema" : "desconhecido"} (RF21).
+                            Espaço atual: {spaceFile.space === "DEVICE" ? "dispositivo pessoal" : spaceFile.space === "SYSTEM" ? "nuvem do sistema" : "desconhecido"}.
                         </p>
                         <form onSubmit={submitSpace}>
                             <label htmlFor="space-action">Operação</label>

@@ -242,7 +242,7 @@ function Storage() {
             return;
         }
         if (!cfgPath.trim()) {
-            setToast({ message: "Indica a pasta do dispositivo a partilhar (RF17.1).", type: "error" });
+            setToast({ message: "Indica a pasta do dispositivo a partilhar.", type: "error" });
             return;
         }
         const gb = Number(cfgSpaceGb);
@@ -354,7 +354,7 @@ function Storage() {
 
                         <div className="card storage-card">
                             <h2 className="card__title"><FiCpu aria-hidden="true" /> Política de armazenamento</h2>
-                            <p className="dashboard-page__text">Define o destino preferido por omissão nos carregamentos (RF22).</p>
+                            <p className="dashboard-page__text">Define o destino preferido por omissão nos carregamentos.</p>
                             <label className="sr-only" htmlFor="storage-policy">Política de armazenamento</label>
                             <select id="storage-policy" className="admin-users__role storage-policy" value={policy} onChange={handlePolicy} disabled={savingPolicy}>
                                 {POLICY_OPTIONS.map((opt) => (
@@ -363,7 +363,7 @@ function Storage() {
                             </select>
 
                             <h2 className="card__title"><FiShield aria-hidden="true" /> Dispositivo offline</h2>
-                            <p className="dashboard-page__text">O que fazer quando um dispositivo que guarda o ficheiro está offline (RF24).</p>
+                            <p className="dashboard-page__text">O que fazer quando um dispositivo que guarda o ficheiro está offline.</p>
                             <label className="sr-only" htmlFor="storage-offline">Comportamento offline</label>
                             <select id="storage-offline" className="admin-users__role storage-policy" value={offlineBehavior} onChange={handleOfflineBehavior} disabled={savingOffline}>
                                 {OFFLINE_OPTIONS.map((opt) => (
@@ -383,7 +383,7 @@ function Storage() {
                         </div>
                         <p className="dashboard-page__text">
                             Liga um computador (agente local) à tua conta para o usar como espaço de armazenamento extra.
-                            Podes registar vários dispositivos com nomes diferentes (RF17.5).
+                            Podes registar vários dispositivos com nomes diferentes.
                         </p>
 
                         {nodes.length === 0 ? (
@@ -472,13 +472,13 @@ function Storage() {
                         {!registered ? (
                             <>
                                 <p className="dashboard-page__text">
-                                    Regista um computador como espaço de armazenamento adicional. O agente vincula-se à tua conta com um token seguro (RF17.4).
+                                    Regista um computador como espaço de armazenamento adicional. O agente vincula-se à tua conta com um token seguro.
                                 </p>
                                 <form onSubmit={submitConfig}>
                                     <label htmlFor="storage-node-name">Nome do dispositivo</label>
                                     <Input id="storage-node-name" type="text" value={cfgName} onChange={(e) => setCfgName(e.target.value)} required placeholder="Ex.: PC de Casa" autoComplete="off" autoFocus />
 
-                                    <label htmlFor="storage-node-path">Pasta do dispositivo (RF17.1)</label>
+                                    <label htmlFor="storage-node-path">Pasta do dispositivo</label>
                                     <Input id="storage-node-path" type="text" value={cfgPath} onChange={(e) => setCfgPath(e.target.value)} required placeholder="Ex.: C:\\CloudSystem ou /home/user/cloud" autoComplete="off" />
 
                                     <label htmlFor="storage-node-address">Endereço do agente (opcional)</label>
@@ -550,7 +550,7 @@ function Storage() {
                     <div className="modal" role="dialog" aria-modal="true" aria-label="Remover dispositivo" onClick={(e) => e.stopPropagation()}>
                         <h2 className="card__title">Remover dispositivo</h2>
                         <p className="dashboard-page__text">
-                            Vais remover <strong>{removing.name}</strong> como espaço de armazenamento (RF17.7).
+                            Vais remover <strong>{removing.name}</strong> como espaço de armazenamento.
                         </p>
                         <label className="storage-check">
                             <input type="checkbox" checked={migrateOnRemove} onChange={(e) => setMigrateOnRemove(e.target.checked)} />

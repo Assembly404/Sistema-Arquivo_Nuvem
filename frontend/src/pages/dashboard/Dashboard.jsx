@@ -30,7 +30,7 @@ function Dashboard() {
     useEffect(() => {
         if (!auth?.token) return undefined;
         let mounted = true;
-        Promise.all([getStorageSummary(), listSharedWithMe(), listFiles({})])
+        Promise.all([getStorageSummary(), listSharedWithMe(), listFiles({ search: "" })])
             .then(([summaryRes, sharedRes, filesRes]) => {
                 if (!mounted) return;
                 setSummary(summaryRes.data);
@@ -98,7 +98,7 @@ function Dashboard() {
                     </div>
 
                     <div className="card home-card home-card--recent">
-                        <h2 className="card__title"><FiFolder aria-hidden="true" /> Ficheiros recentes</h2>
+                        <h2 className="card__title"><FiFolder aria-hidden="true" /> Últimos arquivados</h2>
                         {recent.length === 0 ? (
                             <p className="dashboard-page__text">Ainda não tens ficheiros. <Link to="/dashboard/arquivos">Carrega o primeiro.</Link></p>
                         ) : (
