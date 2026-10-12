@@ -1,14 +1,13 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import './Login.css'
-import Input from "../components/form/input";
-import Button from "../components/button/button";
-import Toast from "../components/toast/toast";
-import hero from "../images/hero.jpg";
+import Input from "../components/form/input.jsx";
+import Button from "../components/button/button.jsx";
+import Toast from "../components/toast/toast.jsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faRightToBracket } from "@fortawesome/free-solid-svg-icons";
 import { Link, useNavigate } from "react-router";
 import AuthContext from "../context/AuthProvider.jsx";
-import { login, setAuthToken } from "../api/axios";
+import { login, setAuthToken } from "../api/axios.js";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
@@ -88,70 +87,48 @@ function Login(){
 
     return(
         <>
-            <section className="loginPage flex">
-                <div className="container flex">
-                    <div className="videoDiv">
-                        <img src={hero} alt="" />
-
-                        <div className="textDiv">
-                            <p className="title">Os Seus Dados A Distancia De Um Clique</p>
-                            <p>Sem peso no bolso, tudo na nuvem!</p>
-                        </div>
-
-                        <div className="footerDiv flex">
-                            <span className="text">Nao tem conta?</span>
-                            <Link to={'/register'} className="btn btn-primary btn-account">
-                                Criar conta
-                            </Link>
-                        </div>
+            <section className="loginPage">
+                <div className="login-card">
+                    <div className="login-badge">
+                        <FontAwesomeIcon icon={faRightToBracket} aria-hidden="true" />
                     </div>
-
-                    <div className="formDiv flex">
-                        <div className="headerDiv">
-                            <FontAwesomeIcon className="headIcon" icon={faRightToBracket} aria-hidden="true" />
-                            <h1 className="authTitle">Bem vindo ao Arquivo Inteligente</h1>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="form grid">
-                            <span className="formHint">Ligue se a sua nuvem</span>
-
-                            <div className="inputDiv">
-                                <label htmlFor="email">
-                                    Email:
-                                </label>
-                                <Input type="email"
+                    <h1 className="login-title" ref={userRef} tabIndex={-1}>Bem vindo ao Arquivo Inteligente</h1>
+                    <p className="login-subtitle">Ligue-se à sua nuvem</p>
+                    <form onSubmit={handleSubmit} className="login-form">
+                        <div className="input_container">
+                            <label htmlFor="email">Email</label>
+                            <Input
+                                type="email"
                                 id="email"
-                                placeholder="Coloque o seu Email"
+                                placeholder="O teu email"
                                 autoComplete="email"
                                 value={email}
-                                ref={userRef}
                                 onChange={(e)=>{setEmail(e.target.value)}}
-                                required={true}
+                                required
                                 errorMessage={emailError} />
-                            </div>
+                        </div>
 
-                            <div className="inputDiv">
-                                <label htmlFor="password">Password</label>
-                                <Input type="password"
+                        <div className="input_container">
+                            <label htmlFor="password">Password</label>
+                            <Input
+                                type="password"
                                 id="password"
-                                placeholder="Coloque a sua senha"
+                                placeholder="A tua password"
                                 autoComplete="current-password"
-                                onChange={(e)=>{ setPassword(e.target.value)}}
                                 value={password}
-                                required={true} />
-                            </div>
+                                onChange={(e)=>{ setPassword(e.target.value)}}
+                                required />
+                        </div>
 
-                            <Button label={'Login'}
-                            variant={'primary'}
-                            type={'submit'}
+                        <Button
+                            label="Login"
+                            variant="primary"
+                            type="submit"
                             loading={loading}
                             disabled={!validEmail} />
-
-                            <span className="forgotPassword">
-                                Esqueceu a sua password? <Link to="/forgotpassword">Clique Aqui</Link>
-                            </span>
-                        </form>
-                    </div>
+                    </form>
+                    <Link className="login-back" to="/forgotpassword">Esqueceu a password?</Link>
+                    <Link className="login-back" to="/register">Não tem conta? Criar uma</Link>
                 </div>
             </section>
 

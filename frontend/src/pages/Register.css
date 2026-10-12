@@ -1,230 +1,117 @@
 /* ============================================================
-   Register — Identidade Visual (docs/IDENTIDADE_VISUAL.md)
-   Mesma geometria do Login (layout preservado) com os tokens
-   definidos em App.css. Breakpoints oficiais: 600 / 768 / 992px.
+   Register — Card style matching ForgotPassword/Login
    ============================================================ */
 
 .registerPage {
     min-height: 100vh;
-    width: 100%;
-    margin: auto;
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    box-shadow: var(--shadow-lg);
+    display: grid;
+    place-items: center;
+    background: var(--color-bg);
+    padding: var(--space-6);
 }
 
-.registerPage .container {
-    min-height: 95vh;
-    width: 60%;
-    margin: auto;
-    justify-content: space-between;
+.register-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    background: var(--color-surface-2);
-}
-
-.registerPage .videoDiv {
-    position: relative;
-    display: flex;
-    flex: 1;
-    padding: 0 var(--space-5);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-8);
+    max-width: 520px;
+    width: 90%;
+    margin: auto;
     text-align: center;
-    align-self: stretch;
-    justify-content: center;
-    flex-direction: column;
-    overflow: hidden;
-    border-radius: var(--radius-md);
-}
-
-.registerPage .videoDiv img,
-.registerPage .videoDiv .footerDiv {
-    position: absolute;
-}
-
-/* Nuvens brancas sobre fundo cinzento — substitui o vídeo (que trazia o azul
-   que não pertence à identidade marrom/dourado) */
-.registerPage .videoDiv img {
-    height: 100%;
-    width: 100%;
-    object-fit: cover;
-    /* o sujeito (nuvem + gesto) fica acima da barra "Já tem uma conta?" */
-    object-position: center 25%;
-    inset: 0;
-}
-
-.registerPage .textDiv {
-    position: relative;
-}
-
-/* Texto sobre imagem clara (§3.3: ≥4.5:1) — antes era branco sobre o vídeo */
-.registerPage .textDiv .title {
-    color: var(--color-ink-strong);
-    font-family: var(--font-display);
-    font-size: var(--fs-2xl);
-    font-weight: 800;
-    line-height: 1.2;
-}
-
-.registerPage .textDiv p {
-    color: var(--color-ink);
-    font-family: var(--font-body);
-    padding: var(--space-4);
-    font-weight: 400;
-    line-height: 1.5;
-}
-
-.registerPage .footerDiv {
-    bottom: var(--space-3);
-    left: var(--space-3);
-    right: var(--space-3);
-    padding: 0 var(--space-4);
-    height: 60px;
-    justify-content: space-between;
-    backdrop-filter: blur(10px);
-    background: color-mix(in srgb, var(--color-surface) 70%, transparent);
-    border-radius: var(--radius-md);
-}
-
-.registerPage .footerDiv .text {
-    color: var(--color-ink);
-    font-family: var(--font-body);
-    font-size: var(--fs-base);
-}
-
-/* Botão da barra: variante primary (dourado) com métrica de pill */
-.registerPage .btn-account {
-    width: auto;
-    padding: var(--space-3) var(--space-6);
-    border-radius: var(--radius-xl);
-    font-family: var(--font-display);
-    font-size: var(--fs-small);
-    font-weight: 600;
-}
-
-.registerPage .formDiv {
-    flex: 1;
+    display: flex;
     flex-direction: column;
     gap: var(--space-4);
-    transform: translateY(calc(var(--space-4) * -1));
 }
 
-.registerPage .headerDiv {
-    text-align: center;
-    padding: var(--space-4) 0;
-}
-
-/* Ícone dourado, fundo transparente (um por página: login / register) */
-.registerPage .headerDiv .headIcon {
-    color: var(--color-primary);
+.register-badge {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--space-4);
+    display: grid;
+    place-items: center;
     background: transparent;
-    font-size: calc(var(--fs-3xl) * 1.5);   /* mantém a pegada do ícone de 60px */
-    padding-bottom: var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    color: var(--color-primary);
+    font-size: var(--fs-xl);
 }
 
-/* H1 único do ecrã (§3.1) */
-.registerPage .headerDiv .authTitle {
+.register-title {
     font-family: var(--font-display);
     font-size: var(--fs-xl);
-    color: var(--color-ink-strong);
     font-weight: 600;
+    color: var(--color-ink-strong);
     line-height: 1.2;
 }
 
-/* Largura definida: impede que a mensagem de erro alargue a coluna
-   (era a causa do input "crescer" quando o erro aparecia) */
-.registerPage .formDiv .form {
-    width: 100%;
-    max-width: 320px;
-    gap: var(--space-3);
+.register-subtitle {
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    color: var(--color-ink-muted);
 }
 
-/* Links auxiliares em --color-primary, sublinhado no hover (§5.3) */
-.registerPage .forgotPassword {
+.register-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    text-align: left;
+}
+
+.register-form .btn {
+    width: 100%;
+}
+
+.input_container {
+    text-align: left;
+}
+
+.input_container label {
+    display: block;
+    margin-bottom: var(--space-1);
     font-family: var(--font-body);
     font-size: var(--fs-small);
-    color: var(--color-ink-muted);
-    text-align: center;
-}
-
-.registerPage .forgotPassword a {
-    color: var(--color-primary);
     font-weight: 500;
-    transition: color var(--dur-fast) var(--ease-out);
+    color: var(--color-ink);
 }
 
-.registerPage .forgotPassword a:hover,
-.registerPage .forgotPassword a:focus-visible {
+.register-back {
+    color: var(--color-primary);
+    font-size: var(--fs-small);
+    font-family: var(--font-body);
+}
+
+.register-back:hover,
+.register-back:focus-visible {
     color: var(--color-primary-hover);
     text-decoration: underline;
 }
 
-/* ---- Responsividade: 992 → 768 → 600 (o mais restrito ganha) ---- */
-@media screen and (max-width: 992px) {
-    .registerPage .container {
-        width: 85%;
-    }
+.pwd-checks {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    text-align: left;
+    margin-top: var(--space-2);
+    margin-bottom: var(--space-2);
 }
 
-@media screen and (max-width: 768px) {
-    .registerPage .container {
-        width: 100%;
-    }
-
-    .registerPage .textDiv .title {
-        font-size: var(--fs-xl);
-    }
-
-    .registerPage .headerDiv {
-        padding: var(--space-3) 0;
-    }
-
-    .registerPage .headerDiv .authTitle {
-        font-size: var(--fs-lg);
-    }
+.pwd-checks li {
+    font-family: var(--font-body);
+    font-size: var(--fs-small);
+    color: var(--color-disabled-ink);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
 }
 
-@media screen and (max-width: 600px) {
-    .registerPage .container {
-        min-height: 100%;
-        width: 100%;
-        flex-direction: column;
-        padding: var(--space-5);
-    }
-
-    .registerPage .videoDiv {
-        width: 100%;
-    }
-
-    .registerPage .textDiv .title {
-        font-size: var(--fs-lg);
-    }
-
-    .registerPage .footerDiv .text {
-        font-size: var(--fs-caption);
-    }
-
-    .registerPage .btn-account {
-        padding: var(--space-2) var(--space-5);
-    }
-
-    .registerPage .formDiv {
-        gap: var(--space-3);
-        transform: translateY(calc(var(--space-2) * -1));
-    }
-
-    .registerPage .headerDiv {
-        padding: var(--space-3) 0;
-    }
-
-    .registerPage .headerDiv .headIcon {
-        font-size: var(--fs-2xl);
-    }
-
-    .registerPage .formDiv .form {
-        gap: var(--space-2);
-    }
+.pwd-checks .pwd-check--ok {
+    color: var(--color-success);
 }
 
-/* Convenção de plataforma (§3.6) */
-::-webkit-scrollbar {
-    display: none;
+@media (max-width: 600px) {
+    .register-card {
+        padding: var(--space-6) var(--space-4);
+    }
 }

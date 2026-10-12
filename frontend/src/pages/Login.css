@@ -1,241 +1,96 @@
 /* ============================================================
-   Login — Identidade Visual (docs/IDENTIDADE_VISUAL.md)
-   Layout preservado (o próprio Login é a referência visual);
-   todos os valores vêm dos design tokens definidos em App.css.
-   Breakpoints oficiais: 600 / 768 / 992px (§3.6).
+   Login — Card style matching ForgotPassword (docs/IDENTIDADE_VISUAL.md)
+   Clean centered card with badge, title, subtitle, form
    ============================================================ */
 
 .loginPage {
-    height: 100vh;
-    width: 100%;
-    margin: auto;
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    box-shadow: var(--shadow-lg);
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: var(--color-bg);
+    padding: var(--space-6);
 }
 
-.loginPage .container {
-    height: 85vh;
-    width: 60%;
-    margin: auto;
-    justify-content: space-between;
+.login-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    background: var(--color-surface-2);
-}
-
-.loginPage .videoDiv {
-    position: relative;
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-8);
+    max-width: 480px;
+    width: 90%;
+    margin: auto;
+    text-align: center;
     display: flex;
-    flex-basis: 50%;
-    width: 70%;
-    height: 100%;
-    padding: 0 var(--space-5);
-    text-align: center;
-    justify-content: center;
     flex-direction: column;
-    overflow: hidden;
-    margin: auto;
-    border-radius: var(--radius-md);
-}
-
-.loginPage .videoDiv img,
-.loginPage .videoDiv .footerDiv {
-    position: absolute;
-}
-
-/* Nuvens brancas sobre fundo cinzento — substitui o vídeo (que trazia o azul
-   que não pertence à identidade marrom/dourado) */
-.loginPage .videoDiv img {
-    height: 100%;
-    width: 100%;
-    object-fit: cover;
-    /* o sujeito (nuvem + gesto) fica acima da barra "Já tem uma conta?" */
-    object-position: center 25%;
-    inset: 0;
-}
-
-.loginPage .textDiv {
-    position: relative;
-}
-
-/* Texto sobre imagem clara (§3.3: ≥4.5:1) — antes era branco sobre o vídeo */
-.loginPage .textDiv .title {
-    color: var(--color-ink-strong);
-    font-family: var(--font-display);
-    font-size: var(--fs-2xl);
-    font-weight: 800;
-    line-height: 1.2;
-}
-
-.loginPage .textDiv p {
-    color: var(--color-ink);
-    font-family: var(--font-body);
-    padding: var(--space-4);
-    font-weight: 400;
-    line-height: 1.5;
-}
-
-.loginPage .footerDiv {
-    bottom: var(--space-3);
-    left: var(--space-3);
-    right: var(--space-3);
-    padding: 0 var(--space-4);
-    height: 60px;
-    justify-content: space-between;
-    backdrop-filter: blur(10px);
-    background: color-mix(in srgb, var(--color-surface) 70%, transparent);
-    border-radius: var(--radius-md);
-}
-
-.loginPage .footerDiv .text {
-    color: var(--color-ink);
-    font-family: var(--font-body);
-    font-size: var(--fs-base);
-}
-
-/* Botão da barra: variante primary (dourado) com métrica de pill */
-.loginPage .btn-account {
-    width: auto;
-    padding: var(--space-3) var(--space-6);
-    border-radius: var(--radius-xl);
-    font-family: var(--font-display);
-    font-size: var(--fs-small);
-    font-weight: 600;
-}
-
-.loginPage .formDiv {
-    flex-basis: 50%;
-    margin: auto;
-    flex-direction: column;
-    gap: var(--space-5);
-    transform: translateY(calc(var(--space-4) * -1));
-}
-
-.loginPage .headerDiv {
-    text-align: center;
-    padding: var(--space-5) 0;
-}
-
-/* Ícone dourado, fundo transparente (substitui a nuvem azul nuvem.png) */
-.loginPage .headerDiv .headIcon {
-    color: var(--color-primary);
-    background: transparent;
-    font-size: calc(var(--fs-3xl) * 1.5);   /* mantém a pegada do ícone de 60px */
-    padding-bottom: var(--space-2);
-}
-
-/* H1 único do ecrã (§3.1) */
-.loginPage .headerDiv .authTitle {
-    font-family: var(--font-display);
-    font-size: var(--fs-xl);
-    color: var(--color-ink-strong);
-    font-weight: 600;
-    line-height: 1.2;
-}
-
-/* Largura definida: impede que a mensagem de erro alargue a coluna
-   (era a causa do input "crescer" quando o erro aparecia) */
-.loginPage .formDiv .form {
-    width: 100%;
-    max-width: 320px;
     gap: var(--space-4);
 }
 
-.loginPage .formDiv .formHint {
-    color: var(--color-ink-muted);
+.login-badge {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--space-4);
+    display: grid;
+    place-items: center;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    color: var(--color-primary);
+    font-size: var(--fs-xl);
+}
+
+.login-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-xl);
+    font-weight: 600;
+    color: var(--color-ink-strong);
+    line-height: 1.2;
+}
+
+.login-subtitle {
     font-family: var(--font-body);
     font-size: var(--fs-base);
-    text-align: center;
+    color: var(--color-ink-muted);
 }
 
-/* Links auxiliares em --color-primary, sublinhado no hover (§5.3) */
-.loginPage .forgotPassword {
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    text-align: left;
+}
+
+.login-form .btn {
+    width: 100%;
+}
+
+.input_container {
+    text-align: left;
+}
+
+.input_container label {
+    display: block;
+    margin-bottom: var(--space-1);
     font-family: var(--font-body);
     font-size: var(--fs-small);
-    color: var(--color-ink-muted);
-    text-align: center;
-}
-
-.loginPage .forgotPassword a {
-    color: var(--color-primary);
     font-weight: 500;
-    transition: color var(--dur-fast) var(--ease-out);
+    color: var(--color-ink);
 }
 
-.loginPage .forgotPassword a:hover,
-.loginPage .forgotPassword a:focus-visible {
+.login-back {
+    color: var(--color-primary);
+    font-size: var(--fs-small);
+    font-family: var(--font-body);
+}
+
+.login-back:hover,
+.login-back:focus-visible {
     color: var(--color-primary-hover);
     text-decoration: underline;
 }
 
-/* ---- Responsividade: 992 → 768 → 600 (o mais restrito ganha) ---- */
-@media screen and (max-width: 992px) {
-    .loginPage .container {
-        width: 85%;
+@media (max-width: 600px) {
+    .login-card {
+        padding: var(--space-6) var(--space-4);
     }
-}
-
-@media screen and (max-width: 768px) {
-    .loginPage .container {
-        width: 100%;
-    }
-
-    .loginPage .textDiv .title {
-        font-size: var(--fs-xl);
-    }
-
-    .loginPage .headerDiv {
-        padding: var(--space-4) 0;
-    }
-
-    .loginPage .headerDiv .authTitle {
-        font-size: var(--fs-lg);
-    }
-}
-
-@media screen and (max-width: 600px) {
-    .loginPage .container {
-        height: 100%;
-        width: 100%;
-        flex-direction: column;
-        padding: var(--space-5);
-    }
-
-    .loginPage .videoDiv {
-        width: 100%;
-    }
-
-    .loginPage .textDiv .title {
-        font-size: var(--fs-lg);
-    }
-
-    .loginPage .footerDiv .text {
-        font-size: var(--fs-caption);
-    }
-
-    .loginPage .btn-account {
-        padding: var(--space-2) var(--space-5);
-    }
-
-    .loginPage .formDiv {
-        gap: var(--space-4);
-        transform: translateY(calc(var(--space-2) * -1));
-    }
-
-    .loginPage .headerDiv {
-        padding: var(--space-4) 0;
-    }
-
-    .loginPage .headerDiv .headIcon {
-        font-size: var(--fs-2xl);
-    }
-
-    .loginPage .formDiv .form {
-        gap: var(--space-3);
-    }
-}
-
-/* Convenção de plataforma (§3.6) */
-::-webkit-scrollbar {
-    display: none;
 }
