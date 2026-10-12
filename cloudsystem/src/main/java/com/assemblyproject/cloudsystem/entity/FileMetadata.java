@@ -66,6 +66,7 @@ public class FileMetadata {
     @Column(length = 20)
     private String compressionAlgorithm;
 
+
     @Column(nullable = false)
     private LocalDateTime uploadedAt;
 

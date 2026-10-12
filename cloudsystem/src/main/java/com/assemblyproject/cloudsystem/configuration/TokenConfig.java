@@ -35,6 +35,7 @@ public class TokenConfig {
         return JWT.create()
                 .withClaim("userID", user.getUserID())
                 .withClaim("role", user.getRole() != null ? user.getRole().name() : "USER")
+                .withClaim("suspended", user.isSuspended())
                 .withSubject(user.getEmail())
                 .withExpiresAt(Instant.now().plusSeconds(86400))
                 .withIssuedAt(Instant.now())
@@ -51,6 +52,7 @@ public class TokenConfig {
                     .userID(decode.getClaim("userID").asLong())
                     .email(decode.getSubject())
                     .role(decode.getClaim("role").asString())
+                    .suspended(decode.getClaim("suspended").asBoolean())
                     .build());
 
         } catch (JWTVerificationException e) {

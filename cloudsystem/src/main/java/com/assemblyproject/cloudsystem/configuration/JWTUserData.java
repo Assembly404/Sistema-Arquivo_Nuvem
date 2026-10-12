@@ -6,6 +6,7 @@ import lombok.Builder;
 public record JWTUserData(
         Long userID,
         String email,
-        String role
+        String role,
+        boolean suspended
 ) {
 }

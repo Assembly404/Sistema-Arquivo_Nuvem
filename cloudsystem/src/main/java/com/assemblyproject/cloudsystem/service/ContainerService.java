@@ -306,46 +306,40 @@ public class ContainerService {
         return out;
     }
 
-    public FileMetadata findById(Long fileID) {
-        return fileMetadataRepository.findById(fileID)
-                .orElseThrow(() -> new RuntimeException("FileMetadata not found with id: " + fileID));
-    }
-
     /**
-     * Carrega e valida a master key (Base64) configurada. Tem de ter 16, 24 ou 32 bytes.
+     * Reprocessa dados já extraídos (raw) num novo container com o modo de
+     * compressão indicado. Usado para comprimir/descomprimir ficheiros existentes.
      */
-    public byte[] loadMasterKey() throws IOException {
-        byte[] masterKey;
-        try {
-            masterKey = Base64.getDecoder().decode(config.getMasterKey());
-        } catch (IllegalArgumentException e) {
-            throw new IOException("A master key tem de estar em Base64 válido", e);
-        }
-        if (masterKey.length != 16 && masterKey.length != 24 && masterKey.length != 32) {
-            throw new IOException("A master key tem de descodificar para 16, 24 ou 32 bytes (obtido: "
-                    + masterKey.length + " bytes)");
-        }
-        return masterKey;
-    }
+    public PreparedContainer prepare(byte[] rawData, String originalName, String mimeType,
+                                     Long originalSizeBytes, CompressionMode mode) throws IOException {
+        String checksum = sha256Hex(rawData);
+        CompressionAlgorithm algorithm = chooseAlgorithm(rawData, originalName, mimeType, mode);
 
-    private byte[] encrypt(byte[] data, byte[] key, byte[] iv) throws IOException {
-        try {
-            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-            cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), new GCMParameterSpec(128, iv));
-            return cipher.doFinal(data);
-        } catch (Exception e) {
-            throw new IOException("Encryption failed", e);
-        }
-    }
+        byte[] fileKey = new byte[32];
+        new SecureRandom().nextBytes(fileKey);
+        byte[] baseIv = new byte[12];
+        new SecureRandom().nextBytes(baseIv);
 
-    private byte[] decrypt(byte[] data, byte[] key, byte[] iv) throws IOException {
+        byte[] container = buildContainerV2(rawData, fileKey, algorithm, baseIv);
+
+        byte[] masterKey = loadMasterKey();
+        EncryptionService.WrappedKey wrapped;
         try {
-            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-            cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"), new GCMParameterSpec(128, iv));
-            return cipher.doFinal(data);
+            wrapped = encryptionService.wrapKey(fileKey, masterKey);
         } catch (Exception e) {
-            throw new IOException("Decryption failed", e);
+            throw new IOException("Key wrapping failed", e);
         }
+
+        return new PreparedContainer(
+                container,
+                originalName,
+                mimeType,
+                originalSizeBytes,
+                (long) container.length,
+                checksum,
+                wrapped.wrappedKeyBase64(),
+                wrapped.ivBase64(),
+                algorithm.name());
     }
 
     private byte[] compress(byte[] data, CompressionAlgorithm algorithm) throws IOException {
@@ -442,6 +436,26 @@ public class ContainerService {
         return new byte[] { (byte)(v >> 24), (byte)(v >> 16), (byte)(v >> 8), (byte)v };
     }
 
+    private byte[] encrypt(byte[] data, byte[] key, byte[] iv) throws IOException {
+        try {
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), new GCMParameterSpec(128, iv));
+            return cipher.doFinal(data);
+        } catch (Exception e) {
+            throw new IOException("Encryption failed", e);
+        }
+    }
+
+    private byte[] decrypt(byte[] data, byte[] key, byte[] iv) throws IOException {
+        try {
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"), new GCMParameterSpec(128, iv));
+            return cipher.doFinal(data);
+        } catch (Exception e) {
+            throw new IOException("Decryption failed", e);
+        }
+    }
+
     private String sha256Hex(byte[] data) {
         try {
             java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
@@ -456,5 +470,22 @@ public class ContainerService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to compute SHA-256", e);
         }
+    }
+
+    /**
+     * Carrega e valida a master key (Base64) configurada. Tem de ter 16, 24 ou 32 bytes.
+     */
+    public byte[] loadMasterKey() throws IOException {
+        byte[] masterKey;
+        try {
+            masterKey = Base64.getDecoder().decode(config.getMasterKey());
+        } catch (IllegalArgumentException e) {
+            throw new IOException("A master key tem de estar em Base64 válido", e);
+        }
+        if (masterKey.length != 16 && masterKey.length != 24 && masterKey.length != 32) {
+            throw new IOException("A master key tem de descodificar para 16, 24 ou 32 bytes (obtido: "
+                    + masterKey.length + " bytes)");
+        }
+        return masterKey;
     }
 }

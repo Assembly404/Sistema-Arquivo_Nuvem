@@ -110,7 +110,7 @@ public class ShareService {
     }
 
     public List<Share> listOwned(User owner) {
-        return shareRepository.findAllByOwnerOrderBySharedAtDesc(owner);
+        return shareRepository.findAllByOwnerAndRevokedAtIsNullOrderBySharedAtDesc(owner);
     }
 
     public Folder requireReadableFolder(User user, Long folderId) {

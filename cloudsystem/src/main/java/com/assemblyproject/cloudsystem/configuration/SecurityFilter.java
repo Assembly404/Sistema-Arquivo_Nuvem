@@ -38,10 +38,14 @@ public class SecurityFilter extends OncePerRequestFilter {
                 JWTUserData userData = optUser.get();
                 String role = userData.role() != null ? userData.role() : "USER";
 
-                UsernamePasswordAuthenticationToken userAndPass = new UsernamePasswordAuthenticationToken(
-                        userData, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+                // Re-verificar o estado de suspensão do utilizador a cada pedido
+                // (RF06 — exclusão de conta / suspensão deve ser respeitada imediatamente)
+                if (!userData.suspended()) {
+                    UsernamePasswordAuthenticationToken userAndPass = new UsernamePasswordAuthenticationToken(
+                            userData, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
 
-                SecurityContextHolder.getContext().setAuthentication(userAndPass);
+                    SecurityContextHolder.getContext().setAuthentication(userAndPass);
+                }
             }
 
             filterChain.doFilter(request, response);

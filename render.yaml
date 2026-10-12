@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: cloudsystem-backend
+    runtime: docker
+    plan: free
+    rootDir: cloudsystem
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DB_URL
+        fromDatabase:
+          name: cloudsystem-db
+          property: connectionString
+      - key: DB_USERNAME
+        fromDatabase:
+          name: cloudsystem-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: cloudsystem-db
+          property: password
+      - key: JWT_SECRET
+        sync: false
+      - key: CLOUD_MASTER_KEY
+        sync: false
+      - key: MAIL_ENABLED
+        value: "false"
+      - key: PORT
+        value: "5000"
+
+databases:
+  - name: cloudsystem-db
+    plan: free
+    databaseName: storagearchivedb

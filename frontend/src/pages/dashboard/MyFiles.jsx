@@ -1,6 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router";
 import {
+    FiArchive,
     FiChevronRight,
     FiClock,
     FiDownload,
@@ -10,6 +11,7 @@ import {
     FiGrid,
     FiHardDrive,
     FiList,
+    FiMaximize,
     FiMoreVertical,
     FiMove,
     FiPlus,
@@ -23,9 +25,11 @@ import Button from "../../components/button/button.jsx";
 import Input from "../../components/form/input.jsx";
 import Toast from "../../components/toast/toast.jsx";
 import {
+    compressFile,
     copyFileToSpace,
     createFolder,
     createPublicLink,
+    decompressFile,
     deleteFile,
     deleteFolder,
     downloadFile,
@@ -110,11 +114,22 @@ function MyFiles() {
     const [nodes, setNodes] = useState([]);
     const [uploadDestination, setUploadDestination] = useState("AUTO");
     const [uploadNodeId, setUploadNodeId] = useState(null);
+    const [uploadCompression, setUploadCompression] = useState("AUTO");
+
     const [spaceFile, setSpaceFile] = useState(null);
     const [spaceAction, setSpaceAction] = useState("move");
     const [spaceDest, setSpaceDest] = useState("SYSTEM");
     const [spaceNodeId, setSpaceNodeId] = useState(null);
     const [spaceBusy, setSpaceBusy] = useState(false);
+
+    // Context menu (botão direito)
+    const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, file: null });
+
+    useEffect(() => {
+        const handleClick = () => setContextMenu((prev) => ({ ...prev, visible: false }));
+        document.addEventListener("click", handleClick);
+        return () => document.removeEventListener("click", handleClick);
+    }, []);
     const fileInputRef = useRef(null);
     const folderInputRef = useRef(null);
     const dragItem = useRef(null);
@@ -189,15 +204,13 @@ function MyFiles() {
     }, []);
 
     const uploadOne = useCallback(async (file, folderId) => {
-        const options = {};
-        if (uploadDestination === "SYSTEM" || uploadDestination === "DEVICE") {
-            options.destination = uploadDestination;
-        }
-        if (uploadDestination === "DEVICE" && uploadNodeId != null) {
-            options.nodeId = uploadNodeId;
-        }
+        const options = {
+            destination: uploadDestination === "SYSTEM" || uploadDestination === "DEVICE" ? uploadDestination : undefined,
+            nodeId: uploadDestination === "DEVICE" && uploadNodeId != null ? uploadNodeId : undefined,
+            compression: uploadCompression && uploadCompression !== "AUTO" ? uploadCompression : undefined
+        };
         await uploadFile(file, folderId, undefined, options);
-    }, [uploadDestination, uploadNodeId]);
+    }, [uploadDestination, uploadNodeId, uploadCompression]);
 
     const runUploads = useCallback(async (fileList, folderId) => {
         const items = Array.from(fileList).filter((f) => f.size > 0 || f.name.trim());
@@ -366,6 +379,28 @@ function MyFiles() {
         } catch (err) {
             console.error("[files] falha ao excluir", err);
             setToast({ message: "Não foi possível excluir.", type: "error" });
+        }
+    };
+
+    const handleCompressFile = async (file) => {
+        try {
+            const res = await compressFile(file.fileID);
+            setFiles((prev) => prev.map((f) => f.fileID === file.fileID ? res.data : f));
+            setToast({ message: `"${file.originalName}" comprimido.`, type: "success" });
+        } catch (err) {
+            console.error("[files] falha ao comprimir", err);
+            setToast({ message: err?.response?.data?.message || "Não foi possível comprimir.", type: "error" });
+        }
+    };
+
+    const handleDecompressFile = async (file) => {
+        try {
+            const res = await decompressFile(file.fileID);
+            setFiles((prev) => prev.map((f) => f.fileID === file.fileID ? res.data : f));
+            setToast({ message: `"${file.originalName}" descomprimido.`, type: "success" });
+        } catch (err) {
+            console.error("[files] falha ao descomprimir", err);
+            setToast({ message: err?.response?.data?.message || "Não foi possível descomprimir.", type: "error" });
         }
     };
 
@@ -603,28 +638,62 @@ function MyFiles() {
         </div>
     );
 
-    const renderFileActions = (file) => (
-        <div className="drive-card__actions">
-            <button type="button" title="Descarregar" aria-label={`Descarregar ${file.originalName}`} onClick={() => handleDownload(file)}>
-                <FiDownload aria-hidden="true" />
-            </button>
-            <button type="button" title="Versões" aria-label={`Versões de ${file.originalName}`} onClick={() => openVersions(file)}>
-                <FiClock aria-hidden="true" />
-            </button>
-            <button type="button" title="Mover/copiar entre espaços" aria-label={`Mover ou copiar ${file.originalName} entre espaços`} onClick={() => openSpace(file)}>
-                <FiMove aria-hidden="true" />
-            </button>
-            <button type="button" title="Renomear" aria-label={`Renomear ${file.originalName}`} onClick={() => { setRenaming(file); setRenameValue(file.originalName); }}>
-                <FiMoreVertical aria-hidden="true" />
-            </button>
-            <button type="button" title="Partilhar" aria-label={`Partilhar ${file.originalName}`} onClick={() => openShare("file", file.fileID, file.originalName)}>
-                <FiShare2 aria-hidden="true" />
-            </button>
-            <button type="button" title="Excluir" aria-label={`Excluir ${file.originalName}`} onClick={() => handleDeleteFile(file)}>
-                <FiTrash2 aria-hidden="true" />
-            </button>
-        </div>
-    );
+    const handleContextMenu = (e, file) => {
+        e.preventDefault();
+        setContextMenu({ visible: true, x: e.clientX, y: e.clientY, file });
+    };
+
+    const handleContextMenuAction = async (action, file) => {
+        setContextMenu({ ...contextMenu, visible: false });
+        if (action === "compress") await handleCompressFile(file);
+        if (action === "decompress") await handleDecompressFile(file);
+    };
+
+    const renderFileActions = (file) => {
+        const isCompressed = file.compressionAlgorithm && file.compressionAlgorithm !== "NONE";
+        return (
+            <div className="drive-card__actions">
+                <button type="button" title="Descarregar" aria-label={`Descarregar ${file.originalName}`} onClick={() => handleDownload(file)}>
+                    <FiDownload aria-hidden="true" />
+                </button>
+                <button type="button" title="Versões" aria-label={`Versões de ${file.originalName}`} onClick={() => openVersions(file)}>
+                    <FiClock aria-hidden="true" />
+                </button>
+                <button type="button" title="Mover/copiar entre espaços" aria-label={`Mover ou copiar ${file.originalName} entre espaços`} onClick={() => openSpace(file)}>
+                    <FiMove aria-hidden="true" />
+                </button>
+                <button type="button" title="Renomear" aria-label={`Renomear ${file.originalName}`} onClick={() => { setRenaming(file); setRenameValue(file.originalName); }}>
+                    <FiMoreVertical aria-hidden="true" />
+                </button>
+                {!isCompressed && (
+                    <button
+                        type="button"
+                        title="Comprimir"
+                        aria-label={`Comprimir ${file.originalName}`}
+                        onClick={() => handleCompressFile(file)}
+                    >
+                        <FiArchive aria-hidden="true" />
+                    </button>
+                )}
+                {isCompressed && (
+                    <button
+                        type="button"
+                        title="Descomprimir"
+                        aria-label={`Descomprimir ${file.originalName}`}
+                        onClick={() => handleDecompressFile(file)}
+                    >
+                        <FiMaximize aria-hidden="true" />
+                    </button>
+                )}
+                <button type="button" title="Partilhar" aria-label={`Partilhar ${file.originalName}`} onClick={() => openShare("file", file.fileID, file.originalName)}>
+                    <FiShare2 aria-hidden="true" />
+                </button>
+                <button type="button" title="Excluir" aria-label={`Excluir ${file.originalName}`} onClick={() => handleDeleteFile(file)}>
+                    <FiTrash2 aria-hidden="true" />
+                </button>
+            </div>
+        );
+    };
 
     return (
         <section className="dashboard-page files-page">
@@ -674,6 +743,22 @@ function MyFiles() {
                             </>
                         )}
                     </div>
+                    <div className="drive-compression" role="group" aria-label="Compressão do upload">
+                        <FiUpload aria-hidden="true" />
+                        <label className="sr-only" htmlFor="upload-compression">Compressão</label>
+                        <select
+                            id="upload-compression"
+                            className="admin-users__role drive-destination__select"
+                            value={uploadCompression}
+                            onChange={(e) => setUploadCompression(e.target.value)}
+                        >
+                            <option value="AUTO">Automático (se ganho ≥ 5%)</option>
+                            <option value="NONE">Sem compressão</option>
+                            <option value="DEFLATE">DEFLATE</option>
+                            <option value="GZIP">GZIP</option>
+                        </select>
+                    </div>
+
                     <div className="drive-view" role="group" aria-label="Modo de visualização">
                         <button
                             type="button"
@@ -776,12 +861,13 @@ function MyFiles() {
                                             key={`file-${file.fileID}`}
                                             className="drive-file"
                                             {...dragProps({ kind: "file", id: file.fileID, name: file.originalName })}
+                                            onContextMenu={(e) => handleContextMenu(e, file)}
                                         >
                                             <span className={`drive-file__thumb drive-icon--${fileTone(file.originalName)}`}>
                                                 <FiFile aria-hidden="true" />
                                             </span>
                                             <div className="drive-file__body">
-                                                <span className="drive-file__name" title={file.originalName}>{file.originalName}</span>
+                                                <span className="drive-file__name" title={file.originalName} data-compressed={file.compressionAlgorithm && file.compressionAlgorithm !== "NONE" ? "true" : "false"}>{file.originalName}</span>
                                                 <span className="drive-card__meta">
                                                     {formatBytes(file.originalSizeBytes)} · {formatDate(file.uploadedAt)}
                                                 </span>
@@ -830,9 +916,10 @@ function MyFiles() {
                                         <tr
                                             key={`file-${file.fileID}`}
                                             {...dragProps({ kind: "file", id: file.fileID, name: file.originalName })}
+                                            onContextMenu={(e) => handleContextMenu(e, file)}
                                         >
                                             <td>
-                                                <span className="drive-table__name">
+                                                <span className="drive-table__name" data-compressed={file.compressionAlgorithm && file.compressionAlgorithm !== "NONE" ? "true" : "false"}>
                                                     <span className={`drive-icon drive-icon--${fileTone(file.originalName)}`}><FiFile aria-hidden="true" /></span>
                                                     {file.originalName}
                                                 </span>
@@ -1091,6 +1178,32 @@ function MyFiles() {
                             </div>
                         </form>
                     </div>
+                </div>
+            )}
+
+            {contextMenu.visible && contextMenu.file && (
+                <div
+                    className="context-menu"
+                    style={{ left: contextMenu.x, top: contextMenu.y }}
+                    role="menu"
+                    aria-label={`Ações para ${contextMenu.file.originalName}`}
+                >
+                    <button
+                        role="menuitem"
+                        className={contextMenu.file.compressionAlgorithm && contextMenu.file.compressionAlgorithm !== "NONE" ? "disabled" : ""}
+                        disabled={contextMenu.file.compressionAlgorithm && contextMenu.file.compressionAlgorithm !== "NONE"}
+                        onClick={() => handleContextMenuAction("compress", contextMenu.file)}
+                    >
+                        <FiArchive aria-hidden="true" /> Comprimir
+                    </button>
+                    <button
+                        role="menuitem"
+                        className={!contextMenu.file.compressionAlgorithm || contextMenu.file.compressionAlgorithm === "NONE" ? "disabled" : ""}
+                        disabled={!contextMenu.file.compressionAlgorithm || contextMenu.file.compressionAlgorithm === "NONE"}
+                        onClick={() => handleContextMenuAction("decompress", contextMenu.file)}
+                    >
+                        <FiMaximize aria-hidden="true" /> Descomprimir
+                    </button>
                 </div>
             )}
 

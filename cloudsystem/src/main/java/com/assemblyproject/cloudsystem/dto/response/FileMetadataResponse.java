@@ -22,6 +22,7 @@ public class FileMetadataResponse {
     private String compressionAlgorithm;
     /** Percentagem de espaço poupada pela compressão (0 se não aplicável). */
     private Integer compressionRatio;
+
     private Integer containerVersion;
     private Long folderID;
     private LocalDateTime uploadedAt;
@@ -42,6 +43,9 @@ public class FileMetadataResponse {
         dto.originalSizeBytes = metadata.getOriginalSizeBytes();
         dto.storedSizeBytes = metadata.getStoredSizeBytes();
         dto.checksumSha256 = metadata.getChecksumSha256();
+        dto.compressionAlgorithm = metadata.getCompressionAlgorithm();
+        dto.compressionRatio = computeRatio(metadata.getOriginalSizeBytes(), metadata.getStoredSizeBytes());
+
         dto.containerVersion = metadata.getContainerVersion();
         dto.folderID = metadata.getFolder() != null ? metadata.getFolder().getFolderID() : null;
         dto.uploadedAt = metadata.getUploadedAt();
@@ -63,5 +67,20 @@ public class FileMetadataResponse {
                 .map(n -> n.getType().name())
                 .orElse(null);
         return dto;
+    }
+
+    /**
+     * Percentagem de espaço poupada pela compressão face ao tamanho original,
+     * considerando o container já cifrado (valores negativos não se aplicam).
+     */
+    private static Integer computeRatio(Long originalSize, Long storedSize) {
+        if (originalSize == null || originalSize <= 0 || storedSize == null) {
+            return 0;
+        }
+        long saved = originalSize - storedSize;
+        if (saved <= 0) {
+            return 0;
+        }
+        return (int) Math.round((double) saved * 100 / originalSize);
     }
 }

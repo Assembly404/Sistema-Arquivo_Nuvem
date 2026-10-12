@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
  * a permitir restaurar versoes antigas independentemente do estado dos nos.
  */
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"fileID", "versionNumber"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -47,6 +48,7 @@ public class FileVersion {
 
     @Column(nullable = false, length = 64)
     private String checksumSha256;
+
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String encryptedDataKey;

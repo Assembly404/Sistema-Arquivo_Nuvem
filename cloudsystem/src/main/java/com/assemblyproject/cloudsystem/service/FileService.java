@@ -107,14 +107,8 @@ public class FileService {
 
     @Transactional
     public FileMetadata updateContent(User owner, Long fileId, MultipartFile upload) throws IOException {
-        return updateContent(owner, fileId, upload, CompressionMode.AUTO);
-    }
-
-    @Transactional
-    public FileMetadata updateContent(User owner, Long fileId, MultipartFile upload,
-                                      CompressionMode mode) throws IOException {
         FileMetadata metadata = requireOwned(owner, fileId);
-        ContainerService.PreparedContainer prepared = containerService.prepare(upload, mode);
+        ContainerService.PreparedContainer prepared = containerService.prepare(upload);
 
         byte[] current = tryReadCurrentContainer(metadata);
         if (current != null) {
@@ -261,6 +255,55 @@ public class FileService {
     }
 
     /**
+     * Comprime o ficheiro com DEFLATE (se ainda não estiver comprimido).
+     * Reprocessa o container e replica no mesmo espaço.
+     */
+    @Transactional
+    public FileMetadata compressFile(User owner, Long fileId) throws IOException {
+        FileMetadata metadata = requireOwned(owner, fileId);
+        String currentAlgo = metadata.getCompressionAlgorithm();
+        if (currentAlgo != null && !"NONE".equalsIgnoreCase(currentAlgo)) {
+            throw new IllegalStateException("O ficheiro já está comprimido (" + currentAlgo + ").");
+        }
+        byte[] container = readCurrentContainer(metadata);
+        byte[] fileKey = containerService.resolveFileKey(metadata);
+        byte[] rawData = containerService.extractContainer(container, fileKey);
+        // Reprocessa com compressão DEFLATE forçada
+        ContainerService.PreparedContainer prepared = containerService.prepare(
+                rawData, metadata.getOriginalName(), metadata.getMimeType(),
+                metadata.getOriginalSizeBytes(), CompressionMode.DEFLATE);
+        replaceReplicas(metadata, owner, prepared.containerData());
+        applyPrepared(metadata, prepared);
+        metadata.setCompressionAlgorithm(CompressionAlgorithm.DEFLATE.name());
+        metadata.setUpdatedAt(LocalDateTime.now());
+        return fileMetadataRepository.save(metadata);
+    }
+
+    /**
+     * Descomprime o ficheiro (guarda como NONE).
+     */
+    @Transactional
+    public FileMetadata decompressFile(User owner, Long fileId) throws IOException {
+        FileMetadata metadata = requireOwned(owner, fileId);
+        String currentAlgo = metadata.getCompressionAlgorithm();
+        if (currentAlgo == null || "NONE".equalsIgnoreCase(currentAlgo)) {
+            throw new IllegalStateException("O ficheiro não está comprimido.");
+        }
+        byte[] container = readCurrentContainer(metadata);
+        byte[] fileKey = containerService.resolveFileKey(metadata);
+        byte[] rawData = containerService.extractContainer(container, fileKey);
+        // Reprocessa sem compressão
+        ContainerService.PreparedContainer prepared = containerService.prepare(
+                rawData, metadata.getOriginalName(), metadata.getMimeType(),
+                metadata.getOriginalSizeBytes(), CompressionMode.NONE);
+        replaceReplicas(metadata, owner, prepared.containerData());
+        applyPrepared(metadata, prepared);
+        metadata.setCompressionAlgorithm(CompressionAlgorithm.NONE.name());
+        metadata.setUpdatedAt(LocalDateTime.now());
+        return fileMetadataRepository.save(metadata);
+    }
+
+    /**
      * Descarrega um ficheiro que o utilizador pode ler porque é dono OU porque
      * lhe foi partilhado (VIEW/EDIT). Não permite operações de escrita.
      */
@@ -345,7 +388,6 @@ public class FileService {
         metadata.setChecksumSha256(prepared.checksumSha256());
         metadata.setEncryptedDataKey(prepared.encryptedDataKey());
         metadata.setKeyEncryptionIv(prepared.keyEncryptionIv());
-        metadata.setCompressionAlgorithm(prepared.compressionAlgorithm());
     }
 
     private String blankToNull(String value) {

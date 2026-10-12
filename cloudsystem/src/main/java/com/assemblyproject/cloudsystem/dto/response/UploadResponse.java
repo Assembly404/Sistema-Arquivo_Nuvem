@@ -4,6 +4,7 @@ public record UploadResponse(
         Long fileID,
         String originalName,
         String contentType,
-        Long size
+        Long size,
+        Long storedSize
 ) {
 }

@@ -94,11 +94,13 @@ public class FileController {
             }
         }
 
+        FileMetadata savedMeta = fileMetadataRepository.findById(stored.fileID()).orElse(null);
         UploadResponse response = new UploadResponse(
                 stored.fileID(),
                 file.getOriginalFilename(),
                 file.getContentType(),
-                file.getSize()
+                file.getSize(),
+                savedMeta != null ? savedMeta.getStoredSizeBytes() : stored.containerData().length
         );
         return ResponseEntity.ok(response);
     }
@@ -146,7 +148,7 @@ public class FileController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + metadata.getOriginalName() + "\"")
+                        "attachment; filename=\"" + sanitizeFilename(metadata.getOriginalName()) + "\"")
                 .body(fileData);
     }
 
@@ -175,14 +177,13 @@ public class FileController {
     @PutMapping("/{fileId}/content")
     public ResponseEntity<FileMetadataResponse> updateContent(@AuthenticationPrincipal JWTUserData principal,
                                                               @PathVariable Long fileId,
-                                                              @RequestParam("file") MultipartFile file,
-                                                              @RequestParam(value = "compression", required = false, defaultValue = "AUTO") String compression) throws IOException {
+                                                              @RequestParam("file") MultipartFile file) throws IOException {
         User user = resolveUser(principal);
         if (user == null) {
             return ResponseEntity.status(401).build();
         }
         return ResponseEntity.ok(FileMetadataResponse.fromEntity(
-                fileService.updateContent(user, fileId, file, CompressionMode.parse(compression))));
+                fileService.updateContent(user, fileId, file)));
     }
 
     @DeleteMapping("/{fileId}")
@@ -276,6 +277,34 @@ public class FileController {
                 fileService.copyToSpace(user, fileId, destination, nodeId)));
     }
 
+    /**
+     * Comprime o ficheiro usando DEFLATE (se ainda não estiver comprimido).
+     */
+    @PostMapping("/{fileId}/compress")
+    public ResponseEntity<?> compressFile(@AuthenticationPrincipal JWTUserData principal,
+                                          @PathVariable Long fileId) throws IOException {
+        User user = resolveUser(principal);
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(FileMetadataResponse.fromEntity(
+                fileService.compressFile(user, fileId)));
+    }
+
+    /**
+     * Descomprime o ficheiro (remove compressão, guarda como NONE).
+     */
+    @PostMapping("/{fileId}/decompress")
+    public ResponseEntity<?> decompressFile(@AuthenticationPrincipal JWTUserData principal,
+                                            @PathVariable Long fileId) throws IOException {
+        User user = resolveUser(principal);
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(FileMetadataResponse.fromEntity(
+                fileService.decompressFile(user, fileId)));
+    }
+
     private UploadDestination parseDestination(String value) {
         if (value == null || value.isBlank()) {
             return UploadDestination.AUTO;
@@ -299,6 +328,19 @@ public class FileController {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    /**
+     * Remove caracteres perigosos do nome do ficheiro para Content-Disposition
+     * (evita path traversal, quebras de header, etc.).
+     */
+    private String sanitizeFilename(String name) {
+        if (name == null) {
+            return "arquivo";
+        }
+        return name.replaceAll("[^\\p{Print}&&[^\\\\/:*?\"<>|]]", "_")
+                .replaceAll("\\s+", "_")
+                .substring(0, Math.min(name.length(), 200));
     }
 
     private User resolveUser(JWTUserData principal) {

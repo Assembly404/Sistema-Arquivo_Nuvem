@@ -19,6 +19,8 @@ public interface ShareRepository extends JpaRepository<Share, Long> {
 
     List<Share> findAllByOwnerOrderBySharedAtDesc(User owner);
 
+    List<Share> findAllByOwnerAndRevokedAtIsNullOrderBySharedAtDesc(User owner);
+
     List<Share> findAllByRecipientAndFileAndRevokedAtIsNull(User recipient, FileMetadata file);
 
     Optional<Share> findByOwnerAndRecipientAndFileAndRevokedAtIsNull(User owner, User recipient, FileMetadata file);

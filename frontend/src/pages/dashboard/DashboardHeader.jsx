@@ -33,15 +33,16 @@ function DashboardHeader({ onLogout }) {
     }
 
     useEffect(() => {
+        const term = query.trim();
+        if (term === urlQuery) return undefined;
         const timer = window.setTimeout(() => {
-            const term = query.trim();
             const target = term
                 ? `/dashboard/arquivos?q=${encodeURIComponent(term)}`
                 : "/dashboard/arquivos";
             navigate(target);
         }, SEARCH_DEBOUNCE);
         return () => window.clearTimeout(timer);
-    }, [query, navigate]);
+    }, [query, urlQuery, navigate]);
 
     useEffect(() => {
         if (!menuOpen) return undefined;

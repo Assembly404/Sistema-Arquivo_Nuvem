@@ -48,15 +48,26 @@ export const uploadFile = (file, folderId, onUploadProgress, options = {}) => {
     if (folderId != null) form.append("folderId", folderId);
     if (options.destination) form.append("destination", options.destination);
     if (options.nodeId != null) form.append("nodeId", options.nodeId);
+
     return http.post("/files/upload", form, {
         headers: { "Content-Type": "multipart/form-data" },
         onUploadProgress
+    });
+};
+export const updateFileContent = (id, file, options = {}) => {
+    const form = new FormData();
+    form.append("file", file);
+    if (options.compression) form.append("compression", options.compression);
+    return http.put(`/files/${id}/content`, form, {
+        headers: { "Content-Type": "multipart/form-data" }
     });
 };
 export const renameFile = (id, name) => http.patch(`/files/${id}`, { name });
 export const moveFile = (id, folderId) => http.patch(`/files/${id}/move`, { folderId });
 export const moveFileToSpace = (id, destination, nodeId) => http.post(`/files/${id}/move-to-space`, { destination, nodeId: nodeId ?? null });
 export const copyFileToSpace = (id, destination, nodeId) => http.post(`/files/${id}/copy-to-space`, { destination, nodeId: nodeId ?? null });
+export const compressFile = (id) => http.post(`/files/${id}/compress`);
+export const decompressFile = (id) => http.post(`/files/${id}/decompress`);
 export const deleteFile = (id) => http.delete(`/files/${id}`);
 export const restoreFile = (id) => http.post(`/files/${id}/restore`);
 export const purgeFile = (id) => http.delete(`/files/${id}/purge`);
