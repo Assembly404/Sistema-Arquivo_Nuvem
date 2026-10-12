@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router";
 import {
     FiArrowRight,
@@ -119,6 +119,28 @@ const FAQ = [
 const LandingPage = () => {
     const [menuAberto, setMenuAberto] = useState(false);
     const fecharMenu = () => setMenuAberto(false);
+    const heroRef = useRef(null);
+
+    // Efeito parallax no hero
+    useEffect(() => {
+        const handleScroll = () => {
+            if (!heroRef.current) return;
+            const scrollY = window.scrollY;
+            const heroRect = heroRef.current.getBoundingClientRect();
+            // Parallax speed: 0.3x (hero moves slower than scroll)
+            const speed = 0.3;
+            const offset = scrollY * speed;
+            // Only apply if hero is in viewport
+            if (heroRect.bottom >= 0 && heroRect.top <= window.innerHeight) {
+                heroRef.current.style.transform = `translateY(${offset}px)`;
+                // Set CSS variable for image parallax
+                heroRef.current.style.setProperty('--parallax-offset', `${offset}px`);
+            }
+        };
+
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     return (
         <div className="landing-page">
@@ -163,7 +185,7 @@ const LandingPage = () => {
             </header>
 
 
-            <section className="hero" id="topo">
+            <section className="hero" id="topo" ref={heroRef}>
                 <img src={hero} alt="" className="hero-img" />
 
                 <div className="hero-conteudo">

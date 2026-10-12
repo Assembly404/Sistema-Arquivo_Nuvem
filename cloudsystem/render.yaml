@@ -7,10 +7,18 @@ services:
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
     envVars:
-      - key: DB_URL
+      - key: DB_HOST
         fromDatabase:
           name: cloudsystem-db
-          property: jdbcURL
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: cloudsystem-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: cloudsystem-db
+          property: databaseName
       - key: DB_USERNAME
         fromDatabase:
           name: cloudsystem-db

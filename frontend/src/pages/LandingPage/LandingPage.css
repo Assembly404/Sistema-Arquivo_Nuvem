@@ -192,6 +192,8 @@
     display: flex;
     align-items: center;
     overflow: hidden;
+    will-change: transform;
+    transform: translateY(0);
 }
 
 .landing-page .hero-img {
@@ -201,6 +203,12 @@
     height: 100%;
     object-fit: cover;
     z-index: 0;
+    will-change: transform;
+}
+
+/* Slight parallax on the image itself for depth */
+.landing-page .hero[style*="translateY"] .hero-img {
+    transform: translateY(calc(var(--parallax-offset, 0) * 0.15));
 }
 
 .landing-page .hero-conteudo {
