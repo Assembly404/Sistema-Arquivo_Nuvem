@@ -12,7 +12,9 @@ FROM eclipse-temurin:17-jre
 WORKDIR /app
 RUN useradd -m appuser
 COPY --from=build /app/target/cloudsystem-0.0.1-SNAPSHOT.jar app.jar
-RUN chown appuser:appuser app.jar
+# Copia o JAR também como cloudsystem-node.jar para download do agente
+COPY --from=build /app/target/cloudsystem-0.0.1-SNAPSHOT.jar cloudsystem-node.jar
+RUN chown appuser:appuser app.jar cloudsystem-node.jar
 USER appuser
 EXPOSE 5000
 ENTRYPOINT ["java", "-jar", "app.jar"]

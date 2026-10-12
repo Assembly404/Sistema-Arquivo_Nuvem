@@ -19,10 +19,11 @@
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
-    justify-content: space-around;
+    justify-content: center;
+    gap: var(--space-1);
     padding: env(safe-area-inset-bottom) var(--space-2) var(--space-2);
     padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
-    font-family: var(--font-ui);
+    font-family: var(--font-display);
     animation: bottomNavSlideUp 0.3s var(--ease-out);
 }
 
@@ -42,16 +43,16 @@
     flex-direction: column;
     align-items: center;
     gap: 2px;
-    padding: var(--space-1) var(--space-2);
+    padding: var(--space-2) var(--space-2);
     border: none;
     background: transparent;
     color: var(--color-ink-muted);
-    font-size: var(--fs-xs);
-    font-weight: 500;
+    font-size: var(--fs-caption);
+    font-weight: 600;
     cursor: pointer;
     border-radius: var(--radius-lg);
     transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
-    min-width: 64px;
+    min-width: 72px;
     position: relative;
 }
 
@@ -78,13 +79,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
 }
 
 .bottom-nav__icon .icon {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     stroke-width: 2.2;
     transition: color var(--dur-fast) var(--ease-out);
 }
@@ -92,6 +93,7 @@
 .bottom-nav__label {
     white-space: nowrap;
     line-height: 1;
+    font-size: var(--fs-caption);
 }
 
 .bottom-nav__badge {
@@ -113,9 +115,9 @@
 /* More button */
 .bottom-nav__more {
     position: relative;
-    flex: 1;
+    flex: 0 0 auto;
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
 }
 
 .bottom-nav__item--more .bottom-nav__icon .icon {
@@ -170,7 +172,7 @@
     border: none;
     background: transparent;
     color: var(--color-ink-strong);
-    font-size: var(--fs-sm);
+    font-size: var(--fs-base);
     font-weight: 500;
     text-align: left;
     cursor: pointer;
@@ -190,7 +192,7 @@
 }
 
 .bottom-nav__dropdown-item--danger:hover {
-    background: var(--color-danger-tint);
+    background: color-mix(in srgb, var(--color-danger-bg) 25%, var(--color-surface));
     color: var(--color-danger);
 }
 
@@ -235,25 +237,27 @@
 /* Reduce padding on very small screens */
 @media (max-width: 480px) {
     .bottom-nav {
-        padding: var(--space-1) var(--space-1) calc(var(--space-1) + env(safe-area-inset-bottom));
+        padding: var(--space-2) var(--space-1) calc(var(--space-2) + env(safe-area-inset-bottom));
+        gap: 0;
     }
     
     .bottom-nav__item {
-        padding: var(--space-1);
-        min-width: 56px;
+        padding: var(--space-2) var(--space-1);
+        min-width: 0;
+        width: 20vw;
     }
     
     .bottom-nav__label {
-        font-size: 10px;
+        font-size: var(--fs-caption);
     }
     
     .bottom-nav__icon {
-        width: 22px;
-        height: 22px;
+        width: 24px;
+        height: 24px;
     }
     
     .bottom-nav__icon .icon {
-        width: 22px;
-        height: 22px;
+        width: 24px;
+        height: 24px;
     }
 }

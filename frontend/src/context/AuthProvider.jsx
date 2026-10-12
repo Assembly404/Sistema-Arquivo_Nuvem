@@ -1,14 +1,37 @@
-import { createContext, useMemo, useState } from "react";
+import { createContext, useEffect, useMemo, useState } from "react";
+import { setAuthToken } from "../api/axios.js";
 
 const AuthContext = createContext({});
+
+const STORAGE_KEY = "arquivo-nuvem.auth";
 
 const ROLE_PERMISSIONS = {
     ADMIN: ["ADMIN_ACESSAR", "ADMIN_USUARIOS", "ADMIN_PERMISSOES", "ARQUIVO_VISUALIZAR", "ARQUIVO_EXCLUIR", "ARMAZENAMENTO_VISUALIZAR"],
     USER: ["ARQUIVO_VISUALIZAR", "ARMAZENAMENTO_VISUALIZAR"]
 };
 
+const readStoredAuth = () => {
+    if (typeof window === "undefined") return {};
+    try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : {};
+    } catch {
+        return {};
+    }
+};
+
 export const AuthProvider = ({ children }) => {
-    const [auth, setAuth] = useState({});
+    const [auth, setAuth] = useState(readStoredAuth);
+
+    useEffect(() => {
+        setAuthToken(auth?.token || null);
+        try {
+            if (auth?.token) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(auth));
+            else window.localStorage.removeItem(STORAGE_KEY);
+        } catch {
+            /* armazenamento indisponível — a sessão dura apenas enquanto a aba estiver aberta */
+        }
+    }, [auth]);
 
     const value = useMemo(() => {
         const role = auth?.user?.role || null;

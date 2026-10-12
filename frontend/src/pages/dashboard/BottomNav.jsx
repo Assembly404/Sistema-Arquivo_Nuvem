@@ -40,8 +40,8 @@ function BottomNav({ activePath, onAction, unreadCount = 0 }) {
     // Close more menu on route change
     /* eslint-disable react-hooks/set-state-in-effect */
     useEffect(() => {
-        if (moreOpen) setMoreOpen(false);
-    }, [location.pathname, moreOpen]);
+        setMoreOpen(false);
+    }, [location.pathname]);
     /* eslint-enable react-hooks/set-state-in-effect */
 
     // Close more menu on outside click
