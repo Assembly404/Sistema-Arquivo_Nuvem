@@ -4,12 +4,13 @@ services:
     runtime: docker
     plan: free
     rootDir: cloudsystem
-    healthCheckPath: /actuator/health
+    dockerfilePath: ./cloudsystem/Dockerfile
+    healthCheckPath: /api/health
     envVars:
       - key: DB_URL
         fromDatabase:
           name: cloudsystem-db
-          property: connectionString
+          property: jdbcURL
       - key: DB_USERNAME
         fromDatabase:
           name: cloudsystem-db

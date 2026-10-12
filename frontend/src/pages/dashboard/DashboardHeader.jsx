@@ -62,82 +62,139 @@ function DashboardHeader({ onLogout }) {
 
     return (
         <header className="dash-header">
-            <div className="dash-header__brand" aria-hidden="true">
-                <img src={Logo} alt="" />
-                <span>Arquivo Nuvem</span>
+            {/* Desktop: Brand + Search + Actions + Account */}
+            <div className="dash-header__desktop">
+                <div className="dash-header__brand" aria-hidden="true">
+                    <img src={Logo} alt="" />
+                    <span>Arquivo Nuvem</span>
+                </div>
+
+                <label className="dash-header__search">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 14h-.8l-.3-.3a6.5 6.5 0 1 0-.7.7l.3.3v.8l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z" /></svg>
+                    <input
+                        type="search"
+                        placeholder="Pesquisar no Arquivo Nuvem"
+                        aria-label="Pesquisar no Arquivo Nuvem"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                    />
+                </label>
+
+                <div className="dash-header__spacer" />
+
+                <Link
+                    to="/dashboard/configuracoes"
+                    className="dash-header__icon"
+                    aria-label="Configurações"
+                    title="Configurações"
+                >
+                    <FiSettings aria-hidden="true" />
+                </Link>
+
+                <Link
+                    to="/dashboard/suporte"
+                    className="dash-header__icon"
+                    aria-label="Suporte"
+                    title="Suporte"
+                >
+                    <FiHelpCircle aria-hidden="true" />
+                </Link>
+
+                <div className="dash-header__account" ref={menuRef}>
+                    <button
+                        type="button"
+                        className="dash-header__avatar"
+                        onClick={() => setMenuOpen((open) => !open)}
+                        aria-expanded={menuOpen}
+                        aria-haspopup="menu"
+                        aria-label={`Conta de ${name}`}
+                    >
+                        {initials}
+                    </button>
+
+                    {menuOpen && (
+                        <ul className="dash-header__menu" role="menu">
+                            <li className="dash-header__menu-head">
+                                <span className="dash-header__menu-name">{name}</span>
+                                <span className="dash-header__menu-email">{auth?.user?.email || ""}</span>
+                            </li>
+                            <li>
+                                <Link to="/dashboard/perfil" className="dash-header__menu-item" role="menuitem" onClick={() => setMenuOpen(false)}>
+                                    <span className="dash-header__menu-icon"><FiUser aria-hidden="true" /></span>
+                                    Perfil
+                                </Link>
+                            </li>
+                            <li>
+                                <button
+                                    type="button"
+                                    className="dash-header__menu-item dash-header__menu-item--danger"
+                                    role="menuitem"
+                                    onClick={() => {
+                                        setMenuOpen(false);
+                                        onLogout?.();
+                                    }}
+                                >
+                                    <span className="dash-header__menu-icon"><FiLogOut aria-hidden="true" /></span>
+                                    Terminar sessão
+                                </button>
+                            </li>
+                        </ul>
+                    )}
+                </div>
             </div>
 
-            <label className="dash-header__search">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 14h-.8l-.3-.3a6.5 6.5 0 1 0-.7.7l.3.3v.8l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z" /></svg>
-                <input
-                    type="search"
-                    placeholder="Pesquisar no Arquivo Nuvem"
-                    aria-label="Pesquisar no Arquivo Nuvem"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                />
-            </label>
-
-            <div className="dash-header__spacer" />
-
-            <Link
-                to="/dashboard/configuracoes"
-                className="dash-header__icon"
-                aria-label="Configurações"
-                title="Configurações"
-            >
-                <FiSettings aria-hidden="true" />
-            </Link>
-
-            <Link
-                to="/dashboard/suporte"
-                className="dash-header__icon"
-                aria-label="Suporte"
-                title="Suporte"
-            >
-                <FiHelpCircle aria-hidden="true" />
-            </Link>
-
-            <div className="dash-header__account" ref={menuRef}>
+            {/* Mobile: Search button + Account avatar only */}
+            <div className="dash-header__mobile">
                 <button
                     type="button"
-                    className="dash-header__avatar"
-                    onClick={() => setMenuOpen((open) => !open)}
-                    aria-expanded={menuOpen}
-                    aria-haspopup="menu"
-                    aria-label={`Conta de ${name}`}
+                    className="dash-header__mobile-search"
+                    aria-label="Pesquisar"
+                    onClick={() => navigate("/dashboard/arquivos")}
                 >
-                    {initials}
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 14h-.8l-.3-.3a6.5 6.5 0 1 0-.7.7l.3.3v.8l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z" /></svg>
                 </button>
 
-                {menuOpen && (
-                    <ul className="dash-header__menu" role="menu">
-                        <li className="dash-header__menu-head">
-                            <span className="dash-header__menu-name">{name}</span>
-                            <span className="dash-header__menu-email">{auth?.user?.email || ""}</span>
-                        </li>
-                        <li>
-                            <Link to="/dashboard/perfil" className="dash-header__menu-item" role="menuitem" onClick={() => setMenuOpen(false)}>
-                                <span className="dash-header__menu-icon"><FiUser aria-hidden="true" /></span>
-                                Perfil
-                            </Link>
-                        </li>
-                        <li>
-                            <button
-                                type="button"
-                                className="dash-header__menu-item dash-header__menu-item--danger"
-                                role="menuitem"
-                                onClick={() => {
-                                    setMenuOpen(false);
-                                    onLogout?.();
-                                }}
-                            >
-                                <span className="dash-header__menu-icon"><FiLogOut aria-hidden="true" /></span>
-                                Terminar sessão
-                            </button>
-                        </li>
-                    </ul>
-                )}
+                <div className="dash-header__account" ref={menuRef}>
+                    <button
+                        type="button"
+                        className="dash-header__avatar"
+                        onClick={() => setMenuOpen((open) => !open)}
+                        aria-expanded={menuOpen}
+                        aria-haspopup="menu"
+                        aria-label={`Conta de ${name}`}
+                    >
+                        {initials}
+                    </button>
+
+                    {menuOpen && (
+                        <ul className="dash-header__menu dash-header__menu--mobile" role="menu">
+                            <li className="dash-header__menu-head">
+                                <span className="dash-header__menu-name">{name}</span>
+                                <span className="dash-header__menu-email">{auth?.user?.email || ""}</span>
+                            </li>
+                            <li>
+                                <Link to="/dashboard/perfil" className="dash-header__menu-item" role="menuitem" onClick={() => setMenuOpen(false)}>
+                                    <span className="dash-header__menu-icon"><FiUser aria-hidden="true" /></span>
+                                    Perfil
+                                </Link>
+                            </li>
+                            <li>
+                                <button
+                                    type="button"
+                                    className="dash-header__menu-item dash-header__menu-item--danger"
+                                    role="menuitem"
+                                    onClick={() => {
+                                        setMenuOpen(false);
+                                        onLogout?.();
+                                    }}
+                                >
+                                    <span className="dash-header__menu-icon"><FiLogOut aria-hidden="true" /></span>
+                                    Terminar sessão
+                                </button>
+                            </li>
+                        </ul>
+                    )}
+                </div>
             </div>
         </header>
     );

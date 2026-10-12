@@ -25,14 +25,14 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final SecurityFilter securityFilter;
+    // private final SecurityFilter securityFilter;
 
-    public SecurityConfig(SecurityFilter securityFilter) {
-        this.securityFilter = securityFilter;
-    }
+    // public SecurityConfig(SecurityFilter securityFilter) {
+    //     this.securityFilter = securityFilter;
+    // }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, TokenConfig tokenConfig) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configure(http))
@@ -44,13 +44,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/password/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/public/**").permitAll()
+                        .requestMatchers("/api/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/nodes/jar").permitAll()
                         .requestMatchers(HttpMethod.POST, "/nodes/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/nodes/*/heartbeat").permitAll()
                         .requestMatchers("/dashboard/**").hasRole("ADMIN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated())
-                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
+                        .anyRequest().authenticated());
+                // .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

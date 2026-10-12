@@ -5,8 +5,8 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
-@Configuration
-@EnableWebSocketMessageBroker
+// @Configuration
+// @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
@@ -17,6 +17,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-nodes").setAllowedOrigins("http://localhost:5173", "http://127.0.0.1:5173");
+        registry.addEndpoint("/ws-nodes")
+                .setAllowedOrigins("http://localhost:5173", "http://127.0.0.1:5173");
     }
 }

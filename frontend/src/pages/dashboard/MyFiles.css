@@ -785,3 +785,213 @@ button.drive-table__name {
     margin-left: var(--space-1);
     vertical-align: middle;
 }
+
+/* ==========================================================================
+   Responsive Styles for MyFiles (Mobile First)
+   ========================================================================== */
+
+/* Tablet adjustments */
+@media (max-width: 992px) {
+    .drive-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-3);
+    }
+
+    .drive-toolbar__right {
+        justify-content: flex-start;
+    }
+
+    .drive-destination,
+    .drive-compression {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .drive-destination__select,
+    .drive-destination__select option {
+        flex: 1;
+    }
+
+    .files-breadcrumb {
+        flex-wrap: wrap;
+        gap: var(--space-1);
+    }
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    .files-page {
+        gap: var(--space-3);
+    }
+
+    .drive-toolbar {
+        gap: var(--space-2);
+    }
+
+    .drive-title {
+        font-size: var(--fs-lg);
+    }
+
+    .drive-destination,
+    .drive-compression {
+        padding: var(--space-1) var(--space-2);
+        font-size: var(--fs-caption);
+    }
+
+    .drive-destination__select {
+        padding: 2px var(--space-2);
+        font-size: var(--fs-caption);
+    }
+
+    .drive-view button {
+        width: 40px;
+        height: 36px;
+    }
+
+    /* Grid view - 2 columns on mobile */
+    .drive-files {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-2);
+    }
+
+    .drive-file {
+        min-width: 0;
+    }
+
+    .drive-file__thumb {
+        width: 40px;
+        height: 40px;
+    }
+
+    .drive-file__name {
+        font-size: var(--fs-small);
+    }
+
+    .drive-card__meta {
+        font-size: var(--fs-caption);
+    }
+
+    .drive-card__actions {
+        gap: var(--space-1);
+    }
+
+    .drive-card__actions button {
+        width: 36px;
+        height: 36px;
+    }
+
+    /* Table view adjustments */
+    .drive-table {
+        font-size: var(--fs-small);
+    }
+
+    .drive-table th,
+    .drive-table td {
+        padding: var(--space-2);
+    }
+
+    .drive-table__actions-col {
+        white-space: nowrap;
+    }
+
+    /* Context menu adjustments for mobile */
+    .context-menu {
+        left: var(--space-2) !important;
+        right: var(--space-2) !important;
+        min-width: auto !important;
+        max-width: calc(100vw - var(--space-4)) !important;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.15);
+        animation: contextMenuSlideUp 0.2s var(--ease-out);
+    }
+
+    @keyframes contextMenuSlideUp {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .context-menu button {
+        padding: var(--space-3) var(--space-4);
+        font-size: var(--fs-base);
+        border-radius: var(--radius-md);
+    }
+
+    /* Upload FAB adjustments */
+    .fab__main {
+        width: 52px;
+        height: 52px;
+    }
+
+    .fab__menu {
+        bottom: 88px; /* Above bottom nav */
+        right: var(--space-4);
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.15);
+    }
+
+    .fab-menu__backdrop {
+        background: var(--color-overlay);
+    }
+
+    /* Modal adjustments for mobile */
+    .modal-backdrop {
+        padding: var(--space-2);
+    }
+
+    .modal {
+        max-height: 85vh;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        animation: modalSlideUp 0.25s var(--ease-out);
+    }
+
+    @keyframes modalSlideUp {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .modal form {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    /* Toast adjustments */
+    .toast {
+        left: var(--space-3) !important;
+        right: var(--space-3) !important;
+        bottom: 100px !important; /* Above bottom nav */
+        max-width: none !important;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+    .fab__menu {
+        left: var(--space-2);
+        right: var(--space-2);
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+
+    .fab__main {
+        width: 48px;
+        height: 48px;
+    }
+
+    .drive-files {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

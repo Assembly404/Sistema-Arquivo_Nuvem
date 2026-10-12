@@ -5,6 +5,7 @@ import { SIDEBAR_MENU, SIDEBAR_STORAGE_KEY, filterMenuByPermissions, permissions
 import AuthContext from "../../context/AuthProvider.jsx";
 import { getStorageSummary, getUnreadNotificationCount, setAuthToken } from "../../api/axios.js";
 import DashboardHeader from "./DashboardHeader.jsx";
+import BottomNav from "./BottomNav.jsx";
 import "./DashboardLayout.css";
 
 function DashboardLayout() {
@@ -16,6 +17,7 @@ function DashboardLayout() {
     );
     const [storage, setStorage] = useState(null);
     const [unread, setUnread] = useState(0);
+    const [bottomNavOpen, setBottomNavOpen] = useState(false);
 
     useEffect(() => {
         window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
@@ -70,6 +72,26 @@ function DashboardLayout() {
         ? `${auth.user.name} ${auth.user.surname}`
         : auth?.user?.name || auth?.user?.email?.split("@")[0] || "";
 
+    const handleBottomNavAction = (action) => {
+        switch (action) {
+            case "home":
+                navigate("/dashboard");
+                break;
+            case "files":
+                navigate("/dashboard/arquivos");
+                break;
+            case "notifications":
+                navigate("/dashboard/notificacoes");
+                break;
+            case "storage":
+                navigate("/dashboard/armazenamento");
+                break;
+            case "more":
+                setBottomNavOpen(true);
+                break;
+        }
+    };
+
     return (
         <div className={`dashboard-layout ${collapsed ? "dashboard-layout--collapsed" : ""}`}>
             <SideBar
@@ -88,6 +110,14 @@ function DashboardLayout() {
                     <Outlet />
                 </div>
             </main>
+
+            <BottomNav
+                activePath={location.pathname}
+                onAction={handleBottomNavAction}
+                isOpen={bottomNavOpen}
+                onClose={() => setBottomNavOpen(false)}
+                unreadCount={unread}
+            />
         </div>
     );
 }

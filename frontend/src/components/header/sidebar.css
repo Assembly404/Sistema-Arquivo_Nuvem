@@ -634,6 +634,88 @@
     }
 }
 
+/* ==========================================================================
+   Mobile Submenus - Open UPWARD from bottom navigation
+   ========================================================================== */
+
+@media (max-width: 992px) {
+    /* On mobile, submenus open as bottom sheets from the bottom nav area */
+    .sidebar-item-group .sidebar-submenu {
+        position: fixed;
+        bottom: 88px; /* Above bottom nav */
+        left: 0;
+        right: 0;
+        max-height: 50vh;
+        background: var(--color-surface);
+        border-top: 1px solid var(--color-border-strong);
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.15);
+        padding: var(--space-4) var(--space-2) calc(var(--space-4) + env(safe-area-inset-bottom));
+        z-index: 1000;
+        overflow-y: auto;
+        animation: submenuSlideUp 0.25s var(--ease-out);
+    }
+
+    @keyframes submenuSlideUp {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .sidebar-item-group .sidebar-submenu .sidebar-item {
+        padding: var(--space-3) var(--space-4);
+        font-size: var(--fs-base);
+        font-weight: 500;
+    }
+
+    .sidebar-item-group .sidebar-submenu .sidebar-item:hover {
+        background: var(--color-primary-tint);
+    }
+
+    /* Close button for submenu */
+    .sidebar-submenu::before {
+        content: "";
+        display: block;
+        width: 40px;
+        height: 4px;
+        margin: 0 auto var(--space-3);
+        border-radius: 2px;
+        background: var(--color-border-strong);
+    }
+
+    /* When submenu is open, add backdrop */
+    .sidebar-item-group .sidebar-submenu:empty::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: var(--color-overlay);
+        z-index: -1;
+    }
+}
+
+/* Flyout adjustments for mobile */
+@media (max-width: 992px) {
+    .sidebar-flyout {
+        bottom: 88px !important;
+        top: auto !important;
+        max-height: 50vh;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+}
+
+/* Account menu opens upward on mobile */
+@media (max-width: 992px) {
+    .sidebar-account__menu {
+        bottom: 88px !important;
+        top: auto !important;
+    }
+}
+
 
 
 
