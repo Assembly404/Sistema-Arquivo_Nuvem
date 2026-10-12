@@ -59,10 +59,29 @@ public class FileMetadata {
     @Column(nullable = false, length = 64)
     private String keyEncryptionIv;
 
+    /**
+     * Algoritmo de compressão usado no container (RF09/RF10). Nullable para
+     * ficheiros antigos criados antes desta funcionalidade.
+     */
+    @Column(length = 20)
+    private String compressionAlgorithm;
+
     @Column(nullable = false)
     private LocalDateTime uploadedAt;
+
+    private LocalDateTime updatedAt;
+
+    @ManyToOne
+    @JoinColumn(name = "folderID")
+    private Folder folder;
+
+    private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "file", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<FileReplica> replicas = new ArrayList<>();
+
+    @OneToMany(mappedBy = "file", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<FileVersion> versions = new ArrayList<>();
 }

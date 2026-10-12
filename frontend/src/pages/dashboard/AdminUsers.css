@@ -64,6 +64,25 @@
 .admin-users__delete:disabled { color: var(--color-disabled-ink); cursor: not-allowed; opacity: 0.55; }
 .admin-users__delete:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
 
+.admin-users__quota-cell { display: flex; flex-direction: column; gap: var(--space-1); align-items: flex-start; }
+
+.admin-users__quota-edit { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; min-width: 220px; }
+.admin-users__quota-edit .inputField { width: 100%; padding: var(--space-1) var(--space-2); font-size: var(--fs-small); }
+.admin-users__quota-actions { display: flex; gap: var(--space-1); }
+
+.admin-users__quota-edit-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    color: var(--color-primary-hover);
+    cursor: pointer;
+    text-decoration: underline;
+}
+.admin-users__quota-edit-btn:hover { color: var(--color-primary); }
+
 .sr-only {
     position: absolute; width: 1px; height: 1px;
     padding: 0; margin: -1px; overflow: hidden;
@@ -92,6 +111,7 @@
         font-family: var(--font-display); font-size: var(--fs-caption);
         font-weight: 600; text-transform: uppercase; color: var(--color-ink-muted);
     }
+    .admin-users__quota-edit { min-width: 0; }
 }
 @media (max-width: 600px) {
     .admin-users .card { padding: var(--space-4); }

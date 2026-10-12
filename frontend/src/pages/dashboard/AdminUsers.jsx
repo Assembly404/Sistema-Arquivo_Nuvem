@@ -4,7 +4,7 @@ import AuthContext from "../../context/AuthProvider.jsx";
 import Button from "../../components/button/button.jsx";
 import Input from "../../components/form/input.jsx";
 import Toast from "../../components/toast/toast.jsx";
-import { changeUserRole, createUser, deleteUser, listUsers, setAuthToken } from "../../api/axios.js";
+import { changeUserRole, createUser, deleteUser, listUsers, setAuthToken, setUserQuota } from "../../api/axios.js";
 import "./AdminUsers.css";
 
 const USER_REGEX = /^[a-zA-Z][a-zA-Z0-9_-]{2,23}$/;
@@ -22,6 +22,9 @@ function AdminUsers() {
     const [creating, setCreating] = useState(false);
     const [pendingDelete, setPendingDelete] = useState(null);
     const [deleting, setDeleting] = useState(false);
+    const [editingQuota, setEditingQuota] = useState(null);
+    const [quotaGiB, setQuotaGiB] = useState("");
+    const [savingQuota, setSavingQuota] = useState(false);
     const [toast, setToast] = useState(null);
     const titleRef = useRef(null);
 
@@ -47,10 +50,10 @@ function AdminUsers() {
      
     useEffect(() => {
         if (auth?.token) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             void load();
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
-    }, [auth?.token]);
+    }, [auth?.token, load]);
 
     const myEmail = auth?.user?.email;
     const roleError = (msg) => setToast({ message: msg, type: "error" });
@@ -107,6 +110,40 @@ function AdminUsers() {
         } finally { setDeleting(false); }
     };
 
+    const startQuotaEdit = (u) => {
+        setEditingQuota(u.id);
+        setQuotaGiB(u.quotaBytes ? String(Math.round((u.quotaBytes / Math.pow(1024, 3)) * 100) / 100) : "");
+    };
+
+    const handleQuotaSubmit = async (u) => {
+        const trimmed = quotaGiB.trim();
+        let bytes = null;
+        if (trimmed) {
+            const gib = Number(trimmed.replace(",", "."));
+            if (!Number.isFinite(gib) || gib <= 0) {
+                roleError("A quota tem de ser um número positivo em GiB (em branco = ilimitada).");
+                return;
+            }
+            bytes = Math.round(gib * Math.pow(1024, 3));
+        }
+        setSavingQuota(true);
+        try {
+            const res = await setUserQuota(u.id, bytes);
+            setUsers((prev) => prev.map((x) => (x.id === u.id ? res.data : x)));
+            setEditingQuota(null);
+            setToast({ message: `Quota de ${u.name} atualizada.`, type: "success" });
+        } catch (err) {
+            console.error("[admin-users] falha ao definir quota", err);
+            roleError(err?.response?.data?.message || "Não foi possível definir a quota.");
+        } finally { setSavingQuota(false); }
+    };
+
+    const formatQuota = (bytes) => {
+        if (!bytes || bytes <= 0) return "Ilimitada";
+        const gib = bytes / Math.pow(1024, 3);
+        return `${gib % 1 === 0 ? gib.toFixed(0) : gib.toFixed(2)} GiB`;
+    };
+
     const nameOk = USER_REGEX.test(newUser.name);
     const surnameOk = USER_REGEX.test(newUser.surname);
     const emailOk = EMAIL_REGEX.test(newUser.email);
@@ -135,6 +172,7 @@ function AdminUsers() {
                                     <th scope="col">Nome</th>
                                     <th scope="col">Email</th>
                                     <th scope="col">Papel</th>
+                                    <th scope="col">Quota</th>
                                     <th scope="col">Registo</th>
                                     <th scope="col">Ações</th>
                                 </tr>
@@ -160,6 +198,37 @@ function AdminUsers() {
                                                     <option value="USER">USER</option>
                                                     <option value="ADMIN">ADMIN</option>
                                                 </select>
+                                            </td>
+                                            <td data-label="Quota">
+                                                {editingQuota === u.id ? (
+                                                    <span className="admin-users__quota-edit">
+                                                        <Input
+                                                            type="number"
+                                                            min="0"
+                                                            step="0.5"
+                                                            value={quotaGiB}
+                                                            onChange={(e) => setQuotaGiB(e.target.value)}
+                                                            placeholder="GiB (em branco = ilimitada)"
+                                                            aria-label={`Quota de ${u.name} ${u.surname} em GiB`}
+                                                        />
+                                                        <span className="admin-users__quota-actions">
+                                                            <Button label="Guardar" variant="ghost" loading={savingQuota}
+                                                                onClick={() => handleQuotaSubmit(u)} />
+                                                            <Button label="Cancelar" variant="ghost" onClick={() => setEditingQuota(null)} disabled={savingQuota} />
+                                                        </span>
+                                                    </span>
+                                                ) : (
+                                                    <span className="admin-users__quota-cell">
+                                                        <span>{formatQuota(u.quotaBytes)}</span>
+                                                        <button
+                                                            type="button"
+                                                            className="admin-users__quota-edit-btn"
+                                                            onClick={() => startQuotaEdit(u)}
+                                                        >
+                                                            Definir quota
+                                                        </button>
+                                                    </span>
+                                                )}
                                             </td>
                                             <td data-label="Registo">{u.dataRegistro ? String(u.dataRegistro).split("T")[0].split("-").reverse().join("/") : "—"}</td>
                                             <td data-label="Ações">

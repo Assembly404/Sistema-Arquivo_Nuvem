@@ -84,6 +84,40 @@ function NodeIcon({ name, className = "icon" }) {
     return <Icon className={className} aria-hidden="true" />;
 }
 
+const formatStorageBytes = (bytes) => {
+    if (bytes == null) return "0 B";
+    if (bytes === 0) return "0 B";
+    const units = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+    return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+};
+
+function sidebarStoragePercent(storage) {
+    if (!storage) return 0;
+    const cloud = storage.cloud || {};
+    if (cloud.hasQuota && cloud.quotaBytes > 0) {
+        return Math.min(Math.round((cloud.usedBytes / cloud.quotaBytes) * 100), 100);
+    }
+    const nodes = Array.isArray(storage.nodes) ? storage.nodes : [];
+    const total = nodes.reduce((sum, node) => sum + (node.totalBytes || 0), 0);
+    const used = nodes.reduce((sum, node) => sum + (node.usedBytes || 0), 0);
+    if (total > 0) return Math.min(Math.round((used / total) * 100), 100);
+    return 0;
+}
+
+function sidebarStorageText(storage) {
+    if (!storage) return "";
+    const cloud = storage.cloud || {};
+    if (cloud.hasQuota && cloud.quotaBytes > 0) {
+        return `${formatStorageBytes(cloud.usedBytes)} de ${formatStorageBytes(cloud.quotaBytes)} usados`;
+    }
+    const nodes = Array.isArray(storage.nodes) ? storage.nodes : [];
+    const total = nodes.reduce((sum, node) => sum + (node.totalBytes || 0), 0);
+    const used = nodes.reduce((sum, node) => sum + (node.usedBytes || 0), 0);
+    if (total > 0) return `${formatStorageBytes(used)} de ${formatStorageBytes(total)} usados`;
+    return "Armazenamento em nuvem";
+}
+
 export function SidebarItem({
     item,
     collapsed = false,
@@ -194,7 +228,8 @@ function SideBar({
     onToggleCollapse,
     activePath = ROOT_PATH,
     user,
-    onLogout
+    onLogout,
+    storage = null
 }) {
     const isMobile = useIsMobile();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -476,6 +511,23 @@ function SideBar({
                         </ul>
                     </nav>
                 </div>
+
+                {storage && (
+                    <section className="sidebar-storage" aria-label="Armazenamento">
+                        <div className="sidebar-storage__bar" aria-hidden="true">
+                            <i
+                                className={`sidebar-storage__fill${storage.cloud?.hasQuota && storage.cloud?.usedBytes >= storage.cloud?.quotaBytes ? " is-blocked" : ""}`}
+                                style={{ width: `${sidebarStoragePercent(storage)}%` }}
+                            />
+                        </div>
+                        <p className="sidebar-storage__text">
+                            {sidebarStorageText(storage)}
+                        </p>
+                        <Link to="/dashboard/armazenamento" className="sidebar-storage__link">
+                            Gerenciar armazenamento
+                        </Link>
+                    </section>
+                )}
 
                 <footer className="sidebar-footer">
                     <div className="sidebar-account" ref={accountRef}>

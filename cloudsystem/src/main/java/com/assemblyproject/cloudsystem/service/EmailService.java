@@ -20,6 +20,14 @@ public class EmailService {
     @Value("${app.mail.enabled:false}")
     private boolean enabled;
 
+    /**
+     * Permite mostrar o OTP no log do servidor quando o envio real esta desativado.
+     * Serve apenas para desenvolvimento local. DEVE permanecer false em producao
+     * (evita expor codigos de reposicao nos logs).
+     */
+    @Value("${app.mail.dev-log-otp:false}")
+    private boolean devLogOtp;
+
     public EmailService(@org.springframework.beans.factory.annotation.Autowired(required = false) JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
@@ -30,7 +38,12 @@ public class EmailService {
                 + "\nVálido por " + validityMinutes + " minutos."
                 + "\nSe não foste tu, ignora esta mensagem.";
         if (!enabled || mailSender == null) {
-            log.info("[forgot] email OTP para {} (modo dev, envio desativado)", to);
+            if (devLogOtp) {
+                log.warn("[forgot][DEV] email OTP para {} -> codigo {} (expira em {} min). Envio real desativado.",
+                        to, otp, validityMinutes);
+            } else {
+                log.info("[forgot] email OTP para {} (modo dev, envio desativado e dev-log-otp=false)", to);
+            }
             return;
         }
         SimpleMailMessage message = new SimpleMailMessage();

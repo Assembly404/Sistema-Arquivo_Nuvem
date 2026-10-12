@@ -44,6 +44,38 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Credenciais inválidas."));
     }
 
+    @ExceptionHandler(com.assemblyproject.cloudsystem.service.PublicLinkService.InvalidLinkPasswordException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidLinkPassword(
+            com.assemblyproject.cloudsystem.service.PublicLinkService.InvalidLinkPasswordException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("message", ex.getMessage(), "passwordRequired", "true"));
+    }
+
+    @ExceptionHandler(com.assemblyproject.cloudsystem.service.NoStorageAvailableException.class)
+    public ResponseEntity<Map<String, String>> handleNoStorage(
+            com.assemblyproject.cloudsystem.service.NoStorageAvailableException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", ex.getMessage(), "storageUnavailable", "true"));
+    }
+
+    @ExceptionHandler(com.assemblyproject.cloudsystem.service.DeviceOfflineException.class)
+    public ResponseEntity<Map<String, String>> handleDeviceOffline(
+            com.assemblyproject.cloudsystem.service.DeviceOfflineException ex) {
+        Map<String, String> body = new java.util.HashMap<>();
+        body.put("message", ex.getMessage());
+        body.put("deviceOffline", "true");
+        if (ex.getNodeID() != null) {
+            body.put("nodeID", ex.getNodeID().toString());
+        }
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    @ExceptionHandler(com.assemblyproject.cloudsystem.service.InvalidPairingException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidPairing(
+            com.assemblyproject.cloudsystem.service.InvalidPairingException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", ex.getMessage()));
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Sem permissão."));

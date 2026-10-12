@@ -16,17 +16,27 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ContainerClient {
 
+    public static final String NODE_TOKEN_HEADER = "X-Node-Token";
+
     private final RestTemplate restTemplate;
     private final StorageNodeService nodeService;
+    private final NodeSecretService nodeSecretService;
 
     @Value("${cloud.node.connect-timeout:5000}")
     private int connectTimeout;
 
     public String uploadReplica(StorageNode node, Long fileID, byte[] containerData) throws IOException {
+        // A nuvem do sistema vive no próprio servidor: gravação local direta,
+        // sem chamada HTTP (evita o servidor chamar-se a si próprio).
+        if (node.isSystem()) {
+            nodeService.saveReplica(node, fileID, containerData);
+            return "OK";
+        }
         String url = nodeUrl(node) + "/nodes/replicas/" + fileID;
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         headers.setContentLength(containerData.length);
+        applyNodeToken(headers, node);
         HttpEntity<byte[]> entity = new HttpEntity<>(containerData, headers);
         try {
             ResponseEntity<Map> resp = restTemplate.postForEntity(url, entity, Map.class);
@@ -40,9 +50,15 @@ public class ContainerClient {
     }
 
     public byte[] downloadReplica(StorageNode node, Long fileID) throws IOException {
+        if (node.isSystem()) {
+            return nodeService.readReplica(node, fileID);
+        }
         String url = nodeUrl(node) + "/nodes/replicas/" + fileID;
+        HttpHeaders headers = new HttpHeaders();
+        applyNodeToken(headers, node);
         try {
-            ResponseEntity<byte[]> resp = restTemplate.exchange(url, HttpMethod.GET, null, byte[].class);
+            ResponseEntity<byte[]> resp = restTemplate.exchange(url, HttpMethod.GET,
+                    new HttpEntity<>(headers), byte[].class);
             if (resp.getStatusCode() == HttpStatus.OK && resp.getBody() != null) {
                 return resp.getBody();
             }
@@ -52,7 +68,36 @@ public class ContainerClient {
         }
     }
 
+    /**
+     * Apaga uma réplica: localmente na nuvem do sistema, ou via HTTP no agente
+     * do dispositivo pessoal. Sem isto as réplicas de um dispositivo ficariam
+     * órfãs em disco depois de o ficheiro ser movido/apagado.
+     */
+    public void deleteReplica(StorageNode node, Long fileID) throws IOException {
+        if (node.isSystem()) {
+            nodeService.deleteReplica(node, fileID);
+            return;
+        }
+        String url = nodeUrl(node) + "/nodes/replicas/" + fileID;
+        HttpHeaders headers = new HttpHeaders();
+        applyNodeToken(headers, node);
+        try {
+            restTemplate.exchange(url, HttpMethod.DELETE, new HttpEntity<>(headers), Void.class);
+        } catch (RestClientException e) {
+            throw new IOException("Failed to delete replica on node " + node.getNodeID(), e);
+        }
+    }
+
     public boolean isNodeOnline(StorageNode node) {
+        if (node.isSystem()) {
+            return true;
+        }
+        if (!node.isEnabled()) {
+            return false;
+        }
+        if (node.getSessionId() == null || node.getSessionId().isBlank()) {
+            return false;
+        }
         String url = nodeUrl(node) + "/nodes/health";
         try {
             ResponseEntity<Map> resp = restTemplate.getForEntity(url, Map.class);
@@ -74,6 +119,13 @@ public class ContainerClient {
             throw new IOException("Node rejected registration");
         } catch (RestClientException e) {
             throw new IOException("Failed to register node", e);
+        }
+    }
+
+    private void applyNodeToken(HttpHeaders headers, StorageNode node) {
+        String token = nodeSecretService.decrypt(node.getDeviceTokenEncrypted());
+        if (token != null && !token.isBlank()) {
+            headers.set(NODE_TOKEN_HEADER, token);
         }
     }
 

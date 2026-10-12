@@ -1,0 +1,22 @@
+.admin-permissions { max-width: 960px; display: flex; flex-direction: column; gap: var(--space-4); }
+
+.perm-table { min-width: 560px; }
+
+.perm-table th, .perm-table td { text-align: center; }
+.perm-table th:first-child, .perm-table td:first-child { text-align: left; }
+
+.perm-code {
+    display: block;
+    font-family: var(--font-display);
+    font-size: var(--fs-caption);
+    color: var(--color-ink-muted);
+    margin-top: 2px;
+}
+
+.perm-check { color: var(--color-success); font-size: 18px; }
+.perm-cross { color: var(--color-ink-muted); font-size: 18px; opacity: 0.6; }
+
+@media (max-width: 768px) {
+    .perm-table td[data-label] { justify-content: space-between; }
+    .perm-table td.perm-yes, .perm-table td.perm-no { display: flex; }
+}

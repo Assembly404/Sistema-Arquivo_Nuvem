@@ -1,0 +1,32 @@
+# Dependências e artefactos
+node_modules/
+dist/
+dist-ssr/
+target/
+build/
+
+# Variáveis de ambiente / segredos
+.env
+.env.*
+!.env.example
+
+# Dados de runtime / armazenamento local (nunca submeter)
+cloudsystem/containers/
+cloudsystem/node-storage/
+cloudsystem/node.properties
+cloudsystem/cloudsystem-node.jar
+
+# Logs
+*.log
+logs
+
+# Editor / SO
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+*.suo
+*.sw?
+.classpath
+.project
+.settings/

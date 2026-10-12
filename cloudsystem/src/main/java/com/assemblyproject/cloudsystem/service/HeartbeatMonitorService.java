@@ -1,6 +1,7 @@
 package com.assemblyproject.cloudsystem.service;
 
 import com.assemblyproject.cloudsystem.entity.NodeStatus;
+import com.assemblyproject.cloudsystem.entity.NotificationType;
 import com.assemblyproject.cloudsystem.entity.StorageNode;
 import com.assemblyproject.cloudsystem.repository.StorageNodeRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ public class HeartbeatMonitorService {
 
     private final StorageNodeRepository nodeRepository;
     private final ContainerClient containerClient;
+    private final NotificationService notificationService;
 
     @Value("${cloud.node.heartbeat-timeout-seconds:90}")
     private int timeoutSeconds;
@@ -30,6 +32,7 @@ public class HeartbeatMonitorService {
 
         for (StorageNode node : nodes) {
             boolean online = containerClient.isNodeOnline(node);
+            NodeStatus previous = node.getStatus();
 
             if (online) {
                 node.setStatus(NodeStatus.ONLINE);
@@ -42,6 +45,14 @@ public class HeartbeatMonitorService {
                     node.setStatus(NodeStatus.DEGRADED);
                 }
             }
+
+            if (node.getStatus() == NodeStatus.OFFLINE && previous != NodeStatus.OFFLINE) {
+                notificationService.notify(node.getOwner(), NotificationType.NODE_OFFLINE,
+                        "Dispositivo offline",
+                        "O dispositivo \"" + node.getName() + "\" ficou offline. Os ficheiros nele guardados podem ficar indisponíveis.",
+                        "/dashboard/armazenamento");
+            }
+
             nodeRepository.save(node);
         }
     }

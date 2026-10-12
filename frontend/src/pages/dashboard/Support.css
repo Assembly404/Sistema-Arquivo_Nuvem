@@ -1,0 +1,8 @@
+.support-page { max-width: 960px; display: flex; flex-direction: column; gap: var(--space-4); }
+
+.support-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-4);
+}
+.support-card { display: flex; flex-direction: column; gap: var(--space-2); }

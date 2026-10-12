@@ -7,6 +7,8 @@ public record MeResponse(
         String role,
         java.util.List<String> permissions,
         java.time.LocalDateTime dataRegistro,
-        java.time.LocalDateTime ultimoAcesso
+        java.time.LocalDateTime ultimoAcesso,
+        Long quotaBytes,
+        String storagePolicy
 ) {
 }

@@ -15,6 +15,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<com.assemblyproject.cloudsystem.entity.User> findByEmail(String email);
 
+    Optional<com.assemblyproject.cloudsystem.entity.User> findByEmailIgnoreCase(String email);
+
     Optional<com.assemblyproject.cloudsystem.entity.User> findFirstByRole(Role role);
 
     long countByRole(Role role);

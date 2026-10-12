@@ -64,7 +64,10 @@ public class StorageNodeService {
     }
 
     public boolean canAccess(StorageNode node, User user) {
-        if (node.getOwner().getUserID().equals(user.getUserID())) return true;
+        if (node == null) return false;
+        if (node.isSystem()) return true;
+        if (user == null) return false;
+        if (node.getOwner() != null && node.getOwner().getUserID().equals(user.getUserID())) return true;
         if (node.getVisibility() == NodeVisibility.PUBLIC) return true;
         if (node.getVisibility() == NodeVisibility.PRIVATE) {
             return nodeAccessRepository.findByNodeAndGrantedUser(node, user).isPresent();
@@ -89,5 +92,45 @@ public class StorageNodeService {
     public void revokeAccess(StorageNode node, User user) {
         nodeAccessRepository.findByNodeAndGrantedUser(node, user)
                 .ifPresent(nodeAccessRepository::delete);
+    }
+
+    /**
+     * Recalcula o espaço usado de um nó a partir do conteúdo em disco.
+     */
+    public long refreshUsedSpace(StorageNode node) {
+        try {
+            long used = getStoredBytes(node);
+            node.setUsedSpaceBytes(used);
+            return used;
+        } catch (IOException e) {
+            return node.getUsedSpaceBytes() == null ? 0L : node.getUsedSpaceBytes();
+        }
+    }
+
+    /**
+     * Apaga todo o armazenamento local associado a um nó (usado na remoção de um
+     * dispositivo após a migração das réplicas). Devolve o número de ficheiros
+     * eliminados.
+     */
+    public int deleteNodeStorage(StorageNode node) {
+        Path dir = getNodeStorageDir(node);
+        if (!Files.exists(dir)) {
+            return 0;
+        }
+        final int[] removed = {0};
+        try {
+            Files.list(dir).filter(Files::isRegularFile).forEach(p -> {
+                try {
+                    Files.deleteIfExists(p);
+                    removed[0]++;
+                } catch (IOException ignored) {
+                    // ficheiro já removido
+                }
+            });
+            Files.deleteIfExists(dir);
+        } catch (IOException ignored) {
+            // diretório já removido
+        }
+        return removed[0];
     }
 }

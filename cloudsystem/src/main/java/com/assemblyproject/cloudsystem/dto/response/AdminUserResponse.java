@@ -8,6 +8,7 @@ public record AdminUserResponse(
         String role,
         java.time.LocalDateTime dataRegistro,
         java.time.LocalDateTime ultimoAcesso,
-        boolean suspended
+        boolean suspended,
+        Long quotaBytes
 ) {
 }

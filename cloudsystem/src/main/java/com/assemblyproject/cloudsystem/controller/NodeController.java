@@ -1,15 +1,21 @@
 package com.assemblyproject.cloudsystem.controller;
 
+import com.assemblyproject.cloudsystem.entity.FileReplica;
 import com.assemblyproject.cloudsystem.entity.NodeStatus;
 import com.assemblyproject.cloudsystem.entity.NodeVisibility;
-import com.assemblyproject.cloudsystem.entity.Role;
+import com.assemblyproject.cloudsystem.entity.ReplicaStatus;
 import com.assemblyproject.cloudsystem.entity.StorageNode;
 import com.assemblyproject.cloudsystem.entity.User;
 import com.assemblyproject.cloudsystem.dto.request.RegisterNodeRequest;
+import com.assemblyproject.cloudsystem.dto.response.StorageNodeResponse;
+import com.assemblyproject.cloudsystem.repository.FileReplicaRepository;
 import com.assemblyproject.cloudsystem.repository.StorageNodeRepository;
 import com.assemblyproject.cloudsystem.repository.UserRepository;
 import com.assemblyproject.cloudsystem.service.HeartbeatMonitorService;
+import com.assemblyproject.cloudsystem.service.NodeManagementService;
+import com.assemblyproject.cloudsystem.service.PairingCodeService;
 import com.assemblyproject.cloudsystem.service.StorageNodeService;
+import com.assemblyproject.cloudsystem.service.SystemNodeService;
 import com.assemblyproject.cloudsystem.configuration.JWTUserData;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,44 +43,55 @@ public class NodeController {
     private final StorageNodeRepository nodeRepository;
     private final StorageNodeService nodeStorageService;
     private final HeartbeatMonitorService heartbeatMonitorService;
+    private final NodeManagementService nodeManagementService;
+    private final SystemNodeService systemNodeService;
+    private final PairingCodeService pairingCodeService;
+    private final FileReplicaRepository fileReplicaRepository;
     private final UserRepository userRepository;
+
+    // --- Vinculação segura de dispositivos (RF17.3/RF17.4) ---
+
+    /**
+     * Gera um código de pareamento de curta duração que o agente local usa no
+     * registo, vinculando o dispositivo à conta do utilizador autenticado.
+     */
+    @PostMapping("/pairing-code")
+    public ResponseEntity<?> createPairingCode(@AuthenticationPrincipal JWTUserData principal) {
+        User user = resolveUser(principal);
+        if (user == null) return unauthorized();
+        String code = pairingCodeService.create(user);
+        return ResponseEntity.ok(Map.of(
+                "code", code,
+                "expiresInMinutes", pairingCodeService.ttlMinutes()));
+    }
+
+    // --- Registo de dispositivos (RF17) ---
 
     @PostMapping("/register")
     public ResponseEntity<?> registerNode(@Valid @RequestBody RegisterNodeRequest request,
                                           @AuthenticationPrincipal JWTUserData principal) {
         User owner = resolveUser(principal);
-        if (owner == null) {
-            owner = userRepository.findFirstByRole(Role.ADMIN).orElse(null);
+        if (owner == null && request.pairingCode() != null && !request.pairingCode().isBlank()) {
+            Long userId = pairingCodeService.consume(request.pairingCode());
+            owner = userRepository.findById(userId).orElse(null);
         }
         if (owner == null) {
-            return ResponseEntity.status(409).body(Map.of("message", "Nenhum utilizador disponível para ser dono do nó."));
+            return ResponseEntity.status(401).body(Map.of("message",
+                    "É necessário um código de pareamento válido ou sessão autenticada para registar um dispositivo."));
         }
 
-        NodeVisibility visibility = parseVisibility(request.visibility());
-
-        StorageNode node = nodeRepository.findAllByOwner(owner).stream().findFirst().orElse(null);
-        if (node != null) {
-            node.setName(request.name());
-            if (request.totalSpaceBytes() != null) node.setTotalSpaceBytes(request.totalSpaceBytes());
-            if (visibility != null) node.setVisibility(visibility);
-            if (request.address() != null) node.setSessionId(request.address());
-            node.setStatus(NodeStatus.ONLINE);
-            node.setLastHeartbeat(LocalDateTime.now());
-            return ResponseEntity.ok(nodeRepository.save(node));
-        }
-
-        node = StorageNode.builder()
-                .owner(owner)
-                .name(request.name())
-                .totalSpaceBytes(request.totalSpaceBytes() != null ? request.totalSpaceBytes() : 0L)
-                .status(NodeStatus.ONLINE)
-                .visibility(visibility != null ? visibility : NodeVisibility.PERSONAL)
-                .lastHeartbeat(LocalDateTime.now())
-                .createdAt(LocalDateTime.now())
-                .build();
-        if (request.address() != null) node.setSessionId(request.address());
-        return ResponseEntity.ok(nodeRepository.save(node));
+        NodeManagementService.RegisteredNode registered = nodeManagementService.registerDevice(owner, request);
+        StorageNode node = registered.node();
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("nodeID", node.getNodeID());
+        body.put("name", node.getName());
+        body.put("type", node.getType().name());
+        body.put("status", node.getStatus().name());
+        body.put("deviceToken", registered.deviceToken());
+        return ResponseEntity.ok(body);
     }
+
+    // --- Listagem de dispositivos e da nuvem do sistema (RF17.6/RF18/RF19) ---
 
     @GetMapping
     public ResponseEntity<?> listNodes(@AuthenticationPrincipal JWTUserData principal) {
@@ -81,8 +99,110 @@ public class NodeController {
         if (user == null) {
             return ResponseEntity.status(401).body(Map.of("message", "Não autenticado."));
         }
-        return ResponseEntity.ok(nodeRepository.findAllByOwner(user));
+        return ResponseEntity.ok(nodeRepository.findAllByOwnerAndTypeOrderByCreatedAtDesc(user,
+                        com.assemblyproject.cloudsystem.entity.NodeType.DEVICE).stream()
+                .map(StorageNodeResponse::from)
+                .toList());
     }
+
+    @GetMapping("/system")
+    public ResponseEntity<?> systemNode(@AuthenticationPrincipal JWTUserData principal) {
+        if (resolveUser(principal) == null) return unauthorized();
+        return ResponseEntity.ok(StorageNodeResponse.from(systemNodeService.getOrCreateSystemNode()));
+    }
+
+    @PostMapping("/{nodeId}/enable")
+    public ResponseEntity<?> enableNode(@PathVariable Long nodeId,
+                                        @AuthenticationPrincipal JWTUserData principal) {
+        User user = resolveUser(principal);
+        if (user == null) return unauthorized();
+        try {
+            return ResponseEntity.ok(StorageNodeResponse.from(nodeManagementService.setEnabled(user, nodeId, true)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{nodeId}/disable")
+    public ResponseEntity<?> disableNode(@PathVariable Long nodeId,
+                                         @AuthenticationPrincipal JWTUserData principal) {
+        User user = resolveUser(principal);
+        if (user == null) return unauthorized();
+        try {
+            return ResponseEntity.ok(StorageNodeResponse.from(nodeManagementService.setEnabled(user, nodeId, false)));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{nodeId}")
+    public ResponseEntity<?> removeNode(@PathVariable Long nodeId,
+                                        @RequestParam(value = "migrate", defaultValue = "false") boolean migrate,
+                                        @AuthenticationPrincipal JWTUserData principal) {
+        User user = resolveUser(principal);
+        if (user == null) return unauthorized();
+        try {
+            nodeManagementService.removeDevice(user, nodeId, migrate);
+            return ResponseEntity.ok(Map.of("removed", true, "migrated", migrate));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.status(409).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{nodeId}/migrate")
+    public ResponseEntity<?> migrateNode(@PathVariable Long nodeId,
+                                         @AuthenticationPrincipal JWTUserData principal) {
+        User user = resolveUser(principal);
+        if (user == null) return unauthorized();
+        try {
+            StorageNode node = nodeManagementService.requireOwnedDevice(user, nodeId);
+            int migrated = nodeManagementService.migrateReplicas(node);
+            return ResponseEntity.ok(Map.of("migrated", migrated));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.status(409).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // --- Sincronização (RF28) ---
+
+    @GetMapping("/{nodeId}/sync-status")
+    public ResponseEntity<?> syncStatus(@PathVariable Long nodeId,
+                                        @AuthenticationPrincipal JWTUserData principal) {
+        User user = resolveUser(principal);
+        if (user == null) return unauthorized();
+        StorageNode node = nodeRepository.findById(nodeId).orElse(null);
+        if (node == null) return notFound();
+        if (!node.isSystem() && !nodeStorageService.canAccess(node, user)) return forbidden();
+
+        List<FileReplica> replicas = fileReplicaRepository.findAllByNode(node);
+        long synced = replicas.stream().filter(r -> r.getStatus() == ReplicaStatus.SYNCED).count();
+        long pending = replicas.stream().filter(r -> r.getStatus() == ReplicaStatus.PENDING).count();
+        long failed = replicas.stream().filter(r -> r.getStatus() == ReplicaStatus.FAILED).count();
+
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (FileReplica replica : replicas) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("fileID", replica.getFile() != null ? replica.getFile().getFileID() : null);
+            item.put("fileName", replica.getFile() != null ? replica.getFile().getOriginalName() : null);
+            item.put("status", replica.getStatus() != null ? replica.getStatus().name() : null);
+            item.put("updatedAt", replica.getUpdatedAt() != null ? replica.getUpdatedAt().toString() : null);
+            items.add(item);
+        }
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("nodeID", node.getNodeID());
+        body.put("nodeName", node.getName());
+        body.put("online", node.getStatus() == NodeStatus.ONLINE);
+        body.put("total", replicas.size());
+        body.put("synced", synced);
+        body.put("pending", pending);
+        body.put("failed", failed);
+        body.put("overall", failed > 0 ? "ERROR" : pending > 0 ? "PENDING" : "SYNCED");
+        body.put("items", items);
+        return ResponseEntity.ok(body);
+    }
+
+    // --- Configuração e consulta de espaço (RF19) ---
 
     @PostMapping("/{nodeId}/visibility")
     public ResponseEntity<?> setVisibility(@PathVariable Long nodeId,
@@ -98,7 +218,7 @@ public class NodeController {
             return ResponseEntity.badRequest().body(Map.of("message", "Visibilidade inválida."));
         }
         node.setVisibility(visibility);
-        return ResponseEntity.ok(nodeRepository.save(node));
+        return ResponseEntity.ok(StorageNodeResponse.from(nodeRepository.save(node)));
     }
 
     @PostMapping("/{nodeId}/heartbeat")
@@ -143,13 +263,14 @@ public class NodeController {
         if (user == null) return unauthorized();
         StorageNode node = nodeRepository.findById(nodeId).orElse(null);
         if (node == null) return notFound();
+        if (node.isSystem()) return forbidden();
         if (!isOwner(node, user)) return forbidden();
         Long quota = body.get("quotaBytes");
         if (quota != null && quota < node.getUsedSpaceBytes()) {
             return ResponseEntity.badRequest().body(Map.of("message", "A quota não pode ser inferior ao espaço usado."));
         }
         if (quota != null) node.setTotalSpaceBytes(quota);
-        return ResponseEntity.ok(nodeRepository.save(node));
+        return ResponseEntity.ok(StorageNodeResponse.from(nodeRepository.save(node)));
     }
 
     @GetMapping("/{nodeId}/quota")
@@ -174,6 +295,8 @@ public class NodeController {
                 "status", status
         ));
     }
+
+    // --- Partilha de um dispositivo com outros utilizadores ---
 
     @PostMapping("/{nodeId}/access")
     public ResponseEntity<?> grantAccess(@PathVariable Long nodeId,
@@ -265,17 +388,22 @@ public class NodeController {
     }
 
     @GetMapping("/offline")
-    public ResponseEntity<List<StorageNode>> listOffline() {
-        return ResponseEntity.ok(heartbeatMonitorService.getOfflineNodes());
+    public ResponseEntity<List<StorageNodeResponse>> listOffline() {
+        return ResponseEntity.ok(heartbeatMonitorService.getOfflineNodes().stream()
+                .map(StorageNodeResponse::from)
+                .toList());
     }
 
     @GetMapping("/degraded")
-    public ResponseEntity<List<StorageNode>> listDegraded() {
-        return ResponseEntity.ok(heartbeatMonitorService.getDegradedNodes());
+    public ResponseEntity<List<StorageNodeResponse>> listDegraded() {
+        return ResponseEntity.ok(heartbeatMonitorService.getDegradedNodes().stream()
+                .map(StorageNodeResponse::from)
+                .toList());
     }
 
     private boolean isOwner(StorageNode node, User user) {
-        return node.getOwner() != null && node.getOwner().getUserID().equals(user.getUserID());
+        return node.getOwner() != null && user != null
+                && node.getOwner().getUserID().equals(user.getUserID());
     }
 
     private ResponseEntity<Map<String, String>> unauthorized() {

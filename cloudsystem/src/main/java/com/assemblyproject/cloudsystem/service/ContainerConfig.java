@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "cloud.container")
 public class ContainerConfig {
     private String extension = ".dbs";
-    private String masterKey = "6jE/QADMd/vCKeyzyq9GRUOiSfrssVSY2AZgwZL8BHQ=";
+    private String masterKey;
     private String storageDir = "./containers";
     private String magic = "DBS1";
 }

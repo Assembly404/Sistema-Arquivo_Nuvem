@@ -99,7 +99,8 @@ public class UserController {
     private MeResponse toMe(User user) {
         Role role = user.getRole() != null ? user.getRole() : Role.USER;
         return new MeResponse(user.getName(), user.getSurname(), user.getEmail(), role.name(),
-                permissionService.permissionsFor(role), user.getRegistrationData(), user.getLastAccess());
+                permissionService.permissionsFor(role), user.getRegistrationData(), user.getLastAccess(),
+                user.getQuotaBytes(), user.getStoragePolicy());
     }
 }
 

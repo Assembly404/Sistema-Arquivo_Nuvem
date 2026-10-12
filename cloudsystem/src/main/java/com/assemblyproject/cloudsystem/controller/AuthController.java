@@ -30,6 +30,10 @@ import java.util.Map;
 @RequestMapping("/auth")
 public class AuthController {
 
+    /** Cota padrão de 5 GiB para novas contas (nuvem do sistema). */
+    public static final long DEFAULT_QUOTA_BYTES = 5L * 1024L * 1024L * 1024L;
+    public static final String DEFAULT_STORAGE_POLICY = "SYSTEM_FIRST";
+
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -69,10 +73,12 @@ public class AuthController {
         }
         User newUser = new User();
         newUser.setPassword(passwordEncoder.encode(registerRequest.password()));
-        newUser.setEmail(registerRequest.email());
+        newUser.setEmail(registerRequest.email().trim().toLowerCase());
         newUser.setName(registerRequest.name());
         newUser.setSurname(registerRequest.surname());
         newUser.setRole(Role.USER);
+        newUser.setQuotaBytes(DEFAULT_QUOTA_BYTES);
+        newUser.setStoragePolicy(DEFAULT_STORAGE_POLICY);
 
         LocalDateTime dateTime = LocalDateTime.now();
         newUser.setRegistrationData(dateTime);

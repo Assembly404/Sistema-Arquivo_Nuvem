@@ -7,8 +7,16 @@ import RequireAuth, { RequireRole } from './components/utils/RequireAuth.jsx'
 import DashboardLayout from './pages/dashboard/DashboardLayout.jsx'
 import Dashboard from './pages/dashboard/Dashboard.jsx'
 import Profile from './pages/dashboard/Profile.jsx'
-import Placeholder from './pages/dashboard/Placeholder.jsx'
+import Notifications from './pages/dashboard/Notifications.jsx'
+import MyFiles from './pages/dashboard/MyFiles.jsx'
+import Trash from './pages/dashboard/Trash.jsx'
+import SharedWith from './pages/dashboard/SharedWith.jsx'
+import Storage from './pages/dashboard/Storage.jsx'
+import AdminPermissions from './pages/dashboard/AdminPermissions.jsx'
+import Settings from './pages/dashboard/Settings.jsx'
+import Support from './pages/dashboard/Support.jsx'
 import AdminUsers from './pages/dashboard/AdminUsers.jsx'
+import PublicAccess from './pages/PublicAccess.jsx'
 import './App.css';
 
 import LandingPage from './pages/LandingPage/LandingPage.jsx'
@@ -25,18 +33,19 @@ function App(){
       <Route path='/login' element={<Login/>} />
       <Route path='/register' element={<Register />}/>
       <Route path='/forgotpassword' element={<ForgotPassword />}/>
+      <Route path='/s/:token' element={<PublicAccess/>}/>
 
       <Route path='/dashboard' element={<RequireAuth><DashboardLayout /></RequireAuth>}>
         <Route index element={<Dashboard/>}/>
-        <Route path='arquivos' element={<Placeholder title="Meus Arquivos"/>}/>
-        <Route path='arquivos/compartilhados' element={<Placeholder title="Compartilhados comigo"/>}/>
-        <Route path='arquivos/lixeira' element={<Placeholder title="Lixeira"/>}/>
-        <Route path='armazenamento' element={<Placeholder title="Armazenamento"/>}/>
+        <Route path='arquivos' element={<MyFiles/>}/>
+        <Route path='arquivos/compartilhados' element={<SharedWith/>}/>
+        <Route path='arquivos/lixeira' element={<Trash/>}/>
+        <Route path='armazenamento' element={<Storage/>}/>
         <Route path='admin/usuarios' element={<RequireRole role="ADMIN"><AdminUsers/></RequireRole>}/>
-        <Route path='admin/permissoes' element={<RequireRole role="ADMIN"><Placeholder title="Perfis & Permissões"/></RequireRole>}/>
-        <Route path='notificacoes' element={<Placeholder title="Notificações"/>}/>
-        <Route path='suporte' element={<Placeholder title="Suporte"/>}/>
-        <Route path='configuracoes' element={<Placeholder title="Configurações"/>}/>
+        <Route path='admin/permissoes' element={<RequireRole role="ADMIN"><AdminPermissions/></RequireRole>}/>
+        <Route path='notificacoes' element={<Notifications/>}/>
+        <Route path='suporte' element={<Support/>}/>
+        <Route path='configuracoes' element={<Settings/>}/>
         <Route path='perfil' element={<Profile/>}/>
       </Route>
 

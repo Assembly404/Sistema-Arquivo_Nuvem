@@ -51,10 +51,12 @@ public class AdminUserController {
         User user = new User();
         user.setName(request.name());
         user.setSurname(request.surname());
-        user.setEmail(request.email());
+        user.setEmail(request.email().trim().toLowerCase());
         user.setPassword(passwordEncoder.encode(request.password()));
         user.setRegistrationData(java.time.LocalDateTime.now());
         user.setRole(parseRole(request.role()));
+        user.setQuotaBytes(AuthController.DEFAULT_QUOTA_BYTES);
+        user.setStoragePolicy(AuthController.DEFAULT_STORAGE_POLICY);
         repository.save(user);
         return ResponseEntity.status(201).body(toResponse(user));
     }
@@ -130,6 +132,31 @@ public class AdminUserController {
         return ResponseEntity.ok(toResponse(user));
     }
 
+    @PatchMapping("/{id}/quota")
+    public ResponseEntity<?> setQuota(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        User user = repository.findById(id).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("message", "Utilizador não encontrado."));
+        }
+        Object quotaValue = body.get("quotaBytes");
+        if (quotaValue == null) {
+            user.setQuotaBytes(null); /* ilimitado */
+        } else {
+            long quota;
+            try {
+                quota = ((Number) quotaValue).longValue();
+            } catch (ClassCastException | NullPointerException e) {
+                return ResponseEntity.status(400).body(Map.of("message", "quotaBytes inválido."));
+            }
+            if (quota < 0) {
+                return ResponseEntity.status(400).body(Map.of("message", "A cota não pode ser negativa."));
+            }
+            user.setQuotaBytes(quota);
+        }
+        repository.save(user);
+        return ResponseEntity.ok(toResponse(user));
+    }
+
     private boolean isSelf(Authentication authentication, User target) {
         if (authentication == null || !(authentication.getPrincipal() instanceof JWTUserData data)) {
             return false;
@@ -154,6 +181,7 @@ public class AdminUserController {
     private AdminUserResponse toResponse(User user) {
         Role role = user.getRole() != null ? user.getRole() : Role.USER;
         return new AdminUserResponse(user.getUserID(), user.getName(), user.getSurname(),
-                user.getEmail(), role.name(), user.getRegistrationData(), user.getLastAccess(), user.isSuspended());
+                user.getEmail(), role.name(), user.getRegistrationData(), user.getLastAccess(), user.isSuspended(),
+                user.getQuotaBytes());
     }
 }

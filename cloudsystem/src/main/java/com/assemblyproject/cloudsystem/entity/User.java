@@ -49,6 +49,23 @@ public class User implements UserDetails {
 
     private boolean suspended;
 
+    /**
+     * Cota de armazenamento na nuvem do sistema, em bytes. {@code null} = ilimitado.
+     */
+    private Long quotaBytes;
+
+    /**
+     * Política padrão de armazenamento: SYSTEM_FIRST, DEVICE_FIRST ou MANUAL.
+     */
+    private String storagePolicy;
+
+    /**
+     * Comportamento quando um dispositivo pessoal que guarda o ficheiro está
+     * offline (RF24): DENY (negar) ou CACHE (servir cópia em cache).
+     */
+    @Column(length = 20)
+    private String offlineBehavior;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Role effective = role != null ? role : Role.USER;

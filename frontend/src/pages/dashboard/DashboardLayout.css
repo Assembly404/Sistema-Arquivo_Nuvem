@@ -5,12 +5,17 @@
 
 .dashboard-main {
     margin-left: var(--sidebar-width);
-    padding: var(--space-8);
+    padding: 0 var(--space-8) var(--space-8);
     transition: margin-left var(--dur-base) var(--ease-out);
 }
 
 .dashboard-layout--collapsed .dashboard-main {
     margin-left: var(--sidebar-width-collapsed);
+}
+
+.dashboard-content {
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .dashboard-page {
@@ -35,22 +40,19 @@
     .dashboard-main,
     .dashboard-layout--collapsed .dashboard-main {
         margin-left: 0;
-        padding-top: calc(var(--space-16) + var(--space-2));
     }
 }
 
 @media (max-width: 768px) {
     .dashboard-main,
     .dashboard-layout--collapsed .dashboard-main {
-        padding: var(--space-6) var(--space-4);
-        padding-top: calc(var(--space-16) + var(--space-2));
+        padding: 0 var(--space-4) var(--space-6);
     }
 }
 
 @media (max-width: 600px) {
     .dashboard-main,
     .dashboard-layout--collapsed .dashboard-main {
-        padding: var(--space-4);
-        padding-top: calc(var(--space-16) + var(--space-2));
+        padding: 0 var(--space-3) var(--space-4);
     }
 }

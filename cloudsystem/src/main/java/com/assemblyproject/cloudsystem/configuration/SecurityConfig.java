@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/password/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/public/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/nodes/jar").permitAll()
                         .requestMatchers(HttpMethod.POST, "/nodes/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/nodes/*/heartbeat").permitAll()
