@@ -27,7 +27,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # --- Defaults ---
-SERVER_URL="${SERVER_URL:-https://cloudsystem-backend.onrender.com}"
+SERVER_URL="${SERVER_URL:-https://debesis.onrender.com}"
 NODE_PORT="${NODE_PORT:-8081}"
 QUOTA_GB="${QUOTA_GB:-100}"
 STORAGE_PATH="${STORAGE_PATH:-$HOME/cloudstorage}"
