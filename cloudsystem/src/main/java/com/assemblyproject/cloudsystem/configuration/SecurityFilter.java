@@ -49,8 +49,10 @@ public class SecurityFilter extends OncePerRequestFilter {
                 if (!userData.suspended()) {
                     List<SimpleGrantedAuthority> authorities = new ArrayList<>();
                     authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
-                    permissionService.permissionsFor(role).forEach(p ->
-                            authorities.add(new SimpleGrantedAuthority(p)));
+                    if (permissionService != null) {
+                        permissionService.permissionsFor(role).forEach(p ->
+                                authorities.add(new SimpleGrantedAuthority(p)));
+                    }
 
                     UsernamePasswordAuthenticationToken userAndPass = new UsernamePasswordAuthenticationToken(
                             userData, null, authorities);

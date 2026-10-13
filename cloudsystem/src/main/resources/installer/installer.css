@@ -1,0 +1,209 @@
+/* CloudSystem Node Installer - Stylesheet */
+
+.root {
+    -fx-background-color: #f5f7fa;
+    -fx-font-family: "Segoe UI", "Ubuntu", "Roboto", "Helvetica Neue", sans-serif;
+}
+
+#rootPane {
+    -fx-background-color: white;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);
+}
+
+.title-label {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2c3e50;
+}
+
+.subtitle-label {
+    -fx-font-size: 16px;
+    -fx-text-fill: #7f8c8d;
+}
+
+.field-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #34495e;
+}
+
+.hint-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #95a5a6;
+}
+
+.progress-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #2c3e50;
+    -fx-font-weight: 500;
+}
+
+.status-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #27ae60;
+    -fx-font-weight: 600;
+}
+
+.log-area {
+    -fx-background-color: #1e1e1e;
+    -fx-text-fill: #d4d4d4;
+    -fx-border-color: #3c3c3c;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-font-family: "Consolas", "Monospace", monospace;
+    -fx-font-size: 11px;
+}
+
+.log-area .scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.log-area .viewport {
+    -fx-background-color: transparent;
+}
+
+.text-field {
+    -fx-background-color: white;
+    -fx-border-color: #d0d7de;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 8 12;
+    -fx-font-size: 13px;
+}
+
+.text-field:focused {
+    -fx-border-color: #3498db;
+    -fx-effect: dropshadow(gaussian, rgba(52,152,219,0.2), 4, 0, 0, 0);
+}
+
+.spinner {
+    -fx-background-color: white;
+    -fx-border-color: #d0d7de;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.primary-btn {
+    -fx-background-color: linear-gradient(to bottom, #3498db, #2980b9);
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-padding: 10 24;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.primary-btn:hover {
+    -fx-background-color: linear-gradient(to bottom, #2980b9, #21618c);
+}
+
+.primary-btn:pressed {
+    -fx-background-color: #1f4e79;
+}
+
+.primary-btn:disabled {
+    -fx-background-color: #bdc3c7;
+    -fx-text-fill: #95a5a6;
+    -fx-cursor: default;
+}
+
+.secondary-btn {
+    -fx-background-color: white;
+    -fx-text-fill: #3498db;
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-padding: 10 20;
+    -fx-background-radius: 6;
+    -fx-border-color: #3498db;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+}
+
+.secondary-btn:hover {
+    -fx-background-color: #ebf5fb;
+}
+
+.secondary-btn:pressed {
+    -fx-background-color: #d6eaf8;
+}
+
+.titled-pane {
+    -fx-background-color: transparent;
+}
+
+.titled-pane > .title {
+    -fx-background-color: #f8f9fa;
+    -fx-background-radius: 6 6 0 0;
+    -fx-padding: 10 14;
+    -fx-border-color: #e1e4e8;
+    -fx-border-width: 0 0 1 0;
+}
+
+.titled-pane > .title .arrow-button .arrow {
+    -fx-background-color: #6a737d;
+}
+
+.titled-pane > .content {
+    -fx-background-color: transparent;
+    -fx-border-color: #e1e4e8;
+    -fx-border-width: 0 1 1 1;
+    -fx-border-radius: 0 0 6 6;
+    -fx-padding: 10;
+}
+
+.help-link {
+    -fx-text-fill: #3498db;
+    -fx-font-size: 12px;
+    -fx-padding: 4 0;
+}
+
+.help-link:hover {
+    -fx-underline: true;
+}
+
+.tunnel-check {
+    -fx-font-size: 12px;
+    -fx-text-fill: #34495e;
+}
+
+.separator {
+    -fx-background-color: #e1e4e8;
+}
+
+/* Scrollbar styling */
+.scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 8;
+}
+
+.scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:vertical .thumb {
+    -fx-background-color: #888;
+    -fx-background-radius: 4;
+}
+
+.scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #aaa;
+}
+
+/* Hyperlink styling */
+.hyperlink {
+    -fx-text-fill: #3498db;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.hyperlink:hover {
+    -fx-underline: true;
+}
+
+/* Focus styling */
+.text-field:focused, .spinner:focused, .combo-box:focused {
+    -fx-border-color: #3498db;
+    -fx-effect: dropshadow(gaussian, rgba(52,152,219,0.15), 6, 0, 0, 0);
+}

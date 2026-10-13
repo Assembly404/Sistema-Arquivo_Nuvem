@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox fx:id="rootPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="680" prefWidth="560" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.assemblyproject.cloudsystem.agent.NodeInstallerController">
+    <padding>
+        <Insets bottom="20" left="20" right="20" top="20"/>
+    </padding>
+    <spacing>15</spacing>
+
+    <!-- Header -->
+    <VBox spacing="5" alignment="CENTER">
+        <Label text="☁ CloudSystem" styleClass="title-label"/>
+        <Label text="Instalador do Nó de Armazenamento" styleClass="subtitle-label"/>
+        <Separator prefWidth="400"/>
+    </VBox>
+
+    <!-- Código de Pareamento -->
+    <TitledPane text="🔑 Pareamento" animated="false">
+        <VBox spacing="10" padding="10">
+            <Label text="Obtenha o código em: Definições → Dispositivos → Adicionar dispositivo" styleClass="hint-label" wrapText="true"/>
+            <TextField fx:id="pairingCodeField" promptText="Cole o código aqui (ex: A7K9M2P4)" prefWidth="500">
+                <font><Font size="14"/></font>
+            </TextField>
+            <Hyperlink fx:id="helpLink" text="Como obter o código?" styleClass="help-link"/>
+        </VBox>
+    </TitledPane>
+
+    <!-- Configuração do Servidor -->
+    <TitledPane text="🌐 Servidor" animated="false">
+        <VBox spacing="10" padding="10">
+            <Label text="URL do servidor CloudSystem:" styleClass="field-label"/>
+            <TextField fx:id="serverUrlField" promptText="https://cloudsystem-backend.onrender.com" prefWidth="500"/>
+
+            <Label text="URL Pública (túnel Cloudflare/ngrok):" styleClass="field-label"/>
+            <HBox spacing="5">
+                <TextField fx:id="publicUrlField" promptText="https://seu-tunel.trycloudflare.com (opcional se usar túnel automático)" HBox.hgrow="ALWAYS"/>
+                <Button fx:id="startTunnelBtn" text="Iniciar Túnel" styleClass="secondary-btn" prefWidth="120"/>
+            </HBox>
+            <CheckBox fx:id="autoTunnelCheck" text="Criar túnel Cloudflare automaticamente" selected="true" styleClass="tunnel-check"/>
+            <Label text="Necessário se o servidor está na nuvem e este PC atrás de router (NAT)" styleClass="hint-label" wrapText="true"/>
+        </VBox>
+    </TitledPane>
+
+    <!-- Configuração Local -->
+    <TitledPane text="💾 Armazenamento Local" animated="false">
+        <VBox spacing="10" padding="10">
+            <Label text="Pasta para guardar os ficheiros:" styleClass="field-label"/>
+            <HBox spacing="5">
+                <TextField fx:id="storagePathField" promptText="~/cloudstorage" HBox.hgrow="ALWAYS"/>
+                <Button fx:id="browseStorageBtn" text="Procurar..." styleClass="secondary-btn" prefWidth="100"/>
+            </HBox>
+
+            <HBox spacing="20">
+                <VBox spacing="5">
+                    <Label text="Porta local:" styleClass="field-label"/>
+                    <TextField fx:id="portField" prefWidth="100" maxWidth="100"/>
+                </VBox>
+                <VBox spacing="5">
+                    <Label text="Quota (GB):" styleClass="field-label"/>
+                    <Spinner fx:id="quotaSpinner" prefWidth="120" maxWidth="120"/>
+                </VBox>
+            </HBox>
+            <Label text="0 = ilimitado (usa espaço livre do disco)" styleClass="hint-label"/>
+        </VBox>
+    </TitledPane>
+
+    <!-- Progresso -->
+    <VBox fx:id="progressBox" spacing="5" visible="false" managed="false">
+        <ProgressBar fx:id="progressBar" prefWidth="520" progress="-1.0"/>
+        <Label fx:id="progressLabel" text="A preparar..." styleClass="progress-label"/>
+    </VBox>
+
+    <!-- Log -->
+    <TitledPane text="📋 Log de Instalação" animated="false" expanded="true">
+        <TextArea fx:id="logArea" editable="false" wrapText="true" prefHeight="180" styleClass="log-area">
+            <font><Font name="Monospace" size="11"/></font>
+        </TextArea>
+    </TitledPane>
+
+    <!-- Status -->
+    <Label fx:id="statusLabel" text="Pronto para instalar" styleClass="status-label"/>
+
+    <!-- Botões -->
+    <HBox spacing="10" alignment="CENTER">
+        <Button fx:id="installBtn" text="Instalar e Iniciar Agente" styleClass="primary-btn" prefWidth="220" defaultButton="true"/>
+        <Button fx:id="cancelBtn" text="Cancelar" styleClass="secondary-btn" prefWidth="120" cancelButton="true"/>
+    </HBox>
+</VBox>

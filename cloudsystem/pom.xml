@@ -29,6 +29,8 @@
 	<properties>
 		<java.version>17</java.version>
 		<kotlin.version>2.3.20</kotlin.version>
+		<javafx.version>21.0.6</javafx.version>
+		<javafx.maven.plugin.version>0.0.8</javafx.maven.plugin.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -109,6 +111,22 @@
 			<version>${kotlin.version}</version>
 			<scope>test</scope>
 		</dependency>
+		<!-- JavaFX para instalador gráfico -->
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-controls</artifactId>
+			<version>${javafx.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-fxml</artifactId>
+			<version>${javafx.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-web</artifactId>
+			<version>${javafx.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -116,6 +134,14 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.openjfx</groupId>
+				<artifactId>javafx-maven-plugin</artifactId>
+				<version>${javafx.maven.plugin.version}</version>
+				<configuration>
+					<mainClass>com.assemblyproject.cloudsystem.agent.NodeInstallerGUI</mainClass>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.jetbrains.kotlin</groupId>
