@@ -4,7 +4,6 @@ import com.assemblyproject.cloudsystem.configuration.JWTUserData;
 import com.assemblyproject.cloudsystem.dto.request.ChangePasswordRequest;
 import com.assemblyproject.cloudsystem.dto.request.UpdateMeRequest;
 import com.assemblyproject.cloudsystem.dto.response.MeResponse;
-import com.assemblyproject.cloudsystem.entity.Role;
 import com.assemblyproject.cloudsystem.entity.User;
 import com.assemblyproject.cloudsystem.repository.UserRepository;
 import com.assemblyproject.cloudsystem.service.PermissionService;
@@ -96,9 +95,20 @@ public class UserController {
         return repository.findByEmail(data.email()).orElse(null);
     }
 
+    @GetMapping("/me/acesso")
+    public ResponseEntity<?> meuAcesso(Authentication authentication) {
+        User user = currentUser(authentication);
+        if (user == null) {
+            return ResponseEntity.status(401).body(java.util.Map.of("message", "Não autenticado."));
+        }
+        String role = user.getRole() != null ? user.getRole() : PermissionService.ROLE_USER;
+        return ResponseEntity.ok(permissionService.acessoFor(role));
+    }
+
     private MeResponse toMe(User user) {
-        Role role = user.getRole() != null ? user.getRole() : Role.USER;
-        return new MeResponse(user.getName(), user.getSurname(), user.getEmail(), role.name(),
+        String role = user.getRole() != null ? user.getRole() : PermissionService.ROLE_USER;
+        return new MeResponse(user.getName(), user.getSurname(), user.getEmail(), role,
+                permissionService.roleNome(role),
                 permissionService.permissionsFor(role), user.getRegistrationData(), user.getLastAccess(),
                 user.getQuotaBytes(), user.getStoragePolicy());
     }

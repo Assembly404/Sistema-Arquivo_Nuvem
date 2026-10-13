@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -73,6 +74,19 @@ public class StandaloneNodeServer {
     @Value("${cloud.node.storage-dir:./node-storage}")
     private String storageDir;
 
+    /**
+     * Endereço público pelo qual o servidor central alcança este nó. Necessário
+     * quando o computador está atrás de NAT (ex.: servidor na nuvem + PC em
+     * casa): define aqui o URL do túnel (cloudflared/ngrok) ou o IP:porta
+     * público. Vazio → anuncia o IP local e a porta (funciona em LAN).
+     */
+    @Value("${cloud.node.public-url:}")
+    private String publicUrl;
+
+    /** Nome amigável apresentado na lista de dispositivos. */
+    @Value("${cloud.node.name:}")
+    private String configuredName;
+
     private HttpServer server;
     private volatile String activeDeviceToken;
     private final Path stateFile;
@@ -112,7 +126,9 @@ public class StandaloneNodeServer {
             registerWithServer();
         }
         if (nodeId > 0) {
+            announceAddress();
             System.out.println("  Estado:         REGISTADO e ONLINE");
+            System.out.println("  Endereco:       " + advertisedAddress());
         } else {
             System.out.println("  Estado:         AGUARDANDO REGISTO");
             System.out.println("  Usa um código de pareamento do site para registar.");
@@ -205,7 +221,9 @@ public class StandaloneNodeServer {
     }
 
     private String buildRegistrationJson(String code, long freeBytes, File dir) {
-        String name = "Dispositivo-" + System.getProperty("user.name", "desconhecido");
+        String name = configuredName != null && !configuredName.isBlank()
+                ? configuredName.trim()
+                : "Dispositivo-" + System.getProperty("user.name", "desconhecido");
         String os = System.getProperty("os.name", "unknown");
         long total = quotaBytes > 0 ? quotaBytes : freeBytes;
         Map<String, Object> body = new HashMap<>();
@@ -213,11 +231,68 @@ public class StandaloneNodeServer {
         body.put("totalSpaceBytes", total);
         body.put("reportedFreeBytes", freeBytes);
         body.put("localPath", dir.getAbsolutePath());
+        body.put("address", advertisedAddress());
         body.put("visibility", "PRIVATE");
         body.put("operatingSystem", os);
         body.put("agentVersion", "1.0");
         body.put("pairingCode", code);
         return SimpleJson.toJson(body);
+    }
+
+    /**
+     * Endereço pelo qual o servidor central deve contactar este nó. Usa
+     * {@code cloud.node.public-url} quando definido (túneis / IP público);
+     * caso contrário anuncia o IP local e a porta (LAN/dev).
+     */
+    private String advertisedAddress() {
+        if (publicUrl != null && !publicUrl.isBlank()) {
+            String value = publicUrl.trim();
+            while (value.endsWith("/")) {
+                value = value.substring(0, value.length() - 1);
+            }
+            return value;
+        }
+        String host;
+        try {
+            host = InetAddress.getLocalHost().getHostAddress();
+        } catch (Exception e) {
+            host = "127.0.0.1";
+        }
+        return "http://" + host + ":" + port;
+    }
+
+    /**
+     * Informa o servidor do endereço actual do nó. Útil quando o nó já estava
+     * registado (ex.: sem endereço) ou quando o URL de um túnel muda entre
+     * arranques. Falha silenciosamente se o servidor não responder.
+     */
+    private void announceAddress() {
+        if (nodeId <= 0 || activeDeviceToken == null || activeDeviceToken.isBlank()) {
+            return;
+        }
+        String endpoint = advertisedAddress();
+        try {
+            Map<String, Object> body = new HashMap<>();
+            body.put("address", endpoint);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(serverUrl + "/nodes/" + nodeId + "/address"))
+                    .header("Content-Type", "application/json")
+                    .header(NODE_TOKEN_HEADER, activeDeviceToken)
+                    .timeout(Duration.ofSeconds(15))
+                    .POST(HttpRequest.BodyPublishers.ofString(SimpleJson.toJson(body), StandardCharsets.UTF_8))
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                System.out.println("  Endereco anunciado ao servidor: " + endpoint);
+            } else {
+                System.out.println("  Nao foi possivel anunciar o endereco (" + response.statusCode() + ").");
+            }
+        } catch (IOException | InterruptedException e) {
+            System.out.println("  Nao foi possivel anunciar o endereco: " + e.getMessage());
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     private void handleHealth(HttpExchange exch) throws IOException {

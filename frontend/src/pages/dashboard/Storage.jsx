@@ -98,6 +98,10 @@ function Storage() {
 
     const closeToast = useCallback(() => setToast(null), []);
     const apiUrl = useMemo(() => import.meta.env.VITE_API_URL || "http://localhost:5000", []);
+    const isWindows = useMemo(
+        () => typeof navigator !== "undefined" && /win/i.test(navigator.platform || navigator.userAgent || ""),
+        []
+    );
 
     useEffect(() => { if (auth?.token) setAuthToken(auth.token); }, [auth?.token]);
 
@@ -529,12 +533,36 @@ function Storage() {
                                     </p>
                                 )}
 
-                                <h3 className="card__title"><FiSettings aria-hidden="true" /> Configuração do agente</h3>
-                                <ol className="storage-config__steps">
-                                    <li>Transferir o agente: <a href={`${apiUrl}/nodes/jar`} target="_blank" rel="noreferrer">cloudsystem-node.jar</a>.</li>
-                                    <li>Guardar as propriedades em <code>node.properties</code> e iniciar o agente.</li>
-                                </ol>
-                                <pre className="storage-config__props">{`cloud.node.server-url=${apiUrl}\ncloud.node.server-port=8081\ncloud.node.device-token=${registered.deviceToken}\ncloud.node.auto-register=true`}</pre>
+                                <h3 className="card__title"><FiSettings aria-hidden="true" /> Como ligar o teu computador</h3>
+                                <p className="dashboard-page__text">
+                                    Segue o código de pareamento e corre o instalador no computador que queres usar como armazenamento.
+                                </p>
+
+                                {pairingCode ? (
+                                    <div className="storage-config__steps">
+                                        <p><strong>1.</strong> No site, copia este código:</p>
+                                        <pre className="storage-config__props">{pairingCode.code}</pre>
+
+                                        <p><strong>2.</strong> No computador, corre um destes comandos:</p>
+                                        {isWindows ? (
+                                            <pre className="storage-config__props">{`install-node.bat ${pairingCode.code}`}</pre>
+                                        ) : (
+                                            <pre className="storage-config__props">{`bash install-node.sh ${pairingCode.code}`}</pre>
+                                        )}
+                                        <p className="dashboard-page__text">
+                                            Não tens o instalador? Transfere-o primeiro:
+                                        </p>
+                                        <div className="storage-toolbar__actions">
+                                            <a className="storage-config__link" href={`${apiUrl}/api/install/install-node.sh`} download>Linux / macOS (install-node.sh)</a>
+                                            <a className="storage-config__link" href={`${apiUrl}/api/install/install-node.bat`} download>Windows (install-node.bat)</a>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="storage-config__steps">
+                                        <p>Gera um código de pareamento para começar:</p>
+                                        <Button label="Gerar código de pareamento" variant="primary" icon={<FiKey aria-hidden="true" />} onClick={generatePairing} />
+                                    </div>
+                                )}
 
                                 <div className="modal__actions">
                                     <Button label="Concluir" variant="primary" onClick={() => setShowConfig(false)} />

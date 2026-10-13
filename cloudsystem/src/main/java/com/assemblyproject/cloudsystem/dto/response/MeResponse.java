@@ -5,6 +5,7 @@ public record MeResponse(
         String surname,
         String email,
         String role,
+        String roleNome,
         java.util.List<String> permissions,
         java.time.LocalDateTime dataRegistro,
         java.time.LocalDateTime ultimoAcesso,

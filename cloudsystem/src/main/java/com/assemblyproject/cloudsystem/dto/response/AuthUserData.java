@@ -7,6 +7,7 @@ public record AuthUserData(
         String surname,
         String email,
         String role,
+        String roleNome,
         List<String> permissions
 ) {
 }

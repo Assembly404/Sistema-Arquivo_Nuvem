@@ -41,8 +41,8 @@ function App(){
         <Route path='arquivos/compartilhados' element={<SharedWith/>}/>
         <Route path='arquivos/lixeira' element={<Trash/>}/>
         <Route path='armazenamento' element={<Storage/>}/>
-        <Route path='admin/usuarios' element={<RequireRole role="ADMIN"><AdminUsers/></RequireRole>}/>
-        <Route path='admin/permissoes' element={<RequireRole role="ADMIN"><AdminPermissions/></RequireRole>}/>
+        <Route path='admin/usuarios' element={<RequireRole permission="ADMIN_USUARIOS"><AdminUsers/></RequireRole>}/>
+        <Route path='admin/permissoes' element={<RequireRole permission="ADMIN_PERMISSOES"><AdminPermissions/></RequireRole>}/>
         <Route path='notificacoes' element={<Notifications/>}/>
         <Route path='suporte' element={<Support/>}/>
         <Route path='configuracoes' element={<Settings/>}/>

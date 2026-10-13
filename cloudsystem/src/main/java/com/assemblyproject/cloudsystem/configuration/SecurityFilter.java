@@ -1,5 +1,6 @@
 package com.assemblyproject.cloudsystem.configuration;
 
+import com.assemblyproject.cloudsystem.service.PermissionService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,9 +21,11 @@ import java.util.Optional;
 public class SecurityFilter extends OncePerRequestFilter {
 
     private final TokenConfig tokenConfig;
+    private final PermissionService permissionService;
 
-    public SecurityFilter(TokenConfig tokenConfig) {
+    public SecurityFilter(TokenConfig tokenConfig, PermissionService permissionService) {
         this.tokenConfig = tokenConfig;
+        this.permissionService = permissionService;
     }
 
     @Override
@@ -41,8 +45,13 @@ public class SecurityFilter extends OncePerRequestFilter {
                 // Re-verificar o estado de suspensão do utilizador a cada pedido
                 // (RF06 — exclusão de conta / suspensão deve ser respeitada imediatamente)
                 if (!userData.suspended()) {
+                    List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+                    permissionService.permissionsFor(role).forEach(p ->
+                            authorities.add(new SimpleGrantedAuthority(p)));
+
                     UsernamePasswordAuthenticationToken userAndPass = new UsernamePasswordAuthenticationToken(
-                            userData, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+                            userData, null, authorities);
 
                     SecurityContextHolder.getContext().setAuthentication(userAndPass);
                 }

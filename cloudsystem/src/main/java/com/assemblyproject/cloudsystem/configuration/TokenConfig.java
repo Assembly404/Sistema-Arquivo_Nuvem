@@ -34,7 +34,7 @@ public class TokenConfig {
         Algorithm algorithm = Algorithm.HMAC256(secret);
         return JWT.create()
                 .withClaim("userID", user.getUserID())
-                .withClaim("role", user.getRole() != null ? user.getRole().name() : "USER")
+                .withClaim("role", user.getRole() != null ? user.getRole() : "USER")
                 .withClaim("suspended", user.isSuspended())
                 .withSubject(user.getEmail())
                 .withExpiresAt(Instant.now().plusSeconds(86400))

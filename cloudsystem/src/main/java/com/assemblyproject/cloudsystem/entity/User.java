@@ -44,9 +44,12 @@ public class User implements UserDetails {
 
     private LocalDateTime lastAccess;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Role role = Role.USER;
+    /**
+     * Código do {@link Papel}/perfil (ex.: USER, ADMIN). Guardado como texto
+     * para permitir perfis dinâmicos definidos em base de dados.
+     */
+    @Column(nullable = false, length = 40)
+    private String role = "USER";
 
     private boolean suspended;
 
@@ -82,8 +85,8 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        Role effective = role != null ? role : Role.USER;
-        return List.of(new SimpleGrantedAuthority("ROLE_" + effective.name()));
+        String effective = role != null && !role.isBlank() ? role : "USER";
+        return List.of(new SimpleGrantedAuthority("ROLE_" + effective));
     }
 
     @Override

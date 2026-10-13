@@ -1,9 +1,9 @@
 package com.assemblyproject.cloudsystem.dto.request;
 
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public record ChangeRoleRequest(
-        @Pattern(regexp = "USER|ADMIN", message = "O papel deve ser USER ou ADMIN")
+        @Size(max = 40)
         String role
 ) {
 }

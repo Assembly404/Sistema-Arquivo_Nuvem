@@ -108,7 +108,7 @@ public class ContainerClient {
     }
 
     public String registerNode(StorageNode node) throws IOException {
-        String url = "http://" + node.getSessionId() + "/nodes/register";
+        String url = nodeUrl(node) + "/nodes/register";
         try {
             Map<String, Object> body = new HashMap<>();
             body.put("nodeID", node.getNodeID());
@@ -129,7 +129,18 @@ public class ContainerClient {
         }
     }
 
+    /**
+     * Base URL do nó. Preserva o esquema quando o endereço já é uma URL
+     * completa (ex.: túnel HTTPS); caso contrário assume {@code http://}.
+     */
     private String nodeUrl(StorageNode node) {
-        return "http://" + node.getSessionId();
+        String sessionId = node.getSessionId();
+        if (sessionId == null) {
+            return "http://localhost";
+        }
+        if (sessionId.startsWith("http://") || sessionId.startsWith("https://")) {
+            return sessionId;
+        }
+        return "http://" + sessionId;
     }
 }

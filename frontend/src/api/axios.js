@@ -27,14 +27,18 @@ export const login = (data) => {
 }
 
 export const getMe = () => http.get("/users/me");
+export const getMeuAcesso = () => http.get("/users/me/acesso");
 export const patchMe = (data) => http.patch("/users/me", data);
 export const changePassword = (data) => http.post("/users/me/password", data);
 export const deleteMe = () => http.delete("/users/me");
 
-export const listUsers = () => http.get("/admin/users");
+export const listUsers = (params = {}) => http.get("/admin/users", { params });
 export const createUser = (data) => http.post("/admin/users", data);
+export const updateUser = (id, data) => http.patch(`/admin/users/${id}`, data);
 export const changeUserRole = (id, data) => http.patch(`/admin/users/${id}/role`, data);
 export const deleteUser = (id) => http.delete(`/admin/users/${id}`);
+export const suspendUser = (id) => http.post(`/admin/users/${id}/suspend`);
+export const unsuspendUser = (id) => http.post(`/admin/users/${id}/unsuspend`);
 
 export const forgotPassword = (data) => http.post("/auth/password/forgot", data);
 export const verifyOtp = (data) => http.post("/auth/password/verify-otp", data);
@@ -146,5 +150,22 @@ export const getNodeSyncStatus = (id) => http.get(`/nodes/${id}/sync-status`);
 
 export const getPermissions = () => http.get("/admin/permissions");
 export const setUserQuota = (id, quotaBytes) => http.patch(`/admin/users/${id}/quota`, { quotaBytes: quotaBytes ?? null });
+
+/* ——— RBAC: perfis, recursos e permissões ——— */
+export const listPapeis = () => http.get("/admin/papeis");
+export const createPapel = (data) => http.post("/admin/papeis", data);
+export const updatePapel = (id, data) => http.patch(`/admin/papeis/${id}`, data);
+export const deletePapel = (id) => http.delete(`/admin/papeis/${id}`);
+export const setPapelPermissoes = (id, permissoes) => http.put(`/admin/papeis/${id}/permissoes`, { permissoes });
+
+export const listRecursos = () => http.get("/admin/recursos");
+export const createRecurso = (data) => http.post("/admin/recursos", data);
+export const updateRecurso = (id, data) => http.patch(`/admin/recursos/${id}`, data);
+export const deleteRecurso = (id) => http.delete(`/admin/recursos/${id}`);
+
+export const listPermissoes = () => http.get("/admin/permissoes");
+export const createPermissao = (data) => http.post("/admin/permissoes", data);
+export const updatePermissao = (id, data) => http.patch(`/admin/permissoes/${id}`, data);
+export const deletePermissao = (id) => http.delete(`/admin/permissoes/${id}`);
 
 export default http;

@@ -2,7 +2,6 @@ package com.assemblyproject.cloudsystem.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record CreateUserRequest(
@@ -18,7 +17,7 @@ public record CreateUserRequest(
         String email,
         @NotBlank(message = "A password é obrigatória")
         String password,
-        @Pattern(regexp = "USER|ADMIN", message = "O papel deve ser USER ou ADMIN")
+        @Size(max = 40)
         String role
 ) {
 }

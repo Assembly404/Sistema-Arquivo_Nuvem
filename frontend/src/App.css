@@ -183,6 +183,17 @@ img,video{
   box-shadow: var(--shadow-sm);
 }
 
+/* Título de secção usado em todas as páginas do dashboard */
+.card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  color: var(--color-ink-strong);
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;

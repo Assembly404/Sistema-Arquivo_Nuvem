@@ -18,8 +18,8 @@ import {
 export const SIDEBAR_STORAGE_KEY = "sidebar:collapsed";
 
 const ROLE_PERMISSIONS = {
-    ADMIN: ["ADMIN_ACESSAR", "ADMIN_USUARIOS", "ADMIN_PERMISSOES", "ARQUIVO_VISUALIZAR", "ARQUIVO_EXCLUIR", "ARMAZENAMENTO_VISUALIZAR"],
-    USER: ["ARQUIVO_VISUALIZAR", "ARMAZENAMENTO_VISUALIZAR"]
+    ADMIN: ["ADMIN_ACESSAR", "ADMIN_USUARIOS", "ADMIN_PERMISSOES", "ARQUIVO_VISUALIZAR", "ARQUIVO_ENVIAR", "ARQUIVO_EDITAR", "ARQUIVO_EXCLUIR", "ARQUIVO_PARTILHAR", "ARMAZENAMENTO_VISUALIZAR", "ARMAZENAMENTO_GERIR"],
+    USER: ["ARQUIVO_VISUALIZAR", "ARQUIVO_ENVIAR", "ARQUIVO_EDITAR", "ARQUIVO_EXCLUIR", "ARQUIVO_PARTILHAR", "ARMAZENAMENTO_VISUALIZAR"]
 };
 
 export const permissionsForRole = (role) => ROLE_PERMISSIONS[role] || [];
@@ -135,7 +135,7 @@ export const SIDEBAR_MENU = [
         children: [
             {
                 id: "admin-usuarios",
-                label: "Usuários",
+                label: "Utilizadores",
                 path: "/dashboard/admin/usuarios",
                 icon: "FiUsers",
                 permission: "ADMIN_USUARIOS",

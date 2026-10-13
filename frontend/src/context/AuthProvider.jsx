@@ -6,8 +6,8 @@ const AuthContext = createContext({});
 const STORAGE_KEY = "arquivo-nuvem.auth";
 
 const ROLE_PERMISSIONS = {
-    ADMIN: ["ADMIN_ACESSAR", "ADMIN_USUARIOS", "ADMIN_PERMISSOES", "ARQUIVO_VISUALIZAR", "ARQUIVO_EXCLUIR", "ARMAZENAMENTO_VISUALIZAR"],
-    USER: ["ARQUIVO_VISUALIZAR", "ARMAZENAMENTO_VISUALIZAR"]
+    ADMIN: ["ADMIN_ACESSAR", "ADMIN_USUARIOS", "ADMIN_PERMISSOES", "ARQUIVO_VISUALIZAR", "ARQUIVO_ENVIAR", "ARQUIVO_EDITAR", "ARQUIVO_EXCLUIR", "ARQUIVO_PARTILHAR", "ARMAZENAMENTO_VISUALIZAR", "ARMAZENAMENTO_GERIR"],
+    USER: ["ARQUIVO_VISUALIZAR", "ARQUIVO_ENVIAR", "ARQUIVO_EDITAR", "ARQUIVO_EXCLUIR", "ARQUIVO_PARTILHAR", "ARMAZENAMENTO_VISUALIZAR"]
 };
 
 const readStoredAuth = () => {
@@ -35,11 +35,12 @@ export const AuthProvider = ({ children }) => {
 
     const value = useMemo(() => {
         const role = auth?.user?.role || null;
+        const roleNome = auth?.user?.roleNome || (role ? ROLE_PERMISSIONS[role] ? (role === "ADMIN" ? "Administrador" : "Utilizador") : role : "");
         const permissions = auth?.user?.permissions || (role ? ROLE_PERMISSIONS[role] || [] : []);
         const hasRole = (wanted) => role === wanted;
         const hasPermission = (wanted) => permissions.includes(wanted);
         const logout = () => setAuth({});
-        return { auth, setAuth, role, permissions, hasRole, hasPermission, logout };
+        return { auth, setAuth, role, roleNome, permissions, hasRole, hasPermission, logout };
     }, [auth]);
 
     return (

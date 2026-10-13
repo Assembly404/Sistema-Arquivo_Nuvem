@@ -9,7 +9,6 @@ import com.assemblyproject.cloudsystem.dto.request.VerifyOtpRequest;
 import com.assemblyproject.cloudsystem.dto.response.AuthUserData;
 import com.assemblyproject.cloudsystem.dto.response.LoginResponse;
 import com.assemblyproject.cloudsystem.dto.response.RegisterUserResponse;
-import com.assemblyproject.cloudsystem.entity.Role;
 import com.assemblyproject.cloudsystem.entity.User;
 import com.assemblyproject.cloudsystem.repository.UserRepository;
 import com.assemblyproject.cloudsystem.service.PasswordResetService;
@@ -76,7 +75,7 @@ public class AuthController {
         newUser.setEmail(registerRequest.email().trim().toLowerCase());
         newUser.setName(registerRequest.name());
         newUser.setSurname(registerRequest.surname());
-        newUser.setRole(Role.USER);
+        newUser.setRole(PermissionService.ROLE_USER);
         newUser.setQuotaBytes(DEFAULT_QUOTA_BYTES);
         newUser.setStoragePolicy(DEFAULT_STORAGE_POLICY);
 
@@ -120,7 +119,8 @@ public class AuthController {
     }
 
     private AuthUserData toAuthUser(User user) {
-        Role role = user.getRole() != null ? user.getRole() : Role.USER;
-        return new AuthUserData(user.getName(), user.getSurname(), user.getEmail(), role.name(), permissionService.permissionsFor(role));
+        String role = user.getRole() != null ? user.getRole() : PermissionService.ROLE_USER;
+        return new AuthUserData(user.getName(), user.getSurname(), user.getEmail(), role,
+                permissionService.roleNome(role), permissionService.permissionsFor(role));
     }
 }

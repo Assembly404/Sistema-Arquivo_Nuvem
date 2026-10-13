@@ -96,11 +96,6 @@
     border-radius: var(--radius-sm);
 }
 
-.card__title {
-    display: flex; align-items: center; gap: var(--space-2);
-    font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 600;
-    color: var(--color-ink-strong);
-}
 .profile-form { display: flex; flex-direction: column; gap: var(--space-4); }
 .profile-form label {
     display: block; padding: var(--space-1) 0;
@@ -115,6 +110,76 @@
 .profile-perms { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .card--danger { border-color: var(--color-danger-bg); }
 .modal__actions { display: flex; gap: var(--space-3); justify-content: flex-end; }
+
+/* ——— Acessos do perfil (o que o papel pode fazer) ——— */
+.profile-access {
+    display: flex; flex-direction: column; gap: var(--space-4);
+    margin: 0; padding: 0;
+}
+.profile-access__recurso {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    padding: var(--space-4);
+    display: flex; flex-direction: column; gap: var(--space-3);
+}
+.profile-access__head {
+    display: flex; align-items: center; gap: var(--space-3);
+}
+.profile-access__icon {
+    display: grid; place-items: center;
+    width: 44px; height: 44px; flex-shrink: 0;
+    border-radius: var(--radius-full);
+    background: var(--color-primary-tint);
+    color: var(--color-primary-hover);
+    font-size: var(--fs-lg);
+}
+.profile-access__head strong {
+    display: block;
+    font-family: var(--font-display); font-weight: 600;
+    color: var(--color-ink-strong);
+}
+.profile-access__code {
+    font-family: var(--font-display); font-size: var(--fs-caption);
+    color: var(--color-ink-muted);
+}
+.profile-access__perms {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--space-2); margin: 0; padding: 0;
+}
+.profile-access__perms li {
+    display: flex; align-items: flex-start; gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-2);
+}
+.profile-access__check { color: var(--color-success); margin-top: 2px; flex-shrink: 0; }
+.profile-access__perms strong {
+    display: block;
+    font-family: var(--font-display); font-size: var(--fs-small); font-weight: 600;
+    color: var(--color-ink-strong);
+}
+.profile-access__perm-code {
+    font-family: var(--font-display); font-size: var(--fs-caption); color: var(--color-ink-muted);
+}
+
+/* ——— Barra de quota (armazenamento real) ——— */
+.quota-bar {
+    width: 100%; height: 12px;
+    border-radius: var(--radius-full);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+}
+.quota-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width var(--dur-normal, 300ms) var(--ease-out, ease);
+}
+.quota-fill--ok { background: var(--color-success); }
+.quota-fill--warn { background: var(--color-warning); }
+.quota-fill--danger { background: var(--color-danger); }
+.quota-bar.is-critical { border-color: var(--color-danger); }
 
 @media (max-width: 768px) {
     .profile-header { flex-direction: column; align-items: stretch; text-align: center; padding: var(--space-5) var(--space-4); }

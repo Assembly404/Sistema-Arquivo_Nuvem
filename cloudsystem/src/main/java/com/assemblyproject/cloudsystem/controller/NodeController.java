@@ -19,6 +19,7 @@ import com.assemblyproject.cloudsystem.service.SystemNodeService;
 import com.assemblyproject.cloudsystem.configuration.JWTUserData;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -48,6 +49,10 @@ public class NodeController {
     private final PairingCodeService pairingCodeService;
     private final FileReplicaRepository fileReplicaRepository;
     private final UserRepository userRepository;
+
+    /** Caminho opcional para o jar do agente standalone (default: procura em target/). */
+    @Value("${cloud.system.node-agent-jar:}")
+    private String nodeAgentJarPath;
 
     // --- Vinculação segura de dispositivos (RF17.3/RF17.4) ---
 
@@ -233,6 +238,27 @@ public class NodeController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * O agente local anuncia o seu endereço público (IP:porta ou URL de túnel)
+     * para que o servidor central o consiga alcançar. Autenticado pelo token do
+     * dispositivo ({@code X-Node-Token}), não pela sessão do utilizador.
+     */
+    @PostMapping("/{nodeId}/address")
+    public ResponseEntity<?> updateAddress(@PathVariable Long nodeId,
+                                           @RequestBody Map<String, String> body,
+                                           @RequestHeader(value = "X-Node-Token", required = false) String deviceToken) {
+        try {
+            StorageNode node = nodeManagementService.updateAddress(nodeId, deviceToken, body.get("address"));
+            return ResponseEntity.ok(Map.of(
+                    "nodeID", node.getNodeID(),
+                    "address", node.getSessionId() == null ? "" : node.getSessionId()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(401).body(Map.of("message", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @GetMapping("/{nodeId}/storage-info")
     public ResponseEntity<?> storageInfo(@PathVariable Long nodeId,
                                          @AuthenticationPrincipal JWTUserData principal) {
@@ -361,18 +387,43 @@ public class NodeController {
     @GetMapping("/jar")
     public ResponseEntity<byte[]> downloadNodeJar() {
         try {
-            Path jarPath = Paths.get("cloudsystem-node.jar");
-            if (!Files.exists(jarPath)) {
+            Path jarPath = resolveNodeAgentJar();
+            if (jarPath == null) {
                 return ResponseEntity.status(404).body(new byte[0]);
             }
             byte[] jarBytes = Files.readAllBytes(jarPath);
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"cloudsystem-node.jar\"")
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .contentLength(jarBytes.length)
                     .body(jarBytes);
         } catch (IOException e) {
             return ResponseEntity.status(500).body(new byte[0]);
         }
+    }
+
+    /**
+     * Localiza o jar do agente standalone a servir em {@code /nodes/jar}.
+     * Procura, por ordem, o caminho configurado em
+     * {@code cloud.system.node-agent-jar} e as localizações habituais de build
+     * (incluindo o classifier {@code -node} gerado pelo maven-jar-plugin).
+     */
+    private Path resolveNodeAgentJar() {
+        String configured = nodeAgentJarPath;
+        List<String> candidates = new ArrayList<>();
+        if (configured != null && !configured.isBlank()) {
+            candidates.add(configured);
+        }
+        candidates.add("cloudsystem-node.jar");
+        candidates.add("target/cloudsystem-node.jar");
+        candidates.add("target/cloudsystem-0.0.1-SNAPSHOT-node.jar");
+        for (String candidate : candidates) {
+            Path path = Paths.get(candidate);
+            if (Files.exists(path) && Files.isRegularFile(path)) {
+                return path;
+            }
+        }
+        return null;
     }
 
     @PostMapping("/check")

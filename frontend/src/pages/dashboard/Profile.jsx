@@ -1,16 +1,38 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { FiHardDrive, FiLock, FiMail, FiShield, FiTrash2, FiUser } from "react-icons/fi";
+import {
+    FiCheck,
+    FiFolder,
+    FiHardDrive,
+    FiKey,
+    FiLock,
+    FiMail,
+    FiShield,
+    FiTrash2,
+    FiUser,
+    FiUsers
+} from "react-icons/fi";
 import AuthContext from "../../context/AuthProvider.jsx";
 import Button from "../../components/button/button.jsx";
 import Input from "../../components/form/input.jsx";
 import Toast from "../../components/toast/toast.jsx";
-import { changePassword, deleteMe, getMe, patchMe, setAuthToken } from "../../api/axios.js";
+import {
+    changePassword,
+    deleteMe,
+    getMe,
+    getMeuAcesso,
+    getStorageSummary,
+    patchMe,
+    setAuthToken
+} from "../../api/axios.js";
 import "./Profile.css";
 
 const USER_REGEX = /^[a-zA-Z][a-zA-Z0-9_-]{2,23}$/;
 const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
 const TOAST_DURATION = 4500;
+
+const RESOURCE_ICONS = { FiFolder, FiHardDrive, FiShield, FiKey, FiUser, FiUsers };
+const resourceIcon = (name) => RESOURCE_ICONS[name] || FiKey;
 
 const passwordChecks = (pwd) => ([
     { label: "8 a 24 caracteres", ok: pwd.length >= 8 && pwd.length <= 24 },
@@ -39,9 +61,18 @@ function Profile() {
     const [tab, setTab] = useState("dados");
     const [toast, setToast] = useState(null);
     const titleRef = useRef(null);
+
+    /* "o que o meu perfil pode fazer" + armazenamento real */
+    const [acesso, setAcesso] = useState(null);
+    const [storage, setStorage] = useState(null);
+    const [loadingStorage, setLoadingStorage] = useState(false);
+
     const closeToast = useCallback(() => setToast(null), []);
+    const notify = ({ message, type }) => setToast({ message, type });
+
     useEffect(() => { titleRef.current?.focus(); }, []);
     useEffect(() => { if (auth?.token) setAuthToken(auth.token); }, [auth?.token]);
+
     useEffect(() => {
         if (!auth?.token) return undefined;
         let mounted = true;
@@ -53,35 +84,85 @@ function Profile() {
             setAuth((prev) => ({ ...prev, user: { ...(prev.user || {}), ...res.data } }));
         }).catch((err) => {
             console.error("[profile] falha ao carregar perfil", err);
-            if (mounted) setToast({ message: "Não foi possível carregar o perfil.", type: "error" });
+            if (mounted) notify({ message: "Não foi possível carregar o perfil.", type: "error" });
         }).finally(() => { if (mounted) setLoadingMe(false); });
+
+        getMeuAcesso().then((res) => {
+            if (mounted) setAcesso(res.data || null);
+        }).catch((err) => {
+            console.error("[profile] falha ao carregar acessos", err);
+        });
+
         return () => { mounted = false; };
     }, [auth?.token, setAuth]);
+
+    const loadStorage = useCallback(() => {
+        if (!auth?.token || loadingStorage) return;
+        setLoadingStorage(true);
+        getStorageSummary()
+            .then((res) => setStorage(res.data || null))
+            .catch((err) => {
+                console.error("[profile] falha ao carregar armazenamento", err);
+                notify({ message: "Não foi possível carregar o armazenamento.", type: "error" });
+            })
+            .finally(() => setLoadingStorage(false));
+    }, [auth?.token, loadingStorage]);
+
+    useEffect(() => {
+        if (tab === "armazenamento" && !storage) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            loadStorage();
+        }
+    }, [tab, storage, loadStorage]);
+
     const role = me?.role || auth?.user?.role || "USER";
+    const roleNome = acesso?.roleNome || me?.roleNome || auth?.user?.roleNome || role;
     const isAdmin = role === "ADMIN";
     const permissions = me?.permissions || auth?.user?.permissions || [];
-    const canDelete = isAdmin || hasPermission("ARQUIVO_EXCLUIR") || permissions.includes("ARQUIVO_EXCLUIR");
+    const canDelete = hasPermission("ARQUIVO_EXCLUIR") || permissions.includes("ARQUIVO_EXCLUIR");
     const initials = `${name?.[0] || ""}${surname?.[0] || ""}`.toUpperCase() || "U";
     const nameError = name && !USER_REGEX.test(name) ? "Mínimo 3 caracteres, a começar por letra." : "";
     const surnameError = surname && !USER_REGEX.test(surname) ? "Mínimo 3 caracteres." : "";
     const newPwdError = newPwd && !PWD_REGEX.test(newPwd) ? "8 a 24 caracteres, com maiúscula, minúscula, número e símbolo." : "";
     const confirmError = confirmPwd && newPwd !== confirmPwd ? "As passwords não coincidem." : "";
-    /* — Cabeçalho estilo Instagram: só dados reais do /users/me (Regra 3) — */
+
     const username = "@" + (me?.email || auth?.user?.email || "utilizador").split("@")[0];
-    const memberSince = (() => {
+    const memberSince = useMemo(() => {
         const raw = me?.dataRegistro;
         if (!raw) return "—";
         const [datePart] = String(raw).split("T");
         const [y, m, d] = String(datePart).split("-");
         return m && d ? `${d}/${m}/${y}` : "—";
-    })();
+    }, [me]);
+
+    const quota = useMemo(() => {
+        const cloud = storage?.cloud;
+        if (!cloud) return null;
+        const used = cloud.usedBytes || 0;
+        const quotaBytes = cloud.quotaBytes;
+        const hasQuota = Boolean(cloud.hasQuota && quotaBytes);
+        const percent = hasQuota ? Math.min(100, Math.round((used / quotaBytes) * 100)) : 0;
+        const tone = !hasQuota || percent < 70 ? "ok" : percent < 90 ? "warn" : "danger";
+        const usedLabel = formatBytes(used);
+        const quotaLabel = hasQuota ? formatBytes(quotaBytes) : "Ilimitada";
+        return { used, hasQuota, percent, tone, usedLabel, quotaLabel };
+    }, [storage]);
+
+    function formatBytes(bytes) {
+        if (!bytes || bytes <= 0) return "0 B";
+        const units = ["B", "KB", "MB", "GB", "TB"];
+        const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+        return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+    }
+
     const tabsList = [
         { id: "dados", label: "Dados", icon: <FiUser aria-hidden="true" /> },
         { id: "seguranca", label: "Segurança", icon: <FiLock aria-hidden="true" /> },
+        { id: "acessos", label: "Acessos", icon: <FiKey aria-hidden="true" /> },
         { id: "armazenamento", label: "Armazenamento", icon: <FiHardDrive aria-hidden="true" /> },
-        ...(isAdmin ? [{ id: "admin", label: "Administração", icon: <FiShield aria-hidden="true" /> }] : []),
         { id: "perigo", label: "Perigo", icon: <FiTrash2 aria-hidden="true" /> }
     ];
+
     const handleSave = async (e) => {
         e.preventDefault();
         setSaving(true);
@@ -89,27 +170,29 @@ function Profile() {
             const res = await patchMe({ name, surname });
             setMe(res.data);
             setAuth((prev) => ({ ...prev, user: { ...(prev.user || {}), ...res.data } }));
-            setToast({ message: "Dados atualizados com sucesso.", type: "success" });
+            notify({ message: "Dados atualizados com sucesso.", type: "success" });
         } catch (err) {
             console.error("[profile] falha ao atualizar dados", err);
-            setToast({ message: err?.response?.data?.message || "Não foi possível guardar.", type: "error" });
+            notify({ message: err?.response?.data?.message || "Não foi possível guardar.", type: "error" });
         } finally { setSaving(false); }
     };
+
     const handlePassword = async (e) => {
         e.preventDefault();
         setSavingPwd(true);
         try {
             await changePassword({ currentPassword: currentPwd, newPassword: newPwd });
             setCurrentPwd(""); setNewPwd(""); setConfirmPwd("");
-            setToast({ message: "Password atualizada com sucesso.", type: "success" });
+            notify({ message: "Password atualizada com sucesso.", type: "success" });
         } catch (err) {
             console.error("[profile] falha ao trocar password", err);
-            setToast({ message: err?.response?.data?.message || "Não foi possível atualizar.", type: "error" });
+            notify({ message: err?.response?.data?.message || "Não foi possível atualizar.", type: "error" });
         } finally { setSavingPwd(false); }
     };
+
     const handleDelete = async () => {
         if (confirmDelete !== "EXCLUIR") {
-            setToast({ message: "Escreva EXCLUIR para confirmar.", type: "warning" });
+            notify({ message: "Escreva EXCLUIR para confirmar.", type: "warning" });
             return;
         }
         setDeleting(true);
@@ -120,14 +203,15 @@ function Profile() {
             navigate("/login");
         } catch (err) {
             console.error("[profile] falha ao excluir conta", err);
-            setToast({ message: "Não foi possível excluir a conta.", type: "error" });
+            notify({ message: "Não foi possível excluir a conta.", type: "error" });
         } finally { setDeleting(false); setShowDelete(false); }
     };
 
     return (
         <section className="dashboard-page profile-page">
             <h1 className="dashboard-page__title" ref={titleRef} tabIndex={-1}>Perfil</h1>
-            <p className="dashboard-page__text">Gira os teus dados, segurança e papel na plataforma.</p>
+            <p className="dashboard-page__text">Gere os teus dados, segurança e o acesso do teu perfil na plataforma.</p>
+
             <header className="card profile-header">
                 <div className="profile-avatar" aria-hidden="true">{initials}</div>
                 <div className="profile-header__info">
@@ -139,20 +223,21 @@ function Profile() {
                         </div>
                     </div>
                     <ul className="profile-stats">
-                        <li><span className="profile-stat__count">{permissions.length}</span><span className="profile-stat__label">permissões</span></li>
-                        <li><span className="profile-stat__count">{isAdmin ? "ADMIN" : "USER"}</span><span className="profile-stat__label">papel</span></li>
+                        <li><span className="profile-stat__count">{acesso ? acesso.recursos.reduce((n, r) => n + r.permissoes.length, 0) : permissions.length}</span><span className="profile-stat__label">permissões</span></li>
+                        <li><span className="profile-stat__count">{roleNome}</span><span className="profile-stat__label">perfil</span></li>
                         <li><span className="profile-stat__count">{memberSince}</span><span className="profile-stat__label">membro desde</span></li>
                     </ul>
                     <div className="profile-bio">
                         <p className="profile-real-name">{loadingMe ? "A carregar..." : `${me?.name || ""} ${me?.surname || ""}`.trim()}</p>
                         <p className="profile-email"><FiMail aria-hidden="true" /> {me?.email || auth?.user?.email}</p>
                         <p className="profile-meta">
-                            <span className="profile-chip"><FiUser aria-hidden="true" /> {isAdmin ? "Administrador" : "Utilizador"}</span>
-                            {isAdmin && <span className="profile-chip profile-chip--admin"><FiShield aria-hidden="true" /> Acesso total</span>}
+                            <span className="profile-chip"><FiUser aria-hidden="true" /> {roleNome}</span>
+                            {isAdmin && <span className="profile-chip profile-chip--admin"><FiShield aria-hidden="true" /> Administração</span>}
                         </p>
                     </div>
                 </div>
             </header>
+
             <nav className="profile-tabs" role="tablist" aria-label="Secções do perfil">
                 {tabsList.map((t) => (
                     <button
@@ -170,6 +255,7 @@ function Profile() {
                     </button>
                 ))}
             </nav>
+
             {tab === "dados" && (
             <div className="card" role="tabpanel" id="tabpanel-dados" aria-labelledby="tab-dados">
                 <h2 className="card__title">Dados pessoais</h2>
@@ -221,23 +307,80 @@ function Profile() {
                 </form>
             </div>
             )}
-            {isAdmin && tab === "admin" && (
-                <div className="card" role="tabpanel" id="tabpanel-admin" aria-labelledby="tab-admin">
-                    <h2 className="card__title">Administração</h2>
-                    <p className="dashboard-page__text">Papel com acesso total à plataforma.</p>
-                    <p className="profile-perms">{(permissions.length ? permissions : ["ADMIN_ACESSAR"]).map((p) => (<span key={p} className="profile-chip">{p}</span>))}</p>
-                    <Link className="btn btn-outline" to="/dashboard/admin/usuarios">Gerir utilizadores</Link>
-                </div>
+
+            {tab === "acessos" && (
+            <div className="card" role="tabpanel" id="tabpanel-acessos" aria-labelledby="tab-acessos">
+                <h2 className="card__title"><FiKey aria-hidden="true" /> O que o meu perfil pode fazer</h2>
+                <p className="dashboard-page__text">
+                    O perfil <strong>{roleNome}</strong> ({role}) tem acesso aos seguintes recursos:
+                </p>
+                {!acesso ? (
+                    <p className="dashboard-page__text">A carregar acessos...</p>
+                ) : acesso.recursos.length === 0 ? (
+                    <p className="dashboard-page__text">Este perfil não tem permissões atribuídas.</p>
+                ) : (
+                    <ul className="profile-access">
+                        {acesso.recursos.map((r) => {
+                            const Icon = resourceIcon(r.icone);
+                            return (
+                                <li key={r.codigo} className="profile-access__recurso">
+                                    <div className="profile-access__head">
+                                        <span className="profile-access__icon"><Icon aria-hidden="true" /></span>
+                                        <div>
+                                            <strong>{r.nome}</strong>
+                                            <span className="profile-access__code">{r.codigo}</span>
+                                        </div>
+                                    </div>
+                                    <ul className="profile-access__perms">
+                                        {r.permissoes.map((pm) => (
+                                            <li key={pm.codigo}>
+                                                <FiCheck className="profile-access__check" aria-hidden="true" />
+                                                <span>
+                                                    <strong>{pm.nome}</strong>
+                                                    <span className="profile-access__perm-code">{pm.codigo}</span>
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
+                {hasPermission("ADMIN_PERMISSOES") && (
+                    <Link className="btn btn-outline" to="/dashboard/admin/permissoes">Gerir perfis &amp; permissões</Link>
+                )}
+            </div>
             )}
+
             {tab === "armazenamento" && (
             <div className="card" role="tabpanel" id="tabpanel-armazenamento" aria-labelledby="tab-armazenamento">
                 <h2 className="card__title"><FiHardDrive aria-hidden="true" /> Armazenamento</h2>
-                <div className="quota-bar" role="progressbar" aria-label="Quota de armazenamento" aria-valuenow={0} aria-valuemin={0} aria-valuemax={100}>
-                    <div className="quota-fill" style={{ width: "0%" }} />
-                </div>
-                <p className="dashboard-page__text">A ligar ao módulo de quota em <Link to="/dashboard/armazenamento">Armazenamento</Link>.</p>
+                {loadingStorage && !storage ? (
+                    <p className="dashboard-page__text">A carregar armazenamento...</p>
+                ) : !storage || !quota ? (
+                    <p className="dashboard-page__text">Sem dados de armazenamento.</p>
+                ) : (
+                    <>
+                        <div
+                            className={`quota-bar ${quota.percent >= 90 ? "is-critical" : ""}`}
+                            role="progressbar"
+                            aria-label="Quota de armazenamento"
+                            aria-valuenow={quota.percent}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                        >
+                            <div className={`quota-fill quota-fill--${quota.tone}`} style={{ width: `${quota.percent}%` }} />
+                        </div>
+                        <p className="dashboard-page__text">
+                            <strong>{quota.usedLabel}</strong> utilizados{quota.hasQuota ? ` de ${quota.quotaLabel} (${quota.percent}%)` : " — quota ilimitada"}.
+                        </p>
+                    </>
+                )}
+                <Link className="btn btn-outline" to="/dashboard/armazenamento">Ver armazenamento em detalhe</Link>
             </div>
             )}
+
             {tab === "perigo" && (
             <div className="card card--danger" role="tabpanel" id="tabpanel-perigo" aria-labelledby="tab-perigo">
                 <h2 className="card__title"><FiTrash2 aria-hidden="true" /> Zona de perigo</h2>
@@ -246,6 +389,7 @@ function Profile() {
                 {!canDelete && <p className="errorText">O seu perfil não permite excluir a conta.</p>}
             </div>
             )}
+
             {showDelete && (
                 <div className="modal-backdrop" onClick={() => setShowDelete(false)}>
                     <div className="modal" role="dialog" aria-modal="true" aria-label="Confirmar exclusão" onClick={(e) => e.stopPropagation()}>
@@ -265,4 +409,3 @@ function Profile() {
 }
 
 export default Profile;
-

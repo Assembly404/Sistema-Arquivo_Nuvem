@@ -6,6 +6,7 @@ public record AdminUserResponse(
         String surname,
         String email,
         String role,
+        String roleNome,
         java.time.LocalDateTime dataRegistro,
         java.time.LocalDateTime ultimoAcesso,
         boolean suspended,

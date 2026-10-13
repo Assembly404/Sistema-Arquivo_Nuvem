@@ -196,6 +196,28 @@ public class NodeManagementService {
         return migrated;
     }
 
+    /**
+     * Atualiza o endereço público de um dispositivo já registado. Autentica o
+     * pedido pelo token do dispositivo (não pela sessão do utilizador), porque
+     * quem chama é o próprio agente local ao arrancar. Isto permite que o
+     * servidor central alcance nós que estejam atrás de NAT/túnel e mantém o
+     * endereço fresco quando o URL do túnel muda.
+     */
+    @Transactional
+    public StorageNode updateAddress(Long nodeId, String deviceToken, String address) {
+        StorageNode node = nodeRepository.findById(nodeId).orElse(null);
+        if (node == null || node.isSystem()) {
+            throw new IllegalArgumentException("Nó não encontrado.");
+        }
+        if (!nodeSecretService.matches(node.getDeviceTokenEncrypted(), deviceToken)) {
+            throw new SecurityException("Token do dispositivo inválido.");
+        }
+        node.setSessionId(normalizeAddress(address));
+        StorageNode saved = nodeRepository.save(node);
+        log.info("[node] Endereço do dispositivo {} atualizado para {}.", nodeId, saved.getSessionId());
+        return saved;
+    }
+
     public StorageNode requireOwnedDevice(User user, Long nodeId) {
         StorageNode node = nodeRepository.findById(nodeId).orElse(null);
         if (node == null) {
@@ -227,8 +249,15 @@ public class NodeManagementService {
             return null;
         }
         String value = address.trim();
-        if (value.startsWith("http://")) value = value.substring("http://".length());
-        if (value.startsWith("https://")) value = value.substring("https://".length());
+        // Endereço completo (com esquema) — usado por túneis públicos
+        // (ex.: https://meu-pc.trycloudflare.com). Preserva o esquema.
+        if (value.startsWith("http://") || value.startsWith("https://")) {
+            while (value.endsWith("/")) {
+                value = value.substring(0, value.length() - 1);
+            }
+            return value;
+        }
+        // Endereço simples: host[:porta]. Assume http e a porta padrão do nó.
         if (value.endsWith("/")) value = value.substring(0, value.length() - 1);
         if (!value.contains(":")) value = value + ":8081";
         return value;

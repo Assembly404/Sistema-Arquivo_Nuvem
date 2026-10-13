@@ -41,7 +41,17 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/nodes/jar").permitAll()
                         .requestMatchers(HttpMethod.POST, "/nodes/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/nodes/*/heartbeat").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/nodes/*/address").permitAll()
+                        // Leitura do catálogo (perfis/recursos/permissões) é permitida a qualquer acesso de administração
+                        .requestMatchers(HttpMethod.GET, "/admin/papeis/**", "/admin/recursos/**", "/admin/permissoes/**")
+                        .hasAnyAuthority("ROLE_ADMIN", "ADMIN_ACESSAR", "ADMIN_USUARIOS", "ADMIN_PERMISSOES")
+                        // Alterações a perfis/recursos/permissões exigem ADMIN_PERMISSOES
+                        .requestMatchers("/admin/papeis/**", "/admin/recursos/**", "/admin/permissoes/**", "/admin/permissions/**")
+                        .hasAnyAuthority("ROLE_ADMIN", "ADMIN_PERMISSOES")
+                        .requestMatchers("/admin/users/**")
+                        .hasAnyAuthority("ROLE_ADMIN", "ADMIN_USUARIOS")
+                        .requestMatchers("/admin/**")
+                        .hasAnyAuthority("ROLE_ADMIN", "ADMIN_ACESSAR")
                         .anyRequest().authenticated());
         return http.build();
     }

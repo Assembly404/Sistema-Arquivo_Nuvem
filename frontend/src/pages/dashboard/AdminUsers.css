@@ -1,9 +1,37 @@
-.admin-users { max-width: 960px; margin: 0 auto; }
+.admin-users { max-width: 1080px; margin: 0 auto; }
 .admin-users .card { display: flex; flex-direction: column; gap: var(--space-4); }
 
 .admin-users__toolbar {
     display: flex; align-items: center; justify-content: space-between;
     gap: var(--space-4); flex-wrap: wrap;
+}
+.admin-users__toolbar-left {
+    display: flex; flex-direction: column; gap: var(--space-2);
+}
+.admin-users__toolbar-right {
+    display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+}
+
+.admin-users__stats { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.admin-users__stat {
+    font-family: var(--font-display); font-size: var(--fs-caption); font-weight: 600;
+    color: var(--color-ink-muted);
+}
+.admin-users__stat.is-warn { color: var(--color-warning); }
+
+.admin-users__search {
+    display: flex; align-items: center; gap: var(--space-2);
+    padding: 0 var(--space-3);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-full);
+    background: var(--color-surface);
+    color: var(--color-ink-muted);
+}
+.admin-users__search:focus-within { outline: 2px solid var(--color-focus-ring); outline-offset: 1px; }
+.admin-users__search .input_container { flex: 1; }
+.admin-users__search .inputField {
+    border: none; background: transparent; min-height: 40px;
+    padding: 0; box-shadow: none; outline: none;
 }
 
 .admin-users__table-wrap { overflow-x: auto; }
@@ -17,6 +45,7 @@
     font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
     color: var(--color-ink-muted);
     border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
 }
 .admin-users__table td {
     padding: var(--space-3);
@@ -25,9 +54,27 @@
     vertical-align: middle;
 }
 .admin-users__table tr:last-child td { border-bottom: none; }
+.admin-users__table tr.is-suspended td { opacity: 0.65; }
+
+.admin-users__user {
+    display: flex; align-items: center; gap: var(--space-3);
+}
+.admin-users__avatar {
+    display: grid; place-items: center;
+    width: 40px; height: 40px; flex-shrink: 0;
+    border-radius: var(--radius-full);
+    background: var(--color-primary-tint);
+    color: var(--color-primary-hover);
+    font-family: var(--font-display); font-size: var(--fs-small); font-weight: 700;
+}
+.admin-users__user-info { display: flex; flex-direction: column; min-width: 0; }
 .admin-users__name {
-    font-family: var(--font-display); font-weight: 600;
-    color: var(--color-ink-strong);
+    font-family: var(--font-display); font-weight: 600; color: var(--color-ink-strong);
+}
+.admin-users__email {
+    display: flex; align-items: center; gap: var(--space-1);
+    font-family: var(--font-body); font-size: var(--fs-small); color: var(--color-ink-muted);
+    overflow-wrap: anywhere;
 }
 .admin-users__you {
     display: inline-block; margin-left: var(--space-2);
@@ -37,51 +84,60 @@
     font-family: var(--font-display); font-size: var(--fs-caption); font-weight: 600;
 }
 
+.admin-users__role-badge {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    background: var(--color-primary-tint);
+    color: var(--color-primary-hover);
+    font-family: var(--font-display); font-size: var(--fs-small); font-weight: 600;
+    white-space: nowrap;
+}
+.admin-users__role-badge code {
+    font-family: var(--font-display); font-size: var(--fs-caption); font-weight: 600;
+    color: var(--color-primary);
+}
+
+.admin-users__state {
+    display: inline-flex; align-items: center;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    font-family: var(--font-display); font-size: var(--fs-caption); font-weight: 600;
+}
+.admin-users__state.is-active { background: var(--color-success-bg); color: var(--color-success); }
+.admin-users__state.is-suspended { background: var(--color-warning-bg); color: var(--color-warning); }
+
+.admin-users__actions {
+    display: flex; gap: var(--space-1); flex-wrap: wrap;
+}
+.admin-users__action {
+    display: inline-grid; place-items: center;
+    min-width: 44px; min-height: 44px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    cursor: pointer;
+    transition: background var(--dur-fast, 150ms) var(--ease-out, ease), color var(--dur-fast, 150ms) var(--ease-out, ease);
+}
+.admin-users__action:hover:not(:disabled) { background: var(--color-primary-tint); color: var(--color-primary-hover); }
+.admin-users__action.is-danger { color: var(--color-danger); }
+.admin-users__action.is-danger:hover:not(:disabled) { background: var(--color-danger-bg); color: var(--color-danger); }
+.admin-users__action:disabled { color: var(--color-disabled-ink); cursor: not-allowed; opacity: 0.55; }
+.admin-users__action:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+
 .admin-users__role {
-    padding: var(--space-1) var(--space-2);
+    padding: var(--space-2) var(--space-3);
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-md);
     background: var(--color-surface);
     font-family: var(--font-display); font-size: var(--fs-small); font-weight: 600;
     color: var(--color-ink);
     cursor: pointer;
+    min-height: 44px;
+    width: 100%;
 }
-.admin-users__role:focus-visible {
-    outline: 2px solid var(--color-primary); outline-offset: 1px;
-}
-
-.admin-users__delete {
-    display: inline-grid; place-items: center;
-    width: 36px; height: 36px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--color-surface);
-    color: var(--color-danger);
-    cursor: pointer;
-    transition: background var(--dur-fast, 150ms) var(--ease-out, ease);
-}
-.admin-users__delete:hover:not(:disabled) { background: var(--color-danger-bg); }
-.admin-users__delete:disabled { color: var(--color-disabled-ink); cursor: not-allowed; opacity: 0.55; }
-.admin-users__delete:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
-
-.admin-users__quota-cell { display: flex; flex-direction: column; gap: var(--space-1); align-items: flex-start; }
-
-.admin-users__quota-edit { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; min-width: 220px; }
-.admin-users__quota-edit .inputField { width: 100%; padding: var(--space-1) var(--space-2); font-size: var(--fs-small); }
-.admin-users__quota-actions { display: flex; gap: var(--space-1); }
-
-.admin-users__quota-edit-btn {
-    border: none;
-    background: transparent;
-    padding: 0;
-    font-family: var(--font-display);
-    font-size: var(--fs-caption);
-    font-weight: 600;
-    color: var(--color-primary-hover);
-    cursor: pointer;
-    text-decoration: underline;
-}
-.admin-users__quota-edit-btn:hover { color: var(--color-primary); }
+.admin-users__role:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
 
 .sr-only {
     position: absolute; width: 1px; height: 1px;
@@ -89,8 +145,12 @@
     clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 
+@media (max-width: 992px) {
+    .admin-users__toolbar { flex-direction: column; align-items: stretch; }
+    .admin-users__toolbar-right { justify-content: space-between; }
+}
+
 @media (max-width: 768px) {
-    /* empilha a tabela em cartões (data-label) */
     .admin-users__table thead { display: none; }
     .admin-users__table, .admin-users__table tbody, .admin-users__table tr, .admin-users__table td {
         display: block; width: 100%;
@@ -110,11 +170,14 @@
         content: attr(data-label);
         font-family: var(--font-display); font-size: var(--fs-caption);
         font-weight: 600; text-transform: uppercase; color: var(--color-ink-muted);
+        flex-shrink: 0;
     }
-    .admin-users__quota-edit { min-width: 0; }
+    .admin-users__actions { justify-content: flex-end; }
 }
+
 @media (max-width: 600px) {
     .admin-users .card { padding: var(--space-4); }
-    .admin-users__toolbar .btn { width: 100%; }
+    .admin-users__toolbar-right .btn { width: 100%; }
+    .admin-users__search { width: 100%; }
     .modal__actions { flex-direction: column; }
 }
