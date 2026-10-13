@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -36,6 +37,7 @@ import java.util.concurrent.Executors;
  * (java.net.http), sem Spring Web nem Jackson.
  */
 @Component
+@Profile("node")
 public class StandaloneNodeServer {
 
     public static final String NODE_TOKEN_HEADER = "X-Node-Token";
@@ -118,17 +120,33 @@ public class StandaloneNodeServer {
         System.out.println("  Pasta local:    " + Paths.get(storageDir).toAbsolutePath());
         System.out.println("  Servidor:       " + serverUrl);
         System.out.println("  Porta local:    " + port);
+        System.out.println("  Health local:   http://localhost:" + port + "/nodes/health");
         if (nodeId > 0) {
             System.out.println("  Node ID:        " + nodeId);
         }
+        if (publicUrl != null && !publicUrl.isBlank()) {
+            System.out.println("  public-url:     " + publicUrl);
+        } else {
+            System.out.println("  public-url:     (nao definido - anuncia IP local)");
+        }
 
         if (autoRegister && nodeId == 0) {
+            System.out.println();
+            System.out.println("A registar no servidor com o codigo de pareamento...");
             registerWithServer();
         }
         if (nodeId > 0) {
             announceAddress();
-            System.out.println("  Estado:         REGISTADO e ONLINE");
+            System.out.println("  Estado:         REGISTADO");
             System.out.println("  Endereco:       " + advertisedAddress());
+            if (publicUrl == null || publicUrl.isBlank()) {
+                System.out.println();
+                System.out.println("  AVISO: sem public-url, o servidor central so consegue aceder a");
+                System.out.println("         este dispositivo se estiver na mesma rede (LAN). Se o");
+                System.out.println("         servidor estiver na nuvem e este PC atras de NAT, expoe");
+                System.out.println("         o agente com um tunel e define cloud.node.public-url:");
+                System.out.println("           cloudflared tunnel --url http://localhost:" + port);
+            }
         } else {
             System.out.println("  Estado:         AGUARDANDO REGISTO");
             System.out.println("  Usa um código de pareamento do site para registar.");
@@ -254,11 +272,49 @@ public class StandaloneNodeServer {
         }
         String host;
         try {
-            host = InetAddress.getLocalHost().getHostAddress();
+            host = localRoutableAddress();
         } catch (Exception e) {
             host = "127.0.0.1";
         }
         return "http://" + host + ":" + port;
+    }
+
+    /**
+     * Descobre um IP local não-loopback (preferindo IPv4), para que um servidor
+     * na mesma rede consiga alcançar este nó. Evita anunciar 127.0.1.1 (comum em
+     * Linux) ou endereços de link-local. Cai para 127.0.0.1 se nada melhor.
+     */
+    private String localRoutableAddress() {
+        try {
+            java.util.Enumeration<java.net.NetworkInterface> ifaces =
+                    java.net.NetworkInterface.getNetworkInterfaces();
+            String fallback = null;
+            while (ifaces != null && ifaces.hasMoreElements()) {
+                java.net.NetworkInterface iface = ifaces.nextElement();
+                if (!iface.isUp() || iface.isLoopback()) {
+                    continue;
+                }
+                java.util.Enumeration<java.net.InetAddress> addrs = iface.getInetAddresses();
+                while (addrs.hasMoreElements()) {
+                    java.net.InetAddress addr = addrs.nextElement();
+                    if (addr.isLoopbackAddress() || addr.isLinkLocalAddress()) {
+                        continue;
+                    }
+                    if (addr instanceof java.net.Inet4Address) {
+                        return addr.getHostAddress();
+                    }
+                    if (fallback == null) {
+                        fallback = addr.getHostAddress();
+                    }
+                }
+            }
+            if (fallback != null) {
+                return fallback;
+            }
+            return InetAddress.getLocalHost().getHostAddress();
+        } catch (Exception e) {
+            return "127.0.0.1";
+        }
     }
 
     /**

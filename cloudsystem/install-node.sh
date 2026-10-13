@@ -14,6 +14,8 @@
 #     --path=/pasta/local      onde guardar os ficheiros (default: ~/cloudstorage)
 #     --quota=GB               quota em GB (default: 100)
 #     --server=URL             URL do servidor (default: https://cloudsystem-backend.onrender.com)
+#     --public-url=URL         endereço pelo qual o servidor alcança este PC
+#                              (túnel cloudflared/ngrok). Necessário atrás de NAT.
 # ============================================================
 
 set -e
@@ -30,6 +32,7 @@ NODE_PORT="${NODE_PORT:-8081}"
 QUOTA_GB="${QUOTA_GB:-100}"
 STORAGE_PATH="${STORAGE_PATH:-$HOME/cloudstorage}"
 PAIRING_CODE=""
+PUBLIC_URL="${PUBLIC_URL:-}"
 
 # --- Processar argumentos ---
 FIRST_ARG="${1:-}"
@@ -39,6 +42,7 @@ for arg in "$@"; do
         --quota=*)    QUOTA_GB="${arg#*=}" ;;
         --server=*)   SERVER_URL="${arg#*=}" ;;
         --port=*)     NODE_PORT="${arg#*=}" ;;
+        --public-url=*) PUBLIC_URL="${arg#*=}" ;;
         -h|--help)
             echo "Uso: bash install-node.sh CODIGO-DE-PAREAMENTO [opções]"
             echo ""
@@ -48,6 +52,8 @@ for arg in "$@"; do
             echo "  --path=/pasta    Onde guardar os ficheiros (default: ~/cloudstorage)"
             echo "  --quota=GB       Espaço a partilhar em GB (default: 100)"
             echo "  --server=URL     URL do servidor (default: $SERVER_URL)"
+            echo "  --public-url=URL Endereço pelo qual o servidor alcança este PC"
+            echo "                   (túnel cloudflared/ngrok). Obrigatório se estiveres atrás de NAT."
             exit 0
             ;;
         -*) ;;  # ignora outras flags
@@ -93,17 +99,22 @@ fi
 
 # --- Descarregar agente ---
 echo ""
-echo -e "${YELLOW}[2/4]${NC} A preparar agente..."
+echo -e "${YELLOW}[2/4]${NC} A preparar agente (o download tem ~62 MB, pode demorar)..."
 NODE_JAR="cloudsystem-node.jar"
-if [ ! -f "$NODE_JAR" ]; then
-    echo "A descarregar o agente do servidor..."
+if [ -f "$NODE_JAR" ]; then
+    echo -e "${GREEN}✓${NC} Agente já existe localmente, a reutilizar ($NODE_JAR)"
+else
+    echo "A descarregar o agente de: $SERVER_URL/nodes/jar"
+    DL_START=$(date +%s)
+    # Nota: mostramos a barra de progresso (sem -s / -q) para que o utilizador
+    # saiba que o passo [2/4] está a avançar e não "pendurado".
     if command -v curl &> /dev/null; then
-        curl -fsSL "$SERVER_URL/nodes/jar" -o "$NODE_JAR" || {
+        curl -fL --progress-bar "$SERVER_URL/nodes/jar" -o "$NODE_JAR" || {
             echo -e "${RED}Erro:${NC} Falha ao descarregar. Verifica a URL: $SERVER_URL"
             exit 1
         }
     elif command -v wget &> /dev/null; then
-        wget -q "$SERVER_URL/nodes/jar" -O "$NODE_JAR" || {
+        wget --show-progress --progress=bar:force:noscroll "$SERVER_URL/nodes/jar" -O "$NODE_JAR" || {
             echo -e "${RED}Erro:${NC} Falha ao descarregar. Verifica a URL: $SERVER_URL"
             exit 1
         }
@@ -111,6 +122,8 @@ if [ ! -f "$NODE_JAR" ]; then
         echo -e "${RED}Erro:${NC} Precisas de curl ou wget instalado."
         exit 1
     fi
+    DL_SECS=$(( $(date +%s) - DL_START ))
+    echo -e "${GREEN}✓${NC} Agente descarregado em ${DL_SECS}s ($(du -h "$NODE_JAR" 2>/dev/null | cut -f1))"
 fi
 echo -e "${GREEN}✓${NC} Agente pronto"
 
@@ -132,11 +145,31 @@ cloud.node.storage-dir=$STORAGE_PATH
 cloud.node.quota-bytes=$QUOTA_BYTES
 cloud.node.auto-register=true
 cloud.node.pairing-code=$PAIRING_CODE
+cloud.node.public-url=$PUBLIC_URL
 PROPS
 echo "Configuração guardada em node.properties"
 
+# --- Aviso de alcance (NAT) ---
+# Se o servidor está na nuvem e este PC está atrás de um router/NAT, o servidor
+# não consegue abrir ligação a este dispositivo. Sem um túnel (public-url), o
+# dispositivo aparece como ligado mas as operações de armazenamento falham.
+if [ -z "$PUBLIC_URL" ]; then
+    echo ""
+    echo -e "${YELLOW}Aviso:${NC} cloud.node.public-url não foi definido."
+    echo "Se o servidor CloudSystem estiver na Internet e este computador"
+    echo "estiver atrás de um router (NAT), o servidor NÃO conseguirá"
+    echo "aceder ao armazenamento deste dispositivo."
+    echo ""
+    echo "Solução: expõe o agente com um túnel, por exemplo:"
+    echo "  cloudflared tunnel --url http://localhost:$NODE_PORT"
+    echo "e volta a correr:"
+    echo "  bash install-node.sh $PAIRING_CODE --public-url=https://O-TEU-TUNEL.trycloudflare.com"
+    echo ""
+fi
+
 # --- Iniciar agente ---
 echo ""
-echo -e "${YELLOW}[4/4]${NC} A iniciar o agente..."
+echo -e "${YELLOW}[4/4]${NC} A iniciar o agente (Ctrl+C para parar)..."
+echo "Endpoint local: http://localhost:$NODE_PORT/nodes/health"
 echo ""
 java -jar "$NODE_JAR" --node.agent=true

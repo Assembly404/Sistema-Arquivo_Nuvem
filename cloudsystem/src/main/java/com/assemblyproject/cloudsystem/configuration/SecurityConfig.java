@@ -4,7 +4,9 @@ import jakarta.servlet.DispatcherType;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,11 +20,25 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Duration;
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    /**
+     * Timeout de ligação para chamadas entre o servidor e os nós de
+     * armazenamento. Evita que um dispositivo offline/inacessível (ex.: atrás
+     * de NAT) bloqueie threads durante o timeout por omissão do sistema
+     * operativo (~2 min), que tornava o registo, a replicação e o heartbeat
+     * lentos.
+     */
+    @Value("${cloud.node.connect-timeout:5000}")
+    private int nodeConnectTimeoutMillis;
+
+    @Value("${cloud.node.read-timeout:30000}")
+    private int nodeReadTimeoutMillis;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -39,8 +55,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/public/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/nodes/jar").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/install/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/nodes/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/nodes/*/heartbeat").permitAll()
+                        // O agente anuncia o seu endereço autenticando-se pelo
+                        // token do dispositivo (X-Node-Token), não por JWT.
                         .requestMatchers(HttpMethod.POST, "/nodes/*/address").permitAll()
                         // Leitura do catálogo (perfis/recursos/permissões) é permitida a qualquer acesso de administração
                         .requestMatchers(HttpMethod.GET, "/admin/papeis/**", "/admin/recursos/**", "/admin/permissoes/**")
@@ -87,6 +106,9 @@ public class SecurityConfig {
 
     @Bean
     public RestTemplate restTemplate() {
-        return new RestTemplate();
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofMillis(nodeConnectTimeoutMillis));
+        factory.setReadTimeout(Duration.ofMillis(nodeReadTimeoutMillis));
+        return new RestTemplate(factory);
     }
 }

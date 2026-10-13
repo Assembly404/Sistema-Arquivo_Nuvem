@@ -20,6 +20,8 @@ import com.assemblyproject.cloudsystem.configuration.JWTUserData;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -385,20 +387,22 @@ public class NodeController {
     }
 
     @GetMapping("/jar")
-    public ResponseEntity<byte[]> downloadNodeJar() {
+    public ResponseEntity<Resource> downloadNodeJar() {
         try {
             Path jarPath = resolveNodeAgentJar();
             if (jarPath == null) {
-                return ResponseEntity.status(404).body(new byte[0]);
+                return ResponseEntity.notFound().build();
             }
-            byte[] jarBytes = Files.readAllBytes(jarPath);
+            // Streaming: não carrega o jar inteiro (~62 MB) para memória, o que
+            // além de lento podia esgotar a memória em instâncias pequenas.
+            FileSystemResource resource = new FileSystemResource(jarPath);
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"cloudsystem-node.jar\"")
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .contentLength(jarBytes.length)
-                    .body(jarBytes);
+                    .contentLength(resource.contentLength())
+                    .body(resource);
         } catch (IOException e) {
-            return ResponseEntity.status(500).body(new byte[0]);
+            return ResponseEntity.status(500).build();
         }
     }
 

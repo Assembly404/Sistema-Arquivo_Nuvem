@@ -520,6 +520,18 @@ function Storage() {
                             <div className="storage-result">
                                 <p className="dashboard-page__text"><FiCheckCircle aria-hidden="true" /> Dispositivo <strong>{registered.name}</strong> vinculado (nó #{registered.nodeID}).</p>
 
+                                {registered.status && registered.status !== "ONLINE" && (
+                                    <p className="storage-config__warning">
+                                        <FiXCircle aria-hidden="true" /> <strong>Ainda não está acessível.</strong>{" "}
+                                        O dispositivo foi registado, mas o servidor não consegue alcançá-lo
+                                        ({registered.status.toLowerCase()}). Se este computador está atrás de um
+                                        router (NAT) e o servidor está na Internet, corre o instalador com o teu
+                                        túnel, por exemplo:
+                                        <code>--public-url=https://o-teu-tunel.trycloudflare.com</code>.
+                                        Sem isso, os ficheiros não serão guardados neste dispositivo.
+                                    </p>
+                                )}
+
                                 <h3 className="card__title"><FiKey aria-hidden="true" /> Token do dispositivo</h3>
                                 <p className="dashboard-page__text">Guarda este token no agente local. Não voltará a ser mostrado.</p>
                                 <pre className="storage-config__props">{registered.deviceToken}</pre>
@@ -549,6 +561,12 @@ function Storage() {
                                         ) : (
                                             <pre className="storage-config__props">{`bash install-node.sh ${pairingCode.code}`}</pre>
                                         )}
+                                        <p className="dashboard-page__text">
+                                            Se este computador estiver atrás de um router (NAT) e o servidor
+                                            estiver na Internet, expõe o agente com um túnel
+                                            (ex.: <code>cloudflared tunnel --url http://localhost:8081</code>)
+                                            e acrescenta <code>--public-url=https://...</code> ao comando.
+                                        </p>
                                         <p className="dashboard-page__text">
                                             Não tens o instalador? Transfere-o primeiro:
                                         </p>

@@ -14,6 +14,7 @@ REM  Variaveis opcionais (define antes de correr):
 REM     set STORAGE_PATH=C:\cloudstorage
 REM     set QUOTA_GB=100
 REM     set SERVER_URL=https://cloudsystem-backend.onrender.com
+REM     set PUBLIC_URL=https://meu-pc.trycloudflare.com   (tunel, para NAT)
 REM ============================================================
 
 setlocal EnableDelayedExpansion
@@ -24,6 +25,13 @@ if "%QUOTA_GB%"=="" set QUOTA_GB=100
 if "%STORAGE_PATH%"=="" set STORAGE_PATH=%USERPROFILE%\cloudstorage
 
 set PAIRING_CODE=%~1
+
+REM --- Opcao --public-url=URL (tunel para funcionar atras de NAT) ---
+set "PUBLIC_URL="
+for %%a in (%*) do (
+    set "ARG=%%a"
+    if "!ARG:~0,13!"=="--public-url=" set "PUBLIC_URL=!ARG:~13!"
+)
 
 REM --- Verificar Java ---
 echo [1/4] A verificar Java...
@@ -59,16 +67,21 @@ if "%PAIRING_CODE%"=="" (
 
 REM --- Descarregar agente ---
 echo.
-echo [2/4] A preparar agente...
-if not exist "cloudsystem-node.jar" (
-    echo A descarregar o agente do servidor...
-    powershell -Command "try { Invoke-WebRequest -Uri '%SERVER_URL%/nodes/jar' -OutFile 'cloudsystem-node.jar' } catch { Write-Host 'ERRO: Falha ao descarregar de %SERVER_URL%'; exit 1 }"
-    if not exist "cloudsystem-node.jar" (
-        echo [ERRO] Falha ao descarregar o agente.
-        pause
-        exit /b 1
-    )
+echo [2/4] A preparar agente (download ~62 MB, pode demorar)...
+if exist "cloudsystem-node.jar" (
+    echo [OK] Agente ja existe localmente, a reutilizar.
+    goto :agent_ready
 )
+echo A descarregar o agente de: %SERVER_URL%/nodes/jar
+REM $ProgressPreference acelera muito o Invoke-WebRequest (a barra de progresso
+REM torna o download de ficheiros grandes extremamente lento no PowerShell).
+powershell -NoProfile -Command "$ProgressPreference='SilentlyContinue'; try { Invoke-WebRequest -Uri '%SERVER_URL%/nodes/jar' -OutFile 'cloudsystem-node.jar' -UseBasicParsing } catch { Write-Host ('ERRO: Falha ao descarregar de %SERVER_URL% -> ' + $_.Exception.Message); exit 1 }"
+if not exist "cloudsystem-node.jar" (
+    echo [ERRO] Falha ao descarregar o agente.
+    pause
+    exit /b 1
+)
+:agent_ready
 echo [OK] Agente pronto
 
 REM --- Criar pasta ---
@@ -89,12 +102,29 @@ REM --- Criar node.properties ---
     echo cloud.node.quota-bytes=%QUOTA_BYTES%
     echo cloud.node.auto-register=true
     echo cloud.node.pairing-code=%PAIRING_CODE%
+    echo cloud.node.public-url=%PUBLIC_URL%
 ) > node.properties
 echo Configuracao guardada em node.properties
 
+REM --- Aviso de alcance (NAT) ---
+if "%PUBLIC_URL%"=="" (
+    echo.
+    echo [AVISO] cloud.node.public-url nao foi definido.
+    echo Se o servidor CloudSystem estiver na Internet e este PC estiver
+    echo atras de um router (NAT), o servidor NAO conseguira aceder ao
+    echo armazenamento deste dispositivo.
+    echo.
+    echo Solucao: expoe o agente com um tunel, por exemplo:
+    echo   cloudflared tunnel --url http://localhost:%NODE_PORT%
+    echo e volta a correr:
+    echo   install-node.bat %PAIRING_CODE% --public-url=https://O-TEU-TUNEL.trycloudflare.com
+    echo.
+)
+
 REM --- Iniciar ---
 echo.
-echo [4/4] A iniciar o agente...
+echo [4/4] A iniciar o agente (Ctrl+C para parar)...
+echo Endpoint local: http://localhost:%NODE_PORT%/nodes/health
 echo.
 java -jar cloudsystem-node.jar --node.agent=true
 

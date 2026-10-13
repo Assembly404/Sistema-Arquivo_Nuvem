@@ -2,7 +2,6 @@ package com.assemblyproject.cloudsystem.service;
 
 import com.assemblyproject.cloudsystem.entity.StorageNode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
@@ -21,9 +20,6 @@ public class ContainerClient {
     private final RestTemplate restTemplate;
     private final StorageNodeService nodeService;
     private final NodeSecretService nodeSecretService;
-
-    @Value("${cloud.node.connect-timeout:5000}")
-    private int connectTimeout;
 
     public String uploadReplica(StorageNode node, Long fileID, byte[] containerData) throws IOException {
         // A nuvem do sistema vive no próprio servidor: gravação local direta,

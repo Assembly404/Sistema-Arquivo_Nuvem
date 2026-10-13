@@ -46,14 +46,36 @@ function installJava() {
 }
 
 function downloadJar() {
-    console.log('A baixar o nó...');
+    console.log('A baixar o nó (~62 MB, pode demorar)...');
     const url = new URL(`${SERVER_URL}/nodes/jar`);
     const protocol = url.protocol === 'https:' ? https : http;
     const file = fs.createWriteStream('cloudsystem-node.jar');
     return new Promise((resolve, reject) => {
         protocol.get(url, (response) => {
+            if (response.statusCode && response.statusCode >= 400) {
+                reject(new Error(`HTTP ${response.statusCode}`));
+                return;
+            }
+            const total = parseInt(response.headers['content-length'] || '0', 10);
+            let received = 0;
+            let lastPct = -1;
+            response.on('data', (chunk) => {
+                received += chunk.length;
+                if (total > 0) {
+                    const pct = Math.floor((received / total) * 100);
+                    if (pct !== lastPct && pct % 5 === 0) {
+                        lastPct = pct;
+                        process.stdout.write(`  ... ${pct}% (${(received / 1048576).toFixed(1)} MB)\r`);
+                    }
+                }
+            });
             response.pipe(file);
-            file.on('finish', () => { file.close(); resolve(true); });
+            file.on('finish', () => {
+                file.close();
+                process.stdout.write('\n');
+                console.log(`[OK] Agente descarregado (${(received / 1048576).toFixed(1)} MB)`);
+                resolve(true);
+            });
         }).on('error', (err) => { fs.unlink('cloudsystem-node.jar', () => {}); reject(err); });
     });
 }
@@ -75,7 +97,9 @@ function configNode() {
 
         readline.close();
         console.log('A iniciar o nó...');
-        runCommand(`java -jar cloudsystem-node.jar --spring.config.location=node.properties`);
+        // --node.agent=true faz o jar arrancar em modo agente (sem base de
+        // dados/web), em vez de arrancar o servidor completo por engano.
+        runCommand(`java -jar cloudsystem-node.jar --node.agent=true`);
     })();
 }
 

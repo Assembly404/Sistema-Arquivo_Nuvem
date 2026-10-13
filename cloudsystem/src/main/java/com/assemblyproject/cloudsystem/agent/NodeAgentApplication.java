@@ -5,6 +5,7 @@ import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.context.annotation.Import;
 
@@ -27,6 +28,7 @@ import org.springframework.context.annotation.Import;
  * </pre>
  */
 @Configuration
+@Profile("node")
 @EnableAutoConfiguration(exclude = {
         org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration.class,
         org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration.class,
@@ -41,6 +43,7 @@ public class NodeAgentApplication {
     public static void main(String[] args) {
         new SpringApplicationBuilder(NodeAgentApplication.class)
                 .web(WebApplicationType.NONE)
+                .profiles("node")
                 .properties("spring.config.location=optional:classpath:/application-node.properties,optional:./node.properties")
                 .sources(NodeAgentApplication.class)
                 .run(args);

@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,7 +24,8 @@ public class SecurityFilter extends OncePerRequestFilter {
     private final TokenConfig tokenConfig;
     private final PermissionService permissionService;
 
-    public SecurityFilter(TokenConfig tokenConfig, PermissionService permissionService) {
+    @Autowired
+    public SecurityFilter(TokenConfig tokenConfig, @Autowired(required = false) PermissionService permissionService) {
         this.tokenConfig = tokenConfig;
         this.permissionService = permissionService;
     }

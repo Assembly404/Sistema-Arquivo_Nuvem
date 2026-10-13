@@ -79,9 +79,39 @@ public class NodeManagementService {
                 .createdAt(LocalDateTime.now())
                 .build();
         StorageNode saved = nodeRepository.save(node);
+
+        // Verifica se o servidor consegue realmente alcançar o agente. Sem isto
+        // o dispositivo aparecia como ONLINE mesmo estando atrás de NAT, e as
+        // operações seguintes (replicação/leitura) falhavam com "não foi
+        // possível aceder ao armazenamento".
+        if (!safeIsReachable(saved)) {
+            saved.setStatus(NodeStatus.DEGRADED);
+            saved = nodeRepository.save(saved);
+            log.warn("[node] Dispositivo {} registado, mas ainda não acessível em '{}'. "
+                            + "Se o servidor está na nuvem e o PC está atrás de NAT, configura "
+                            + "cloud.node.public-url (túnel cloudflared/ngrok) no agente.",
+                    saved.getNodeID(), saved.getSessionId());
+        }
+
         log.info("Dispositivo '{}' registado para o utilizador {} (nó {}).",
                 saved.getName(), owner.getUserID(), saved.getNodeID());
         return new RegisteredNode(saved, token);
+    }
+
+    /**
+     * Testa, de forma segura, se o servidor consegue chegar ao agente do
+     * dispositivo. Devolve {@code false} se não houver endereço ou se a ligação
+     * falhar (nunca propaga exceções para não impedir o registo).
+     */
+    private boolean safeIsReachable(StorageNode node) {
+        if (node.getSessionId() == null || node.getSessionId().isBlank()) {
+            return false;
+        }
+        try {
+            return containerClient.isNodeOnline(node);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private long resolveTotalBytes(RegisterNodeRequest request) {
