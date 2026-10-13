@@ -90,6 +90,7 @@ npm run lint                  # ESLint
 
 ## Documentação
 
+- **`docs/ARQUITETURA.md`** — problema, solução, diferencial e decisões arquitecturais (inclui a limitação de NAT e a solução proposta).
 - `docs/requisitos_sistema_armazenamento_nuvem.pdf` — requisitos funcionais e não-funcionais (RF01–RF30, RNF01–RNF07).
 - `docs/historias_usuario.pdf` — épicos e histórias de utilizador.
 - `docs/OTP_EMAIL_SETUP.md` — configuração do envio de OTP por email.
