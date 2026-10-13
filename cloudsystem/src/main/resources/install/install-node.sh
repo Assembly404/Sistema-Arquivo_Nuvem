@@ -32,7 +32,7 @@ NODE_PORT="${NODE_PORT:-8081}"
 QUOTA_GB="${QUOTA_GB:-100}"
 STORAGE_PATH="${STORAGE_PATH:-$HOME/cloudstorage}"
 PAIRING_CODE=""
-PUBLIC_URL="${PUBLIC_URL:-https://kjwnzm6x-8081.uks1.devtunnels.ms/}"
+PUBLIC_URL="${PUBLIC_URL:-https://maple-sheet-spoken-interim.trycloudflare.com/}"
 
 # --- Processar argumentos ---
 FIRST_ARG="${1:-}"

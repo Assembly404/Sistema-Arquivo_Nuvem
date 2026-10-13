@@ -19,7 +19,7 @@ REM ============================================================
 
 setlocal EnableDelayedExpansion
 
-if "%SERVER_URL%"=="" set SERVER_URL=https://cloudsystem-backend.onrender.com
+if "%SERVER_URL%"=="" set SERVER_URL=https://debesis.onrender.com
 if "%NODE_PORT%"=="" set NODE_PORT=8081
 if "%QUOTA_GB%"=="" set QUOTA_GB=100
 if "%STORAGE_PATH%"=="" set STORAGE_PATH=%USERPROFILE%\cloudstorage
