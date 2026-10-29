@@ -1,0 +1,4 @@
+-- O seed de dados e feito em Java, de forma idempotente, por:
+--   com.assemblyproject.cloudsystem.service.PermissionService#seed  (recursos, permissoes e papeis)
+--   com.assemblyproject.cloudsystem.service.DataSeeder#seed          (ADMIN inicial e no de sistema)
+-- Ver docs/SEED.md. Nao adicionar INSERTs aqui.
