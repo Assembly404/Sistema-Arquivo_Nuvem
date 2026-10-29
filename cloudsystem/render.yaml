@@ -31,6 +31,12 @@ services:
         sync: false
       - key: CLOUD_MASTER_KEY
         sync: false
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      - key: SEED_ENABLED
+        value: "true"
       - key: MAIL_ENABLED
         value: "false"
       - key: PORT
