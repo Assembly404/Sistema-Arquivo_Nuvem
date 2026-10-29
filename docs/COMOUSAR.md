@@ -89,12 +89,12 @@ cp .env.example .env          # manter VITE_API_URL=http://localhost:5000
 npm install
 npm run dev                   # frontend subirá em http://localhost:5173
 
-# 6. Aceder e registar
+# 6. Aceder com a conta ADMIN criada pelo seed
 #    - Abrir http://localhost:5173 no navegador
-#    - Clicar em "Registar"
-#    - Preencher nome, e-mail e senha
-#    - Primeiro utilizador criado será ADMIN automaticamente
-#    - Fazer login e começar a usar
+#    - Fazer login com SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD
+#      (default: admin@arquivonuvem.local / Admin@1234)
+#    - Outros utilizadores podem usar "Registar" (cria sempre USER)
+#    - Ver docs/SEED.md para configurar credenciais próprias
 
 # Pronto! O sistema está funcional em modo "cloud-only".
 # O armazenamento fica no disco do computador onde o backend roda.
@@ -190,7 +190,7 @@ Estas **não podem** ser definidas no código-fonte — têm de vir do `.env` (b
 | Ação | O que fazer |
 |---|---|
 | **Aceder à aplicação** | Ir a `http://localhost:5173` (ou ao domínio deployado). |
-| **Registrar** | Clicar em "Registar" na landing page. Preencher: nome, e-mail, senha. O primeiro utilizador criado torna-se automaticamente **ADMIN**. |
+| **Registar** | Clicar em "Registar" na landing page. Preencher: nome, e-mail, senha. O registo público cria sempre **USER**. O **ADMIN** inicial é criado pelo seed (ver `docs/SEED.md`). |
 | **Login** | Preencher e-mail/senha no formulário de login. O token JWT fica guardado no frontend (context Auth) e dura 24h. |
 | **Logout** | Clicar em "Terminar sessão" no rodapé da sidebar. |
 
@@ -409,11 +409,11 @@ MAIL_PASSWORD=
 ### 5.5 Passos finais após deploy
 
 1. **Aceder ao frontend** (`https://seu-front.vercel.app`).
-2. **Registrar** a primeira conta (será ADMIN).
-3. **Login**.
-4. Ir à página **Armazenamento** → verificar que o nó de sistema aparece.
-5. **(Opcional) Configurar nó pessoal:** usar o installer `install-node.sh` em um PC próprio, apontando para `https://seu-backend.onrender.com`.
-6. **Testar upload:** tentar upload de um ficheiro e verificar onde ele vai (nuvem do sistema ou dispositivo pessoal, dependendo da política).
+2. **Login** com a conta ADMIN do seed (`SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`).
+   Em produção, configura credenciais próprias antes do primeiro deploy (`docs/SEED.md`).
+3. Ir à página **Armazenamento** → verificar que o nó de sistema aparece.
+4. **(Opcional) Configurar nó pessoal:** usar o installer `install-node.sh` em um PC próprio, apontando para `https://seu-backend.onrender.com`.
+5. **Testar upload:** tentar upload de um ficheiro e verificar onde ele vai (nuvem do sistema ou dispositivo pessoal, dependendo da política).
 
 ---
 

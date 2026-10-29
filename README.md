@@ -58,6 +58,23 @@ cd cloudsystem
 ./mvnw spring-boot:run        # porta 5000
 ```
 
+### Seed inicial
+
+No primeiro arranque o backend cria automaticamente:
+
+- recursos, permissões e papéis (`ADMIN`/`USER`);
+- o nó de armazenamento **Nuvem do sistema**;
+- uma conta **ADMIN** inicial.
+
+Credenciais de desenvolvimento (configuráveis no `.env`):
+
+| Variável | Default |
+|---|---|
+| `SEED_ADMIN_EMAIL` | `admin@arquivonuvem.local` |
+| `SEED_ADMIN_PASSWORD` | `Admin@1234` |
+
+> Em produção define sempre credenciais próprias. Guia completo: **`docs/SEED.md`**.
+
 ## Frontend — configuração e arranque
 
 ```bash
@@ -94,6 +111,7 @@ npm run lint                  # ESLint
 - `docs/requisitos_sistema_armazenamento_nuvem.pdf` — requisitos funcionais e não-funcionais (RF01–RF30, RNF01–RNF07).
 - `docs/historias_usuario.pdf` — épicos e histórias de utilizador.
 - `docs/OTP_EMAIL_SETUP.md` — configuração do envio de OTP por email.
+- `docs/SEED.md` — dados iniciais (ADMIN, papéis, nó de sistema) e credenciais de arranque.
 - `frontend/src/docs/IDENTIDADE_VISUAL.md` — regras normativas de UI/UX.
 - `frontend/src/docs/Modelos_Sidebar/SIDEBAR_ARQUITETURA.md` — arquitetura de navegação.
 - `frontend/src/docs/RegrasDeTecnologias.md` — regras de implementação de componentes.
