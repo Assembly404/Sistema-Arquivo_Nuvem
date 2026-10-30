@@ -85,7 +85,10 @@ public class SecurityConfig {
             "http://127.0.0.1:5500",
             "https://debesis-sage.vercel.app/",
             "https://debesis-i47jpwogv-projetositc2026-9121.vercel.app/",
-            "https://debesis-git-main-projetositc2026-9121.vercel.app/"
+            "https://debesis-git-main-projetositc2026-9121.vercel.app/",
+            "https://debesis-sage.vercel.app/*",
+            "https://debesis-i47jpwogv-projetositc2026-9121.vercel.app/*",
+            "https://debesis-git-main-projetositc2026-9121.vercel.app/*"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
